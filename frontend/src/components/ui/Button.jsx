@@ -24,20 +24,24 @@ const Button = ({
     alignItems: 'center',
     justifyContent: 'center',
     fontWeight: tokens.typography.fontWeight.semibold,
-    borderRadius: tokens.borderRadius.md,
+    borderRadius: tokens.borderRadius.full, // Paisawaala: 1000px (fully rounded)
     transition: `all ${tokens.transitions.normal} ease-in-out`,
     cursor: disabled || loading ? 'not-allowed' : 'pointer',
     opacity: disabled || loading ? 0.6 : 1,
     width: fullWidth ? '100%' : 'auto',
+    height: tokens.spacing.buttonHeight, // Paisawaala: 48px
+    padding: tokens.spacing.buttonPadding, // Paisawaala: 0.75rem 1.5rem
+    fontSize: tokens.typography.fontSize.base, // Paisawaala: 1rem
+    fontFamily: tokens.typography.fontFamily.sans.join(', '),
   };
 
   const variantStyles = {
     primary: {
-      backgroundColor: tokens.colors.primary[600],
+      backgroundColor: tokens.colors.cta.primary, // Paisawaala: #ec3957
       color: '#ffffff',
       border: 'none',
       '&:hover': {
-        backgroundColor: tokens.colors.primary[700],
+        backgroundColor: tokens.colors.cta.hover, // Paisawaala: #dd23bb
       },
     },
     secondary: {

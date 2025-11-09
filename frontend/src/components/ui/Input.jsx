@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTheme } from '../../design-system/ThemeProvider';
 
 /**
@@ -23,38 +23,44 @@ const Input = ({
 }) => {
   const { tokens, colors } = useTheme();
 
+  // Detect if mobile (simple check - can be enhanced)
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
+  const [isFocused, setIsFocused] = useState(false);
+
   const inputStyles = {
     width: fullWidth ? '100%' : 'auto',
-    padding: `${tokens.spacing.sm} ${tokens.spacing.md}`,
-    fontSize: tokens.typography.fontSize.base,
-    lineHeight: tokens.typography.lineHeight.normal,
-    color: colors.text,
+    padding: isMobile 
+      ? `${tokens.spacing.md} ${tokens.spacing.md}` // Larger padding on mobile for touch
+      : `${tokens.spacing.sm} ${tokens.spacing.md}`,
+    fontSize: tokens.typography.fontSize.base, // Paisawaala: 1rem
+    lineHeight: tokens.typography.lineHeight.textRegular, // Paisawaala: 24px
+    color: colors.textSecondary || tokens.colors.gray[500], // Paisawaala: #656c77
     backgroundColor: colors.input.background,
-    border: `1px solid ${error ? tokens.colors.error[500] : colors.input.border}`,
-    borderRadius: tokens.borderRadius.md,
+    border: `1px solid ${error ? tokens.colors.error[500] : isFocused ? colors.input.focus : colors.input.border}`,
+    borderRadius: tokens.borderRadius.lg, // Larger radius for modern look
     transition: `all ${tokens.transitions.normal} ease-in-out`,
     outline: 'none',
-    '&:focus': {
-      borderColor: colors.input.focus,
-      boxShadow: `0 0 0 3px ${tokens.colors.primary[100]}`,
-    },
-    '&:disabled': {
-      opacity: 0.6,
-      cursor: 'not-allowed',
-    },
+    fontFamily: tokens.typography.fontFamily.sans.join(', '),
+    minHeight: isMobile ? '48px' : 'auto', // Minimum touch target on mobile
+    boxShadow: isFocused && !error 
+      ? `0 0 0 3px ${tokens.colors.primary[50]}` 
+      : 'none', // Light blue focus ring
+    opacity: disabled ? 0.6 : 1,
+    cursor: disabled ? 'not-allowed' : 'text',
   };
 
   return (
-    <div style={{ marginBottom: tokens.spacing.md, width: fullWidth ? '100%' : 'auto' }}>
+    <div style={{ width: fullWidth ? '100%' : 'auto' }}>
       {label && (
         <label
           htmlFor={name}
           style={{
             display: 'block',
             marginBottom: tokens.spacing.xs,
-            fontSize: tokens.typography.fontSize.sm,
+            fontSize: tokens.typography.fontSize.sm, // Paisawaala: 0.875rem
             fontWeight: tokens.typography.fontWeight.medium,
-            color: colors.text,
+            color: colors.textSecondary || tokens.colors.gray[500], // Paisawaala: #656c77
+            fontFamily: tokens.typography.fontFamily.sans.join(', '),
           }}
         >
           {label}
@@ -71,8 +77,14 @@ const Input = ({
         type={type}
         value={value || ''}
         onChange={onChange}
-        onBlur={onBlur}
-        onFocus={onFocus}
+        onBlur={(e) => {
+          setIsFocused(false);
+          onBlur?.(e);
+        }}
+        onFocus={(e) => {
+          setIsFocused(true);
+          onFocus?.(e);
+        }}
         placeholder={placeholder}
         required={required}
         disabled={disabled}

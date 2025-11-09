@@ -22,7 +22,7 @@ const applicationSchema = new mongoose.Schema(
     },
     breStatus: {
       type: String,
-      enum: ['pending', 'processing', 'completed', 'failed'],
+      enum: ['pending', 'initiated', 'processing', 'completed', 'failed'],
     },
     breCompletedAt: Date,
     // Application data snapshot

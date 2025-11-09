@@ -3,6 +3,10 @@ import { logger } from '../utils/logger.js';
 
 const BRE_API_URL = process.env.BRE_API_URL;
 const BRE_API_KEY = process.env.BRE_API_KEY;
+const USE_BRE_STUB = process.env.USE_BRE_STUB !== 'false'; // Default to true (stub mode)
+
+// Store stub status progression for each request
+const stubStatusStore = new Map();
 
 class BreService {
   async initiateRequest(application) {
@@ -10,6 +14,56 @@ class BreService {
       // Transform application data to BRE service format
       const payload = this.transformApplicationToBreFormat(application);
 
+      // STUB MODE: Return random requestId and simulate BRE processing
+      if (USE_BRE_STUB || !BRE_API_URL) {
+        const requestId = `BRE-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        
+        // Get phone number from payload to determine if we should always generate offers
+        const phoneNumber = payload?.phone || '';
+        // Extract last digit - handle both string and number, remove all non-digits first
+        const digitsOnly = phoneNumber.toString().replace(/\D/g, '');
+        const lastDigit = digitsOnly.length > 0 ? digitsOnly.slice(-1) : '';
+        const phoneEndsInEven = lastDigit && !isNaN(parseInt(lastDigit)) && parseInt(lastDigit) % 2 === 0;
+        
+        // Initialize stub status progression
+        // Status will progress: initiated -> processing -> completed/failed
+        // If phone ends in even digit, always complete successfully
+        const willComplete = phoneEndsInEven || Math.random() > 0.1; // 90% success rate, or 100% if even phone
+        
+        const statusProgression = {
+          requestId,
+          currentStep: 0,
+          phoneEndsInEven, // Store for later use
+          steps: [
+            { status: 'initiated', delay: 0 },
+            { status: 'processing', delay: 1000 }, // 1 second (reduced for testing)
+            // Complete or fail based on phone number or random
+            { 
+              status: willComplete ? 'completed' : 'failed',
+              delay: 2000 + Math.random() * 2000, // 2-4 seconds (reduced for testing)
+            },
+          ],
+          startTime: Date.now(),
+          payload,
+        };
+        
+        stubStatusStore.set(requestId, statusProgression);
+        
+        logger.info('BRE stub: Request initiated', {
+          requestId,
+          applicationId: application._id,
+          phoneNumber: phoneNumber,
+          phoneEndsInEven,
+          willAlwaysGetOffers: phoneEndsInEven,
+        });
+
+        return {
+          requestId,
+          payload,
+        };
+      }
+
+      // REAL MODE: Make actual API call
       const response = await axios.post(
         `${BRE_API_URL}/requests`,
         payload,
@@ -36,6 +90,75 @@ class BreService {
 
   async checkStatus(breRequestId) {
     try {
+      // STUB MODE: Return simulated status progression
+      if (USE_BRE_STUB || !BRE_API_URL) {
+        const statusProgression = stubStatusStore.get(breRequestId);
+        
+        if (!statusProgression) {
+          // Request not found - could be expired or invalid
+          return {
+            status: 'failed',
+            response: null,
+            error: 'BRE request not found',
+          };
+        }
+
+        const now = Date.now();
+        const elapsed = now - statusProgression.startTime;
+        let currentStatus = 'initiated';
+
+        // Progress through status steps based on elapsed time
+        for (let i = 0; i < statusProgression.steps.length; i++) {
+          const step = statusProgression.steps[i];
+          const stepStartTime = statusProgression.steps
+            .slice(0, i)
+            .reduce((sum, s) => sum + s.delay, 0);
+          
+          if (elapsed >= stepStartTime) {
+            currentStatus = step.status;
+            statusProgression.currentStep = i;
+          } else {
+            break;
+          }
+        }
+
+        // Generate random mock response for completed status
+        let response = null;
+        if (currentStatus === 'completed') {
+          // Always generate offers if phone ends in even digit, otherwise 90% chance
+          // Also ensure we always generate at least 1 offer for even phone numbers
+          const hasOffers = statusProgression.phoneEndsInEven || Math.random() > 0.1;
+          const offerCount = statusProgression.phoneEndsInEven 
+            ? Math.max(2, Math.floor(Math.random() * 5) + 1) // At least 2 offers for even phone
+            : Math.floor(Math.random() * 5) + 1; // 1-5 offers otherwise
+          
+          response = {
+            eligible: hasOffers,
+            offers: hasOffers ? this.generateMockOffers(offerCount) : [],
+            creditScore: 600 + Math.floor(Math.random() * 200), // 600-800
+            riskLevel: ['low', 'medium', 'high'][Math.floor(Math.random() * 3)],
+            decision: hasOffers ? 'approved' : 'pending',
+          };
+        }
+
+        logger.info('BRE stub: Status checked', {
+          breRequestId,
+          status: currentStatus,
+          elapsed: `${elapsed}ms`,
+          hasOffers: currentStatus === 'completed' && response?.offers?.length > 0,
+          phoneEndsInEven: statusProgression.phoneEndsInEven,
+          offerCount: currentStatus === 'completed' && response?.offers ? response.offers.length : 0,
+          phoneNumber: statusProgression.payload?.phone,
+        });
+
+        return {
+          status: currentStatus,
+          response,
+          error: currentStatus === 'failed' ? 'Simulated BRE failure' : null,
+        };
+      }
+
+      // REAL MODE: Make actual API call
       const response = await axios.get(
         `${BRE_API_URL}/requests/${breRequestId}/status`,
         {
@@ -57,6 +180,33 @@ class BreService {
       });
       throw new Error('Failed to check BRE status');
     }
+  }
+
+  /**
+   * Generate mock offers for stub mode
+   * @param {number} count - Number of offers to generate (default: random 1-5)
+   */
+  generateMockOffers(count = null) {
+    const offerCount = count || Math.floor(Math.random() * 5) + 1; // 1-5 offers
+    const offers = [];
+
+    for (let i = 0; i < offerCount; i++) {
+      const baseAmount = [5000, 10000, 15000, 20000, 25000][Math.floor(Math.random() * 5)];
+      const apr = 8 + Math.random() * 12; // 8-20% APR
+      
+      offers.push({
+        id: `OFFER-${Date.now()}-${i}`,
+        lender: ['Bank A', 'Bank B', 'Credit Union C', 'Lender D', 'Finance Co E'][i % 5],
+        amount: baseAmount + Math.floor(Math.random() * 5000),
+        apr: parseFloat(apr.toFixed(2)),
+        term: [12, 24, 36, 48, 60][Math.floor(Math.random() * 5)],
+        monthlyPayment: Math.floor((baseAmount * (1 + apr / 100)) / 36),
+        features: ['No prepayment penalty', 'Fast approval', 'Flexible terms'].slice(0, Math.floor(Math.random() * 3) + 1),
+      });
+    }
+
+    // Sort by APR (lowest first)
+    return offers.sort((a, b) => a.apr - b.apr);
   }
 
   transformApplicationToBreFormat(application) {

@@ -23,8 +23,13 @@ export const createApplication = async (req, res, next) => {
       );
     }
 
+    // Generate application number
+    const count = await Application.countDocuments();
+    const applicationNumber = `APP-${Date.now()}-${count + 1}`;
+
     const application = new Application({
       leadId,
+      applicationNumber,
       applicationData: lead.toObject(),
       status: 'pending',
     });

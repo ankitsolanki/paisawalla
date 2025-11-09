@@ -5,23 +5,28 @@
 
 export const tokens = {
   colors: {
-    // Primary palette
+    // Paisawaala Primary Brand Colors
     primary: {
-      50: '#eff6ff',
-      100: '#dbeafe',
-      200: '#bfdbfe',
-      300: '#93c5fd',
-      400: '#60a5fa',
-      500: '#3b82f6',
-      600: '#2563eb',
-      700: '#1d4ed8',
-      800: '#1e40af',
-      900: '#1e3a8a',
+      50: '#e8e7fe',   // royal-blue-100
+      100: '#e8e7fe',
+      200: '#2d40ea1a', // light blue tint
+      300: '#1f14ae',   // royal-blue-300
+      400: '#1c3693',   // Main brand blue
+      500: '#1c3693',   // Main brand blue
+      600: '#160e7a',   // royal-blue-500
+      700: '#113eb5',
+      800: '#1a1b1f',
+      900: '#000000',
+    },
+    // Paisawaala CTA/Button Color
+    cta: {
+      primary: '#ec3957',  // Main CTA red/pink
+      hover: '#dd23bb',   // Hover state
     },
     // Semantic colors
     success: {
-      50: '#f0fdf4',
-      100: '#dcfce7',
+      50: '#edfcf5',
+      100: '#cef5ca',
       500: '#22c55e',
       600: '#16a34a',
       700: '#15803d',
@@ -29,7 +34,7 @@ export const tokens = {
     error: {
       50: '#fef2f2',
       100: '#fee2e2',
-      500: '#ef4444',
+      500: '#ec3957',  // Using brand error color
       600: '#dc2626',
       700: '#b91c1c',
     },
@@ -39,61 +44,71 @@ export const tokens = {
       500: '#f59e0b',
       600: '#d97706',
     },
-    // Neutral palette
+    // Paisawaala Neutral/Gray palette
     gray: {
-      50: '#f9fafb',
-      100: '#f3f4f6',
-      200: '#e5e7eb',
-      300: '#d1d5db',
-      400: '#9ca3af',
-      500: '#6b7280',
-      600: '#4b5563',
-      700: '#374151',
-      800: '#1f2937',
-      900: '#111827',
+      50: '#f7f7f7',   // Background gray
+      100: '#f2f2f2',  // grey-100
+      200: '#e4ebf3',  // Light gray
+      300: '#cbcbcb',  // grey-200
+      400: '#8b8b8b',  // grey-300
+      500: '#656c77',  // Main text gray
+      600: '#494949',  // grey-400
+      700: '#43464d',
+      800: '#32343a',
+      900: '#1a1b1f',
     },
     // Background colors
     background: {
       light: '#ffffff',
-      dark: '#111827',
-      gray: '#f9fafb',
+      dark: '#1a1b1f',
+      gray: '#f7f7f7',  // Paisawaala gray background
+      blue: '#e8e7fe',  // royal-blue-100
     },
   },
   typography: {
     fontFamily: {
-      sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
+      sans: ['Manrope', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'sans-serif'],
       mono: ['Menlo', 'Monaco', 'Courier New', 'monospace'],
     },
     fontSize: {
-      xs: '0.75rem',    // 12px
-      sm: '0.875rem',   // 14px
-      base: '1rem',     // 16px
-      lg: '1.125rem',   // 18px
-      xl: '1.25rem',    // 20px
-      '2xl': '1.5rem',  // 24px
-      '3xl': '1.875rem', // 30px
-      '4xl': '2.25rem',  // 36px
+      tiny: '0.75rem',    // 12px - text-size-tiny
+      xs: '0.75rem',      // 12px
+      sm: '0.875rem',    // 14px - text-size-small
+      base: '1rem',      // 16px - text-size-regular
+      lg: '1.125rem',    // 18px
+      xl: '1.25rem',     // 20px - text-size-medium, heading-style-h4
+      '2xl': '1.5rem',   // 24px - text-size-large, heading-style-h3
+      '3xl': '2rem',     // 32px - heading-style-h2
+      '4xl': '3rem',     // 48px - heading-style-h1
     },
     fontWeight: {
       normal: 400,
       medium: 500,
       semibold: 600,
-      bold: 700,
+      bold: 700,         // All headings use 700
     },
     lineHeight: {
-      tight: 1.25,
-      normal: 1.5,
+      tight: 1.2,        // H1, H2, H3
+      normal: 1.4,       // H4
+      base: 1.5,         // H5, regular text
       relaxed: 1.75,
+      // Specific line heights from Paisawaala
+      textRegular: '24px',  // text-size-regular line-height
+      textMedium: '30px',   // text-size-medium line-height
     },
   },
   spacing: {
     xs: '0.25rem',   // 4px
     sm: '0.5rem',    // 8px
-    md: '1rem',      // 16px
+    md: '1rem',      // 16px - padding-small
     lg: '1.5rem',    // 24px
     xl: '2rem',      // 32px
     '2xl': '3rem',   // 48px
     '3xl': '4rem',   // 64px
+    '4xl': '5rem',   // 80px - padding-xxlarge
+    // Paisawaala specific spacing
+    buttonPadding: '0.75rem 1.5rem',  // Button padding
+    buttonHeight: '48px',              // Button height
   },
   borderRadius: {
     none: '0',
@@ -101,7 +116,8 @@ export const tokens = {
     md: '0.375rem',   // 6px
     lg: '0.5rem',     // 8px
     xl: '0.75rem',    // 12px
-    full: '9999px',
+    full: '1000px',   // Paisawaala button border-radius (fully rounded)
+    pill: '9999px',
   },
   shadows: {
     sm: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
@@ -131,17 +147,23 @@ export const tokens = {
   },
 };
 
-// Theme presets
+// Theme presets - Paisawaala brand theme
 export const themes = {
   light: {
     background: tokens.colors.background.light,
-    text: tokens.colors.gray[900],
-    textSecondary: tokens.colors.gray[600],
+    text: '#000000',                    // Paisawaala heading color
+    textSecondary: tokens.colors.gray[500], // #656c77 - main text gray
+    textMuted: tokens.colors.gray[400],     // #8b8b8b
     border: tokens.colors.gray[300],
     input: {
       background: tokens.colors.background.light,
       border: tokens.colors.gray[300],
-      focus: tokens.colors.primary[500],
+      focus: tokens.colors.primary[500],    // #1c3693
+    },
+    button: {
+      primary: tokens.colors.cta.primary,  // #ec3957
+      primaryHover: tokens.colors.cta.hover,
+      text: '#ffffff',
     },
   },
   dark: {
@@ -153,6 +175,11 @@ export const themes = {
       background: tokens.colors.gray[800],
       border: tokens.colors.gray[700],
       focus: tokens.colors.primary[400],
+    },
+    button: {
+      primary: tokens.colors.cta.primary,
+      primaryHover: tokens.colors.cta.hover,
+      text: '#ffffff',
     },
   },
 };

@@ -1,11 +1,71 @@
 import rateLimit from 'express-rate-limit';
 
+/**
+ * Get CORS origin configuration
+ * In development, allows multiple localhost ports
+ * In production, uses CORS_ORIGIN env variable
+ */
+const getCorsOrigin = () => {
+  const env = process.env.NODE_ENV || 'development';
+  const corsOrigin = process.env.CORS_ORIGIN;
+
+  // Production: use configured origin
+  if (env === 'production' && corsOrigin) {
+    return corsOrigin;
+  }
+
+  // Development: allow common Vite dev server ports
+  if (env === 'development') {
+    // If CORS_ORIGIN is set, use it, otherwise allow common dev ports
+    if (corsOrigin) {
+      return corsOrigin;
+    }
+    // Allow multiple localhost origins in development
+    return (origin, callback) => {
+      const allowedOrigins = [
+        'http://localhost:5173',
+        'http://localhost:5174',
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:5173',
+        'http://127.0.0.1:5174',
+      ];
+      
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.indexOf(origin) !== -1) {
+        callback(null, true);
+      } else {
+        // In development, allow any localhost origin
+        if (origin.startsWith('http://localhost:') || origin.startsWith('http://127.0.0.1:')) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }
+    };
+  }
+
+  // Fallback
+  return corsOrigin || 'http://localhost:5173';
+};
+
 export const securityConfig = {
   cors: {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+    origin: getCorsOrigin(),
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Session-Id',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+    ],
+    exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+    optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
   },
 };
 

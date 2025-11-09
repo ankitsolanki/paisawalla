@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import Form1 from './forms/form1';
 import Form2 from './forms/form2';
 import Form3 from './forms/form3';
+import ResponsiveTester, { ResponsiveTesterControls } from './components/ResponsiveTester';
 import { tokens } from './design-system/tokens';
 
 function App() {
   const [selectedForm, setSelectedForm] = useState('form1');
   const [theme, setTheme] = useState('light');
+  const [containerSize, setContainerSize] = useState({ width: '100%', height: 'auto' });
 
   const renderForm = () => {
     switch (selectedForm) {
@@ -85,36 +87,39 @@ function App() {
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: tokens.spacing.sm, alignItems: 'center' }}>
-            <span style={{ fontSize: tokens.typography.fontSize.sm, color: tokens.colors.gray[600] }}>Theme:</span>
-            <button
-              onClick={() => setTheme('light')}
-              style={{
-                padding: `${tokens.spacing.xs} ${tokens.spacing.sm}`,
-                backgroundColor: theme === 'light' ? tokens.colors.primary[600] : tokens.colors.gray[200],
-                color: theme === 'light' ? 'white' : tokens.colors.gray[700],
-                border: 'none',
-                borderRadius: tokens.borderRadius.sm,
-                cursor: 'pointer',
-                fontSize: tokens.typography.fontSize.sm,
-              }}
-            >
-              Light
-            </button>
-            <button
-              onClick={() => setTheme('dark')}
-              style={{
-                padding: `${tokens.spacing.xs} ${tokens.spacing.sm}`,
-                backgroundColor: theme === 'dark' ? tokens.colors.primary[600] : tokens.colors.gray[200],
-                color: theme === 'dark' ? 'white' : tokens.colors.gray[700],
-                border: 'none',
-                borderRadius: tokens.borderRadius.sm,
-                cursor: 'pointer',
-                fontSize: tokens.typography.fontSize.sm,
-              }}
-            >
-              Dark
-            </button>
+          <div style={{ display: 'flex', gap: tokens.spacing.lg, alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', gap: tokens.spacing.sm, alignItems: 'center' }}>
+              <span style={{ fontSize: tokens.typography.fontSize.sm, color: tokens.colors.gray[600] }}>Theme:</span>
+              <button
+                onClick={() => setTheme('light')}
+                style={{
+                  padding: `${tokens.spacing.xs} ${tokens.spacing.sm}`,
+                  backgroundColor: theme === 'light' ? tokens.colors.primary[600] : tokens.colors.gray[200],
+                  color: theme === 'light' ? 'white' : tokens.colors.gray[700],
+                  border: 'none',
+                  borderRadius: tokens.borderRadius.sm,
+                  cursor: 'pointer',
+                  fontSize: tokens.typography.fontSize.sm,
+                }}
+              >
+                Light
+              </button>
+              <button
+                onClick={() => setTheme('dark')}
+                style={{
+                  padding: `${tokens.spacing.xs} ${tokens.spacing.sm}`,
+                  backgroundColor: theme === 'dark' ? tokens.colors.primary[600] : tokens.colors.gray[200],
+                  color: theme === 'dark' ? 'white' : tokens.colors.gray[700],
+                  border: 'none',
+                  borderRadius: tokens.borderRadius.sm,
+                  cursor: 'pointer',
+                  fontSize: tokens.typography.fontSize.sm,
+                }}
+              >
+                Dark
+              </button>
+            </div>
+            <ResponsiveTesterControls onSizeChange={setContainerSize} />
           </div>
         </div>
 
@@ -126,7 +131,9 @@ function App() {
             boxShadow: tokens.shadows.md,
           }}
         >
-          {renderForm()}
+          <ResponsiveTester containerSize={containerSize}>
+            {renderForm()}
+          </ResponsiveTester>
         </div>
       </div>
     </div>

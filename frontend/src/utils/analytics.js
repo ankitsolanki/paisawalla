@@ -4,6 +4,7 @@
  */
 
 import apiClient from './apiClient';
+import { debounce } from './debounce';
 
 class AnalyticsService {
   constructor() {
@@ -13,6 +14,10 @@ class AnalyticsService {
     this.events = [];
     this.flushInterval = null;
     this.flushDelay = 5000; // Flush events every 5 seconds
+    this.trackedFormViews = new Set(); // Track which forms have been viewed to prevent duplicates
+    this.lastFormViewTime = {}; // Track last form view time per form type
+    this.fieldChangeDebouncers = {}; // Debouncers for field change events
+    this.lastFieldInteraction = {}; // Track last interaction per field to prevent duplicates
   }
 
   /**
@@ -120,8 +125,24 @@ class AnalyticsService {
 
   /**
    * Track form view
+   * Prevents duplicate tracking within 2 seconds (handles React Strict Mode double-mount)
    */
   trackFormView(formType, formId = null) {
+    const key = `${formType}-${formId || 'default'}`;
+    const now = Date.now();
+    const lastViewTime = this.lastFormViewTime[key] || 0;
+    
+    // Prevent duplicate tracking within 2 seconds (React Strict Mode protection)
+    if (now - lastViewTime < 2000) {
+      if (import.meta.env.DEV) {
+        console.log('[Analytics] Skipping duplicate form_view for', formType);
+      }
+      return;
+    }
+    
+    this.lastFormViewTime[key] = now;
+    this.trackedFormViews.add(key);
+    
     this.track('form_view', {
       formType,
       formId,
@@ -131,12 +152,66 @@ class AnalyticsService {
 
   /**
    * Track form field interaction
+   * Smart tracking: 
+   * - 'focus' and 'blur' are tracked immediately (important for UX)
+   * - 'error' is tracked immediately (critical)
+   * - 'change' is debounced (only track after user stops typing for 1 second)
    */
   trackFieldInteraction(formType, fieldName, action, value = null) {
+    const key = `${formType}-${fieldName}`;
+    const now = Date.now();
+    
+    // Always track focus, blur, and error immediately (these are meaningful events)
+    if (action === 'focus' || action === 'blur' || action === 'error') {
+      // Prevent duplicate focus/blur within 500ms (handles rapid clicking)
+      if (action === 'focus' || action === 'blur') {
+        const lastInteraction = this.lastFieldInteraction[key];
+        if (lastInteraction && 
+            lastInteraction.action === action && 
+            now - lastInteraction.time < 500) {
+          if (import.meta.env.DEV) {
+            console.log(`[Analytics] Skipping duplicate ${action} for ${fieldName}`);
+          }
+          return;
+        }
+        this.lastFieldInteraction[key] = { action, time: now };
+      }
+      
+      this.track('field_interaction', {
+        formType,
+        fieldName,
+        action,
+        valueLength: value ? value.toString().length : 0,
+        hasValue: !!value,
+      });
+      return;
+    }
+    
+    // For 'change' events, debounce to avoid tracking every keystroke
+    if (action === 'change') {
+      // Create debouncer for this field if it doesn't exist
+      if (!this.fieldChangeDebouncers[key]) {
+        this.fieldChangeDebouncers[key] = debounce((formType, fieldName, value) => {
+          this.track('field_interaction', {
+            formType,
+            fieldName,
+            action: 'change',
+            valueLength: value ? value.toString().length : 0,
+            hasValue: !!value,
+          });
+        }, 1000); // Wait 1 second after user stops typing
+      }
+      
+      // Call debounced function
+      this.fieldChangeDebouncers[key](formType, fieldName, value);
+      return;
+    }
+    
+    // Fallback for any other action types
     this.track('field_interaction', {
       formType,
       fieldName,
-      action, // 'focus', 'blur', 'change', 'error'
+      action,
       valueLength: value ? value.toString().length : 0,
       hasValue: !!value,
     });

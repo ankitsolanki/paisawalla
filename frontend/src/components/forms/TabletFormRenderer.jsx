@@ -1,0 +1,485 @@
+import React, { useState, useCallback, useEffect } from 'react';
+import { ThemeProvider } from '../../design-system/ThemeProvider';
+import { useFormTracking } from '../../hooks/useFormTracking';
+import ErrorBoundary from '../ui/ErrorBoundary';
+import Button from '../ui/Button';
+import FieldRenderer from '../FieldRenderer';
+import FormStepper from '../FormStepper';
+import ProgressBar from '../ProgressBar';
+import SubmitSuccess from '../SubmitSuccess';
+import EligibilityChecking from '../EligibilityChecking';
+import OffersListing from '../../embeds/offers/OffersListing';
+import { validateFormData, validateField } from '../../utils/validation';
+import { executeRecaptcha } from '../../utils/recaptcha';
+import apiClient from '../../utils/apiClient';
+import { webflowBridge } from '../../embed/webflowBridge';
+import { tokens } from '../../design-system/tokens';
+
+/**
+ * TabletFormRenderer - Optimized for tablet devices (640px - 1024px)
+ * Features:
+ * - 2-column grid layout
+ * - Medium padding
+ * - Side-by-side buttons
+ * - Balanced spacing
+ */
+const TabletFormRenderer = ({ schema, theme = 'light' }) => {
+  const [currentStep, setCurrentStep] = React.useState(1);
+  const [formData, setFormData] = React.useState({});
+  const [errors, setErrors] = React.useState({});
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSubmitted, setIsSubmitted] = React.useState(false);
+  const [recaptchaToken, setRecaptchaToken] = React.useState(null);
+  const [recaptchaError, setRecaptchaError] = React.useState(null);
+  const [leadId, setLeadId] = React.useState(null);
+  const [checkingEligibility, setCheckingEligibility] = React.useState(false);
+  const [applicationId, setApplicationId] = React.useState(null);
+  const [eligibilityError, setEligibilityError] = React.useState(null);
+
+  const {
+    trackFieldInteraction,
+    trackSubmitStart,
+    trackSubmitSuccess,
+    trackSubmitError,
+    trackButtonClick,
+  } = useFormTracking(schema.formId, formData, schema.steps > 1 ? currentStep : null);
+
+  const getCurrentStepFields = React.useCallback(() => {
+    return schema.fields.filter((field) => field.step === currentStep);
+  }, [schema, currentStep]);
+
+  const getStepLabels = React.useCallback(() => {
+    if (schema.steps === 1) return [];
+    const steps = [];
+    for (let i = 1; i <= schema.steps; i++) {
+      const stepFields = schema.fields.filter((f) => f.step === i);
+      const firstField = stepFields[0];
+      steps.push({
+        label: firstField?.stepLabel || `Step ${i}`,
+      });
+    }
+    return steps;
+  }, [schema]);
+
+  const handleChange = React.useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+      trackFieldInteraction(name, 'change', value);
+      if (errors[name]) {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
+      }
+    },
+    [errors, trackFieldInteraction]
+  );
+
+  const handleBlur = React.useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      trackFieldInteraction(name, 'blur', value);
+      const field = schema.fields.find((f) => f.name === name);
+      if (field) {
+        const validation = validateField(value, field);
+        if (!validation.isValid) {
+          setErrors((prev) => ({ ...prev, [name]: validation.error }));
+          trackFieldInteraction(name, 'error', value);
+        }
+      }
+    },
+    [schema, trackFieldInteraction]
+  );
+
+  const handleFocus = React.useCallback(
+    (e) => {
+      const { name, value } = e.target;
+      trackFieldInteraction(name, 'focus', value);
+    },
+    [trackFieldInteraction]
+  );
+
+  const validateCurrentStep = React.useCallback(() => {
+    const currentFields = getCurrentStepFields();
+    const stepErrors = {};
+    let isValid = true;
+
+    currentFields.forEach((field) => {
+      const value = formData[field.name];
+      const validation = validateField(value, field);
+      if (!validation.isValid) {
+        stepErrors[field.name] = validation.error;
+        isValid = false;
+      }
+    });
+
+    setErrors((prev) => ({ ...prev, ...stepErrors }));
+    return isValid;
+  }, [formData, getCurrentStepFields]);
+
+  const handleNext = React.useCallback(() => {
+    if (validateCurrentStep()) {
+      trackButtonClick('next', { fromStep: currentStep, toStep: currentStep + 1 });
+      setCurrentStep((prev) => Math.min(prev + 1, schema.steps));
+    }
+  }, [currentStep, validateCurrentStep, schema.steps, trackButtonClick]);
+
+  const handlePrevious = React.useCallback(() => {
+    trackButtonClick('previous', { fromStep: currentStep, toStep: currentStep - 1 });
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
+  }, [currentStep, trackButtonClick]);
+
+  const handleSubmit = React.useCallback(async () => {
+    if (!validateCurrentStep()) return;
+
+    const validation = validateFormData(formData, schema);
+    if (!validation.isValid) {
+      setErrors(validation.errors);
+      return;
+    }
+
+    let token = recaptchaToken;
+    if (!token) {
+      try {
+        trackButtonClick('recaptcha_start');
+        token = await executeRecaptcha('submit');
+        setRecaptchaToken(token);
+        setRecaptchaError(null);
+      } catch (error) {
+        setRecaptchaError('reCAPTCHA verification failed. Please try again.');
+        trackSubmitError(error);
+        return;
+      }
+    }
+
+    trackSubmitStart();
+    setIsSubmitting(true);
+
+    try {
+      const response = await apiClient.post(schema.submitEndpoint, {
+        ...validation.data,
+        formType: schema.formId,
+        recaptchaToken: token,
+      });
+
+      const submittedLeadId = response.data?._id || response.data?.leadId;
+      setLeadId(submittedLeadId);
+      setIsSubmitted(true);
+      setCheckingEligibility(true);
+      trackSubmitSuccess(submittedLeadId);
+      webflowBridge.postMessage('formSubmitted', {
+        success: true,
+        leadId: submittedLeadId,
+        formId: schema.formId,
+      });
+    } catch (error) {
+      setErrors((prev) => ({
+        ...prev,
+        submit: error.message || 'Failed to submit form. Please try again.',
+      }));
+      trackSubmitError(error);
+      webflowBridge.postMessage('formSubmitted', {
+        success: false,
+        error: error.message,
+        formId: schema.formId,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    validateCurrentStep,
+    formData,
+    schema,
+    recaptchaToken,
+    trackSubmitStart,
+    trackSubmitSuccess,
+    trackSubmitError,
+    trackButtonClick,
+  ]);
+
+  React.useEffect(() => {
+    if (schema.steps === 1 || currentStep === schema.steps) {
+      import('../../utils/recaptcha').then(({ loadRecaptcha }) => {
+        loadRecaptcha().catch((error) => {
+          console.warn('reCAPTCHA load warning:', error);
+        });
+      });
+    }
+  }, [schema.steps, currentStep]);
+
+  // Handle eligibility checking completion
+  const handleEligibilityComplete = React.useCallback((appId) => {
+    setApplicationId(appId);
+    setCheckingEligibility(false);
+    trackButtonClick('eligibility_complete', { applicationId: appId });
+  }, [trackButtonClick]);
+
+  const handleEligibilityError = React.useCallback((error) => {
+    setEligibilityError(error);
+    setCheckingEligibility(false);
+    trackButtonClick('eligibility_error', { error: error.message });
+  }, [trackButtonClick]);
+
+  // Show eligibility checking screen
+  if (checkingEligibility && leadId) {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <EligibilityChecking
+            leadId={leadId}
+            onComplete={handleEligibilityComplete}
+            onError={handleEligibilityError}
+            theme={theme}
+          />
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  // Show offers listing after eligibility check
+  if (applicationId && !checkingEligibility) {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <OffersListing
+            applicationId={applicationId}
+            leadId={leadId}
+            theme={theme}
+            onStateChange={(status, data) => {
+              webflowBridge.postMessage('offersStateChange', {
+                status,
+                applicationId,
+                leadId,
+                ...data,
+              });
+            }}
+          />
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  // Show error state if eligibility check failed
+  if (eligibilityError && !checkingEligibility) {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <div
+            style={{
+              textAlign: 'center',
+              padding: tokens.spacing['2xl'],
+            }}
+          >
+            <h3
+              style={{
+                fontSize: tokens.typography.fontSize.xl,
+                fontWeight: tokens.typography.fontWeight.bold,
+                color: tokens.colors.error[700],
+                marginBottom: tokens.spacing.md,
+              }}
+            >
+              Unable to check eligibility
+            </h3>
+            <p
+              style={{
+                fontSize: tokens.typography.fontSize.base,
+                color: tokens.colors.gray[600],
+                marginBottom: tokens.spacing.lg,
+              }}
+            >
+              {eligibilityError.message || 'An error occurred while checking your eligibility. Please try again later.'}
+            </p>
+            <Button
+              variant="primary"
+              onClick={() => {
+                setEligibilityError(null);
+                setCheckingEligibility(true);
+              }}
+            >
+              Try Again
+            </Button>
+          </div>
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  // Show success message if form submitted but eligibility check hasn't started
+  if (isSubmitted && !checkingEligibility && !applicationId) {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <SubmitSuccess
+            message={`Thank you! Your ${schema.title} has been submitted successfully. We'll review your information and get back to you soon.`}
+            onCheckEligibility={() => {
+              trackButtonClick('check_eligibility');
+              if (leadId) {
+                setCheckingEligibility(true);
+              }
+              webflowBridge.postMessage('checkEligibility', {
+                formId: schema.formId,
+                leadId,
+              });
+            }}
+          />
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  const currentFields = getCurrentStepFields();
+  const stepLabels = getStepLabels();
+  const isLastStep = currentStep === schema.steps;
+
+  return (
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <div
+          style={{
+            maxWidth: '48rem',
+            margin: '0 auto',
+            padding: tokens.spacing.lg,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: tokens.typography.fontSize['2xl'], // 1.5rem
+              fontWeight: tokens.typography.fontWeight.bold,
+              marginBottom: tokens.spacing.lg,
+              color: tokens.colors.gray[900],
+            }}
+          >
+            {schema.title}
+          </h2>
+
+          {schema.steps > 1 && stepLabels.length > 0 && (
+            <>
+              <FormStepper
+                currentStep={currentStep}
+                totalSteps={schema.steps}
+                steps={stepLabels}
+              />
+              <ProgressBar current={currentStep} total={schema.steps} />
+            </>
+          )}
+
+          <form onSubmit={(e) => e.preventDefault()}>
+            {/* Tablet: 2-column grid */}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: tokens.spacing.md,
+                marginBottom: tokens.spacing.lg,
+              }}
+            >
+              {currentFields.map((field) => (
+                <div
+                  key={field.name}
+                  style={{
+                    gridColumn: field.fullWidth ? '1 / -1' : 'auto',
+                  }}
+                >
+                  <FieldRenderer
+                    field={field}
+                    value={formData[field.name]}
+                    onChange={handleChange}
+                    onBlur={handleBlur}
+                    onFocus={handleFocus}
+                    error={errors[field.name]}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {errors.submit && (
+              <div
+                style={{
+                  marginBottom: tokens.spacing.md,
+                  padding: tokens.spacing.md,
+                  backgroundColor: tokens.colors.error[50],
+                  border: `1px solid ${tokens.colors.error[500]}`,
+                  borderRadius: tokens.borderRadius.md,
+                  color: tokens.colors.error[700],
+                }}
+              >
+                {errors.submit}
+              </div>
+            )}
+
+            {recaptchaError && (
+              <div
+                style={{
+                  marginBottom: tokens.spacing.md,
+                  padding: tokens.spacing.md,
+                  backgroundColor: tokens.colors.error[50],
+                  border: `1px solid ${tokens.colors.error[500]}`,
+                  borderRadius: tokens.borderRadius.md,
+                  color: tokens.colors.error[700],
+                }}
+              >
+                {recaptchaError}
+              </div>
+            )}
+
+            {isLastStep && (
+              <div style={{ marginBottom: tokens.spacing.lg }}>
+                <div id="recaptcha-container"></div>
+              </div>
+            )}
+
+            {/* Tablet: Side-by-side buttons */}
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: schema.steps > 1 ? 'space-between' : 'flex-end',
+                marginTop: tokens.spacing.xl,
+                gap: tokens.spacing.md,
+              }}
+            >
+              {schema.steps > 1 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={currentStep === 1 || isSubmitting}
+                >
+                  Previous
+                </Button>
+              )}
+
+              {isLastStep ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  loading={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit'}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleNext}
+                >
+                  Next
+                </Button>
+              )}
+            </div>
+          </form>
+        </div>
+      </ThemeProvider>
+    </ErrorBoundary>
+  );
+};
+
+export default TabletFormRenderer;
+

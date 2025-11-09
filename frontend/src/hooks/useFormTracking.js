@@ -8,10 +8,16 @@ export const useFormTracking = (formType, formData, currentStep = null) => {
   const formStartTime = useRef(Date.now());
   const lastInteractionTime = useRef(Date.now());
   const abandonmentCleanup = useRef(null);
+  const hasTrackedFormView = useRef(false);
+  const previousStep = useRef(currentStep);
 
-  // Initialize abandonment tracking
+  // Initialize abandonment tracking and track form view (only once)
   useEffect(() => {
-    analytics.trackFormView(formType);
+    // Only track form view once per form instance
+    if (!hasTrackedFormView.current) {
+      analytics.trackFormView(formType);
+      hasTrackedFormView.current = true;
+    }
 
     // Set up abandonment tracking
     abandonmentCleanup.current = analytics.initAbandonmentTracking(
@@ -23,13 +29,28 @@ export const useFormTracking = (formType, formData, currentStep = null) => {
       if (abandonmentCleanup.current) {
         abandonmentCleanup.current();
       }
+      // Reset on unmount so it can track again if component remounts
+      hasTrackedFormView.current = false;
     };
   }, [formType]);
 
-  // Track step changes
+  // Track step changes (only when step actually changes, not on initial mount)
   useEffect(() => {
-    if (currentStep !== null) {
-      analytics.trackStepChange(formType, currentStep - 1, currentStep);
+    // Skip if currentStep is null (single-step form)
+    if (currentStep === null) {
+      return;
+    }
+
+    // Skip on initial mount - only track actual step changes
+    if (previousStep.current === null || previousStep.current === undefined) {
+      previousStep.current = currentStep;
+      return;
+    }
+
+    // Only track if step actually changed
+    if (previousStep.current !== currentStep) {
+      analytics.trackStepChange(formType, previousStep.current, currentStep);
+      previousStep.current = currentStep;
     }
   }, [currentStep, formType]);
 
