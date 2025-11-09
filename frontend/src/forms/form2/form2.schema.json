@@ -1,0 +1,140 @@
+{
+  "formId": "form2",
+  "title": "Get Started",
+  "submitEndpoint": "/api/leads",
+  "steps": 1,
+  "fields": [
+    {
+      "name": "firstName",
+      "label": "First Name",
+      "type": "text",
+      "placeholder": "Enter your first name",
+      "required": true,
+      "validation": {
+        "minLength": 2,
+        "maxLength": 50
+      },
+      "step": 1
+    },
+    {
+      "name": "lastName",
+      "label": "Last Name",
+      "type": "text",
+      "placeholder": "Enter your last name",
+      "required": true,
+      "validation": {
+        "minLength": 2,
+        "maxLength": 50
+      },
+      "step": 1
+    },
+    {
+      "name": "email",
+      "label": "Email Address",
+      "type": "email",
+      "placeholder": "you@example.com",
+      "required": true,
+      "validation": {
+        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+      },
+      "step": 1
+    },
+    {
+      "name": "phone",
+      "label": "Mobile Number",
+      "type": "tel",
+      "placeholder": "10-digit mobile number",
+      "required": true,
+      "validation": {
+        "regex": "^[6-9][0-9]{9}$",
+        "minLength": 10,
+        "maxLength": 10
+      },
+      "step": 1
+    },
+    {
+      "name": "loanAmount",
+      "label": "Desired Loan Amount (INR)",
+      "type": "number",
+      "placeholder": "e.g. 500000",
+      "required": true,
+      "validation": {
+        "min": 10000,
+        "max": 50000000
+      },
+      "step": 1
+    },
+    {
+      "name": "loanPurpose",
+      "label": "Loan Purpose",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "debt_consolidation", "label": "Debt Consolidation" },
+        { "value": "home_improvement", "label": "Home Improvement" },
+        { "value": "medical_expenses", "label": "Medical Expenses" },
+        { "value": "education", "label": "Education" },
+        { "value": "other", "label": "Other" }
+      ],
+      "step": 1
+    },
+    {
+      "name": "employmentStatus",
+      "label": "Employment Type",
+      "type": "select",
+      "required": true,
+      "options": [
+        { "value": "salaried", "label": "Salaried" },
+        { "value": "self-employed", "label": "Self-Employed" },
+        { "value": "business", "label": "Business Owner" },
+        { "value": "retired", "label": "Retired" }
+      ],
+      "step": 1
+    },
+    {
+      "name": "monthlyIncome",
+      "label": "Monthly Income (INR)",
+      "type": "number",
+      "placeholder": "e.g. 50000",
+      "required": true,
+      "validation": {
+        "min": 10000,
+        "max": 10000000
+      },
+      "step": 1
+    },
+    {
+      "name": "creditScore",
+      "label": "Credit Score (if known)",
+      "type": "number",
+      "placeholder": "e.g. 750",
+      "required": false,
+      "validation": {
+        "min": 300,
+        "max": 850
+      },
+      "step": 1
+    },
+    {
+      "name": "zipCode",
+      "label": "ZIP Code",
+      "type": "text",
+      "placeholder": "Enter ZIP code",
+      "required": true,
+      "validation": {
+        "regex": "^[0-9]{6}$",
+        "minLength": 6,
+        "maxLength": 6
+      },
+      "step": 1
+    },
+    {
+      "name": "consentMarketing",
+      "label": "I consent to receive marketing communications",
+      "type": "checkbox",
+      "required": false,
+      "step": 1
+    }
+  ]
+}
+

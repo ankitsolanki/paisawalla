@@ -1,0 +1,82 @@
+{
+  "formId": "form3",
+  "title": "Quick Quote",
+  "submitEndpoint": "/api/leads",
+  "steps": 1,
+  "fields": [
+    {
+      "name": "firstName",
+      "label": "First Name",
+      "type": "text",
+      "placeholder": "Enter your first name",
+      "required": true,
+      "validation": {
+        "minLength": 2,
+        "maxLength": 50
+      },
+      "step": 1
+    },
+    {
+      "name": "lastName",
+      "label": "Last Name",
+      "type": "text",
+      "placeholder": "Enter your last name",
+      "required": true,
+      "validation": {
+        "minLength": 2,
+        "maxLength": 50
+      },
+      "step": 1
+    },
+    {
+      "name": "email",
+      "label": "Email Address",
+      "type": "email",
+      "placeholder": "you@example.com",
+      "required": true,
+      "validation": {
+        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+      },
+      "step": 1
+    },
+    {
+      "name": "phone",
+      "label": "Mobile Number",
+      "type": "tel",
+      "placeholder": "10-digit mobile number",
+      "required": true,
+      "validation": {
+        "regex": "^[6-9][0-9]{9}$",
+        "minLength": 10,
+        "maxLength": 10
+      },
+      "step": 1
+    },
+    {
+      "name": "loanAmount",
+      "label": "Loan Amount (INR)",
+      "type": "number",
+      "placeholder": "e.g. 500000",
+      "required": true,
+      "validation": {
+        "min": 10000,
+        "max": 50000000
+      },
+      "step": 1
+    },
+    {
+      "name": "zipCode",
+      "label": "ZIP Code",
+      "type": "text",
+      "placeholder": "Enter ZIP code",
+      "required": true,
+      "validation": {
+        "regex": "^[0-9]{6}$",
+        "minLength": 6,
+        "maxLength": 6
+      },
+      "step": 1
+    }
+  ]
+}
+
