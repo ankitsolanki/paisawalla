@@ -189,19 +189,76 @@ class BreService {
   generateMockOffers(count = null) {
     const offerCount = count || Math.floor(Math.random() * 5) + 1; // 1-5 offers
     const offers = [];
+    
+    const lenderNames = [
+      'HDFC Bank', 'ICICI Bank', 'Axis Bank', 'State Bank of India', 'Kotak Mahindra Bank',
+      'Bajaj Finserv', 'Fullerton India', 'IDFC First Bank', 'Tata Capital', 'Aditya Birla Capital',
+      'IndusInd Bank', 'Yes Bank', 'Punjab National Bank', 'Bank of Baroda', 'Canara Bank'
+    ];
+    
+    const allFeatures = [
+      'Quick response', 'Fast funding process', 'Easy online application',
+      'No prepayment penalty', 'Flexible terms', 'Competitive rates',
+      'No processing fees', 'Same-day approval', '24/7 customer support',
+      'Minimal documentation', 'Flexible EMI options', 'Quick disbursal'
+    ];
+    
+    const allPros = [
+      'No processing fees', 'Get responses in minutes', 'Fast approval',
+      'Competitive interest rates', 'Flexible repayment', 'No hidden charges',
+      'Quick loan disbursal', 'Minimal documentation', 'Online application'
+    ];
+    
+    const allCons = [
+      'High credit score required', 'Limited loan amounts',
+      'Strict eligibility criteria', 'Processing time may vary'
+    ];
 
     for (let i = 0; i < offerCount; i++) {
-      const baseAmount = [5000, 10000, 15000, 20000, 25000][Math.floor(Math.random() * 5)];
-      const apr = 8 + Math.random() * 12; // 8-20% APR
+      // Indian loan amounts in INR (lakhs converted to actual amount)
+      const baseAmountLakhs = [1, 2, 3, 5, 7, 10, 15, 20, 25, 50][Math.floor(Math.random() * 10)];
+      const baseAmount = baseAmountLakhs * 100000; // Convert lakhs to actual amount
+      const apr = 8 + Math.random() * 20; // 8-28% APR (typical Indian personal loan rates)
+      const term = [12, 24, 36, 48, 60][Math.floor(Math.random() * 5)]; // 1-5 years
+      const minCreditScore = [650, 670, 680, 700, 720, 750][Math.floor(Math.random() * 6)]; // Indian credit score range
+      const rating = 4.0 + Math.random() * 1.0; // 4.0-5.0 rating
+      const reviewCount = Math.floor(Math.random() * 5000) + 500; // More reviews for popular banks
+      
+      // Select random features, pros, and cons
+      const shuffledFeatures = [...allFeatures].sort(() => 0.5 - Math.random());
+      const shuffledPros = [...allPros].sort(() => 0.5 - Math.random());
+      const shuffledCons = [...allCons].sort(() => 0.5 - Math.random());
+      
+      const features = shuffledFeatures.slice(0, Math.floor(Math.random() * 4) + 2);
+      const pros = shuffledPros.slice(0, Math.floor(Math.random() * 3) + 1);
+      const cons = shuffledCons.slice(0, Math.floor(Math.random() * 2) + 1);
+      
+      // Calculate monthly payment
+      const monthlyRate = apr / 100 / 12;
+      const monthlyPayment = baseAmount * (monthlyRate * Math.pow(1 + monthlyRate, term)) / (Math.pow(1 + monthlyRate, term) - 1);
+      
+      const maxApr = apr + Math.random() * 3; // Max APR slightly higher
       
       offers.push({
         id: `OFFER-${Date.now()}-${i}`,
-        lender: ['Bank A', 'Bank B', 'Credit Union C', 'Lender D', 'Finance Co E'][i % 5],
-        amount: baseAmount + Math.floor(Math.random() * 5000),
+        lender: lenderNames[i % lenderNames.length],
+        lenderName: lenderNames[i % lenderNames.length],
+        amount: baseAmount,
+        loanAmount: baseAmount,
         apr: parseFloat(apr.toFixed(2)),
-        term: [12, 24, 36, 48, 60][Math.floor(Math.random() * 5)],
-        monthlyPayment: Math.floor((baseAmount * (1 + apr / 100)) / 36),
-        features: ['No prepayment penalty', 'Fast approval', 'Flexible terms'].slice(0, Math.floor(Math.random() * 3) + 1),
+        interestRate: parseFloat(apr.toFixed(2)),
+        aprRange: `${parseFloat(apr.toFixed(2))} - ${parseFloat(maxApr.toFixed(2))}%`,
+        term: term,
+        termMonths: term,
+        monthlyPayment: Math.round(monthlyPayment),
+        minCreditScore: minCreditScore,
+        rating: parseFloat(rating.toFixed(1)),
+        reviewCount: reviewCount,
+        features: features,
+        pros: pros,
+        cons: cons,
+        offerType: 'standard',
+        status: 'available',
       });
     }
 

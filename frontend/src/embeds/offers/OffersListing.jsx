@@ -198,93 +198,102 @@ const OffersListing = ({
             padding: tokens.spacing.lg,
           }}
         >
-          {/* Header */}
+          {/* Header with Results Count and Sort Controls */}
           <div
             style={{
-              marginBottom: tokens.spacing.xl,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: tokens.spacing.lg,
+              flexWrap: 'wrap',
+              gap: tokens.spacing.md,
             }}
           >
             <h2
               style={{
-                fontSize: tokens.typography.fontSize['2xl'],
+                fontSize: tokens.typography.fontSize.xl,
                 fontWeight: tokens.typography.fontWeight.bold,
                 color: tokens.colors.gray[900],
-                marginBottom: tokens.spacing.sm,
+                margin: 0,
               }}
             >
-              Your Loan Offers
+              {offers.length} {offers.length === 1 ? 'Result' : 'Results'} Found
             </h2>
-            <p
-              style={{
-                fontSize: tokens.typography.fontSize.base,
-                color: tokens.colors.gray[600],
-              }}
-            >
-              We found {offers.length} {offers.length === 1 ? 'offer' : 'offers'} for you
-            </p>
-          </div>
 
-          {/* Sort Controls */}
-          {offers.length > 1 && (
             <div
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: tokens.spacing.md,
-                marginBottom: tokens.spacing.lg,
                 flexWrap: 'wrap',
               }}
             >
-              <span
-                style={{
-                  fontSize: tokens.typography.fontSize.sm,
-                  color: tokens.colors.gray[600],
-                  fontWeight: tokens.typography.fontWeight.medium,
-                }}
-              >
-                Sort by:
-              </span>
-              <button
-                onClick={() => setSortBy('apr')}
-                style={{
-                  padding: `${tokens.spacing.xs} ${tokens.spacing.md}`,
-                  fontSize: tokens.typography.fontSize.sm,
-                  backgroundColor: sortBy === 'apr' ? tokens.colors.primary[600] : tokens.colors.gray[200],
-                  color: sortBy === 'apr' ? '#ffffff' : tokens.colors.gray[700],
-                  border: 'none',
-                  borderRadius: tokens.borderRadius.md,
-                  cursor: 'pointer',
-                  fontWeight: tokens.typography.fontWeight.medium,
-                  transition: `all ${tokens.transitions.normal} ease-in-out`,
-                }}
-              >
-                Lowest APR
-              </button>
-              <button
-                onClick={() => setSortBy('amount')}
-                style={{
-                  padding: `${tokens.spacing.xs} ${tokens.spacing.md}`,
-                  fontSize: tokens.typography.fontSize.sm,
-                  backgroundColor: sortBy === 'amount' ? tokens.colors.primary[600] : tokens.colors.gray[200],
-                  color: sortBy === 'amount' ? '#ffffff' : tokens.colors.gray[700],
-                  border: 'none',
-                  borderRadius: tokens.borderRadius.md,
-                  cursor: 'pointer',
-                  fontWeight: tokens.typography.fontWeight.medium,
-                  transition: `all ${tokens.transitions.normal} ease-in-out`,
-                }}
-              >
-                Highest Amount
-              </button>
-            </div>
-          )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm }}>
+                <label
+                  style={{
+                    fontSize: tokens.typography.fontSize.sm,
+                    color: tokens.colors.gray[600],
+                    fontWeight: tokens.typography.fontWeight.medium,
+                  }}
+                >
+                  Sort by:
+                </label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  style={{
+                    padding: `${tokens.spacing.xs} ${tokens.spacing.md}`,
+                    fontSize: tokens.typography.fontSize.sm,
+                    border: `1px solid ${tokens.colors.gray[300]}`,
+                    borderRadius: tokens.borderRadius.md,
+                    backgroundColor: '#ffffff',
+                    color: tokens.colors.gray[700],
+                    cursor: 'pointer',
+                    minWidth: '150px',
+                  }}
+                >
+                  <option value="apr">Credit Score</option>
+                  <option value="amount">Loan Amount</option>
+                  <option value="apr">Lowest APR</option>
+                </select>
+              </div>
 
-          {/* Offers Grid */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm }}>
+                <label
+                  style={{
+                    fontSize: tokens.typography.fontSize.sm,
+                    color: tokens.colors.gray[600],
+                    fontWeight: tokens.typography.fontWeight.medium,
+                  }}
+                >
+                  Show:
+                </label>
+                <select
+                  style={{
+                    padding: `${tokens.spacing.xs} ${tokens.spacing.md}`,
+                    fontSize: tokens.typography.fontSize.sm,
+                    border: `1px solid ${tokens.colors.gray[300]}`,
+                    borderRadius: tokens.borderRadius.md,
+                    backgroundColor: '#ffffff',
+                    color: tokens.colors.gray[700],
+                    cursor: 'pointer',
+                    minWidth: '80px',
+                  }}
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Offers List (Vertical) */}
           <div
             style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: tokens.spacing.lg,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 0,
             }}
           >
             {offers.map((offer, index) => (
