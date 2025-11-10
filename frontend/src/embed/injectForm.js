@@ -38,9 +38,29 @@ if (script) {
   }
 
   const recaptchaSiteKey = script.getAttribute('data-recaptcha-site-key') || script.getAttribute('data-recaptcha');
+  console.log('[injectForm] reCAPTCHA key from script:', {
+    hasAttribute: !!recaptchaSiteKey,
+    attributeValue: recaptchaSiteKey ? `${recaptchaSiteKey.substring(0, 20)}...` : 'none',
+    attributeLength: recaptchaSiteKey ? recaptchaSiteKey.length : 0,
+    trimmed: recaptchaSiteKey ? recaptchaSiteKey.trim() : '',
+    trimmedLength: recaptchaSiteKey ? recaptchaSiteKey.trim().length : 0,
+    isValid: recaptchaSiteKey && recaptchaSiteKey.trim() !== '' && recaptchaSiteKey.length > 20,
+  });
+  
   // Only set if key exists and looks valid (reCAPTCHA keys are typically 40 characters)
   if (recaptchaSiteKey && recaptchaSiteKey.trim() !== '' && recaptchaSiteKey.length > 20) {
     window.VITE_RECAPTCHA_SITE_KEY = recaptchaSiteKey.trim();
+    console.log('[injectForm] Set window.VITE_RECAPTCHA_SITE_KEY:', {
+      keyPreview: `${recaptchaSiteKey.trim().substring(0, 10)}...${recaptchaSiteKey.trim().substring(recaptchaSiteKey.trim().length - 5)}`,
+      keyLength: recaptchaSiteKey.trim().length,
+    });
+  } else {
+    console.log('[injectForm] Not setting reCAPTCHA key - invalid or missing');
+    // Explicitly clear it to avoid stale values
+    if (window.VITE_RECAPTCHA_SITE_KEY) {
+      console.log('[injectForm] Clearing existing window.VITE_RECAPTCHA_SITE_KEY');
+      delete window.VITE_RECAPTCHA_SITE_KEY;
+    }
   }
 }
 
