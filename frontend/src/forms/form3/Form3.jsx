@@ -219,7 +219,7 @@ const Form3 = ({ theme = 'light' }) => {
                 We're processing your application and will show you personalized offers shortly.
               </p>
               <p style={{ color: '#8b8b8b', fontSize: '0.75rem' }}>
-                Takes under 2 minutes. No paperwork. No hidden surprises.
+                You'll receive offers from multiple lenders with transparent comparisons.
               </p>
             </div>
           </div>
@@ -273,7 +273,7 @@ const Form3 = ({ theme = 'light' }) => {
                 Complete Your Application
               </h2>
               <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
-                From ₹10,000 to ₹10 Lakh. See real offers, no hidden surprises. 100% digital.
+                Get matched offers from 35+ lenders. 100% digital process.
               </p>
             </>
           )}
