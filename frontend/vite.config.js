@@ -15,6 +15,8 @@ export default defineConfig({
           fileName: 'injectForm',
           formats: ['iife'],
         },
+        outDir: 'dist',
+        emptyOutDir: false, // Don't empty so we can have both app and library
         rollupOptions: {
           output: {
             entryFileNames: 'injectForm.js',

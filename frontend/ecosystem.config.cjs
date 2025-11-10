@@ -3,7 +3,7 @@ module.exports = {
     {
       name: 'pw-frontend',
       script: 'npx',
-      args: 'serve -s dist -l 2526',
+      args: 'serve dist -l 2526 --single',
       cwd: __dirname,
       instances: 1,
       exec_mode: 'fork',
