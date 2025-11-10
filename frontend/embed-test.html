@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Embed Test</title>
+    <title>Embed Test - Form3 OTP Flow</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <style>
       body {
@@ -25,14 +25,15 @@
   </head>
   <body>
     <div class="frame">
-      <h1>PW Form Embed Test</h1>
+      <h1>PW Form Embed Test (Form 3)</h1>
       <p>This page simulates how the form is embedded in Webflow or any host page.</p>
+      <p><strong>Flow:</strong> Step 1: Phone → OTP (1234) → Step 2: Details → Submit.</p>
 
       <div id="pw-form"></div>
 
       <script
         src="./dist/injectForm.js"
-        data-form="form1"
+        data-form="form3"
         data-theme="light"
         data-container="pw-form"
         data-api-url="http://localhost:3000"
