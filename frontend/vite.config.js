@@ -1,27 +1,37 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+// Check if we're building the library or the app
+const isLibraryBuild = process.env.BUILD_MODE === 'library';
+
 export default defineConfig({
   plugins: [react()],
-  build: {
-    lib: {
-      entry: 'src/embed/injectForm.js',
-      name: 'PWForms',
-      fileName: 'injectForm',
-      formats: ['iife'],
-    },
-    // Code splitting and output configuration
-    rollupOptions: {
-      output: {
-        entryFileNames: 'injectForm.js',
-        assetFileNames: 'injectForm.css',
-        // Note: manualChunks is not supported for IIFE format (inlineDynamicImports is auto-enabled)
-        // All code will be bundled into a single file for IIFE library builds
+  build: isLibraryBuild
+    ? {
+        // Library build configuration
+        lib: {
+          entry: 'src/embed/injectForm.js',
+          name: 'PWForms',
+          fileName: 'injectForm',
+          formats: ['iife'],
+        },
+        rollupOptions: {
+          output: {
+            entryFileNames: 'injectForm.js',
+            assetFileNames: 'injectForm.css',
+            // Note: manualChunks is not supported for IIFE format (inlineDynamicImports is auto-enabled)
+            // All code will be bundled into a single file for IIFE library builds
+          },
+        },
+        chunkSizeWarningLimit: 1000,
+      }
+    : {
+        // App build configuration (default)
+        outDir: 'dist',
+        emptyOutDir: true,
+        // Optimize chunk size
+        chunkSizeWarningLimit: 1000,
       },
-    },
-    // Optimize chunk size
-    chunkSizeWarningLimit: 1000,
-  },
   server: {
     port: 5173,
     cors: true,

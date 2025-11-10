@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:library": "BUILD_MODE=library vite build",
     "preview": "vite preview",
     "start": "npx serve -s dist -l 2526",
     "start:prod": "npx serve -s dist -l 2526",
