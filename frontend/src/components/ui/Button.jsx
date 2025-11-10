@@ -37,12 +37,9 @@ const Button = ({
 
   const variantStyles = {
     primary: {
-      backgroundColor: tokens.colors.cta.primary, // Paisawaala: #ec3957
+      backgroundColor: tokens.colors.cta.primary, // Paisawaala: #160E7A
       color: '#ffffff',
       border: 'none',
-      '&:hover': {
-        backgroundColor: tokens.colors.cta.hover, // Paisawaala: #dd23bb
-      },
     },
     secondary: {
       backgroundColor: 'transparent',
@@ -93,11 +90,26 @@ const Button = ({
     ...sizeStyles[size],
   };
 
+  // Handle hover state for primary buttons
+  const handleMouseEnter = (e) => {
+    if (variant === 'primary' && !disabled && !loading) {
+      e.currentTarget.style.backgroundColor = tokens.colors.cta.hover;
+    }
+  };
+
+  const handleMouseLeave = (e) => {
+    if (variant === 'primary' && !disabled && !loading) {
+      e.currentTarget.style.backgroundColor = tokens.colors.cta.primary;
+    }
+  };
+
   return (
     <button
       type={type}
       disabled={disabled || loading}
       onClick={onClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       style={style}
       className={className}
       {...props}

@@ -9,7 +9,7 @@ const getCorsOrigin = () => {
   const corsOrigin = process.env.CORS_ORIGIN;
 
   // If CORS_ORIGIN is set, use it (supports comma-separated origins)
-  if (corsOrigin) {
+    if (corsOrigin) {
     const origins = corsOrigin.split(',').map(o => o.trim());
     if (origins.length === 1) {
       return origins[0];
@@ -18,9 +18,9 @@ const getCorsOrigin = () => {
     return (origin, callback) => {
       if (!origin) return callback(null, true);
       if (origins.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
       }
     };
   }

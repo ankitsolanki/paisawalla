@@ -16,7 +16,7 @@ import { createRoot } from 'react-dom/client';
 import Form1 from '../forms/form1/index.jsx';
 import Form2 from '../forms/form2/index.jsx';
 import Form3 from '../forms/form3/index.jsx';
-import '../index.css';
+import './embed-styles.css';
 
 // Provide minimal process polyfill for libraries expecting process.env
 if (typeof window !== 'undefined') {
@@ -104,6 +104,8 @@ if (script) {
       // CSS file not found, that's okay - styles might be inline
       console.warn('PW Forms: CSS file not found, styles may be inline');
     };
+    // Add scoped attribute to prevent affecting host page
+    link.setAttribute('data-pw-form-styles', 'true');
     document.head.appendChild(link);
   };
 
@@ -127,6 +129,9 @@ if (script) {
         </style>
       `;
 
+      // Add scoped container class to prevent style leakage
+      container.classList.add('pw-form-container');
+      
       // Create React root and render form
       const root = createRoot(container);
       root.render(React.createElement(FormComponent, { theme }));

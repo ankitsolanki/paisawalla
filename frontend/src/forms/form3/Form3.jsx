@@ -262,16 +262,16 @@ const Form3 = ({ theme = 'light' }) => {
 
             {stage === 'details' && (
               <div style={{ marginBottom: '1.25rem' }}>
-                <ReCAPTCHA
-                  sitekey={RECAPTCHA_SITE_KEY}
-                  onChange={handleRecaptchaChange}
-                />
-                {errors.recaptcha && (
-                  <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#dc2626' }}>
-                    {errors.recaptcha}
-                  </p>
-                )}
-              </div>
+              <ReCAPTCHA
+                sitekey={RECAPTCHA_SITE_KEY}
+                onChange={handleRecaptchaChange}
+              />
+              {errors.recaptcha && (
+                <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#dc2626' }}>
+                  {errors.recaptcha}
+                </p>
+              )}
+            </div>
             )}
 
             <Button

@@ -20,8 +20,8 @@ export const tokens = {
     },
     // Paisawaala CTA/Button Color
     cta: {
-      primary: '#ec3957',  // Main CTA red/pink
-      hover: '#dd23bb',   // Hover state
+      primary: '#160E7A',  // Main CTA color (royal-blue-500)
+      hover: '#1c3693',    // Hover state (slightly lighter)
     },
     // Semantic colors
     success: {

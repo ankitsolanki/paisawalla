@@ -14,31 +14,31 @@ export default defineConfig({
   build: isLibraryBuild
     ? {
         // Library build configuration
-        lib: {
-          entry: 'src/embed/injectForm.js',
-          name: 'PWForms',
-          fileName: 'injectForm',
-          formats: ['iife'],
-        },
+    lib: {
+      entry: 'src/embed/injectForm.js',
+      name: 'PWForms',
+      fileName: 'injectForm',
+      formats: ['iife'],
+    },
         outDir: 'dist',
         emptyOutDir: false, // Don't empty so we can have both app and library
-        rollupOptions: {
-          output: {
-            entryFileNames: 'injectForm.js',
-            assetFileNames: 'injectForm.css',
+    rollupOptions: {
+      output: {
+        entryFileNames: 'injectForm.js',
+        assetFileNames: 'injectForm.css',
             // Note: manualChunks is not supported for IIFE format (inlineDynamicImports is auto-enabled)
             // All code will be bundled into a single file for IIFE library builds
-          },
         },
+      },
         chunkSizeWarningLimit: 1000,
       }
     : {
         // App build configuration (default)
         outDir: 'dist',
         emptyOutDir: true,
-        // Optimize chunk size
-        chunkSizeWarningLimit: 1000,
-      },
+    // Optimize chunk size
+    chunkSizeWarningLimit: 1000,
+  },
   server: {
     port: 5173,
     cors: true,
