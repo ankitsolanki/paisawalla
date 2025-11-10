@@ -4,28 +4,45 @@
  * Usage in Webflow:
  * <div id="pw-form"></div>
  * <script 
- *   src="https://cdn.pw.com/forms/injectForm.js"
+ *   src="https://app-paisawalla.gofo.app/injectForm.js"
  *   data-form="form1"
  *   data-theme="light"
+ *   data-api-url="https://api-paisawalla.gofo.app"
  * ></script>
  */
+
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import Form1 from '../forms/form1/index.jsx';
+import Form2 from '../forms/form2/index.jsx';
+import Form3 from '../forms/form3/index.jsx';
+import '../index.css';
+
+// Set API URL if provided
+const script = document.currentScript || document.querySelector('script[data-form]');
+if (script) {
+  const apiUrl = script.getAttribute('data-api-url');
+  if (apiUrl) {
+    // Set API URL in window for apiClient to use
+    window.VITE_API_BASE_URL = apiUrl;
+  }
+}
 
 (function() {
   'use strict';
 
   // Get configuration from script tag
-  const script = document.currentScript || 
+  const scriptTag = document.currentScript || 
     document.querySelector('script[data-form]');
   
-  if (!script) {
+  if (!scriptTag) {
     console.error('PW Forms: Script tag not found');
     return;
   }
 
-  const formType = script.getAttribute('data-form') || 'form1';
-  const theme = script.getAttribute('data-theme') || 'light';
-  const containerId = script.getAttribute('data-container') || 'pw-form';
-  const apiUrl = script.getAttribute('data-api-url') || '';
+  const formType = scriptTag.getAttribute('data-form') || 'form1';
+  const theme = scriptTag.getAttribute('data-theme') || 'light';
+  const containerId = scriptTag.getAttribute('data-container') || 'pw-form';
 
   // Find container element
   const container = document.getElementById(containerId);
@@ -34,9 +51,53 @@
     return;
   }
 
-  // Load React and form components dynamically
-  const loadForm = async () => {
+  // Map form types to components
+  const formComponents = {
+    'form1': Form1,
+    'form2': Form2,
+    'form3': Form3,
+  };
+
+  const FormComponent = formComponents[formType];
+  
+  if (!FormComponent) {
+    container.innerHTML = `
+      <div style="padding: 20px; color: #dc2626; border: 1px solid #dc2626; border-radius: 8px; background: #fee2e2;">
+        <h3 style="margin-top: 0; color: #dc2626;">Error Loading Form</h3>
+        <p>Unknown form type: ${formType}</p>
+        <p style="font-size: 0.9em; margin-top: 10px;">Available forms: form1, form2, form3</p>
+      </div>
+    `;
+    return;
+  }
+
+  // Load CSS if it exists (for library builds)
+  const loadCSS = () => {
+    const scriptSrc = scriptTag.src;
+    const baseUrl = scriptSrc.substring(0, scriptSrc.lastIndexOf('/'));
+    const cssUrl = `${baseUrl}/injectForm.css`;
+    
+    // Check if CSS is already loaded
+    if (document.querySelector(`link[href="${cssUrl}"]`)) {
+      return;
+    }
+    
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = cssUrl;
+    link.onerror = () => {
+      // CSS file not found, that's okay - styles might be inline
+      console.warn('PW Forms: CSS file not found, styles may be inline');
+    };
+    document.head.appendChild(link);
+  };
+
+  // Render the form
+  const loadForm = () => {
     try {
+      // Load CSS first
+      loadCSS();
+      
       // Show loading state
       container.innerHTML = `
         <div style="padding: 20px; text-align: center;">
@@ -51,35 +112,9 @@
         </style>
       `;
 
-      // In production, these would be loaded from CDN
-      // For development, we'll use a placeholder that shows the form structure
-      
-      // Map form types to component paths
-      const formMap = {
-        'form1': '/src/forms/form1/index.jsx',
-        'form2': '/src/forms/form2/index.jsx',
-        'form3': '/src/forms/form3/index.jsx',
-      };
-
-      const formPath = formMap[formType];
-      
-      if (!formPath) {
-        throw new Error(`Unknown form type: ${formType}`);
-      }
-
-      // In production build, forms would be pre-bundled and loaded from CDN
-      // For now, we'll create a message indicating the form should be loaded
-      container.innerHTML = `
-        <div style="padding: 20px; border: 1px solid #ddd; border-radius: 8px; background: white;">
-          <h3 style="margin-top: 0;">PW Form: ${formType}</h3>
-          <p>Form will be loaded here. In production, this will dynamically load the React form component.</p>
-          <p><strong>Theme:</strong> ${theme}</p>
-          <p><strong>API URL:</strong> ${apiUrl || 'Default'}</p>
-          <p style="color: #666; font-size: 0.9em; margin-top: 20px;">
-            <em>Note: In production build, the form component will be loaded from CDN and rendered here.</em>
-          </p>
-        </div>
-      `;
+      // Create React root and render form
+      const root = createRoot(container);
+      root.render(React.createElement(FormComponent, { theme }));
 
       // Post message to Webflow that form is ready
       if (window.parent) {
@@ -89,17 +124,6 @@
           data: { formType, theme, containerId },
         }, '*');
       }
-
-      // In production, you would:
-      // 1. Load React from CDN
-      // 2. Load the specific form component bundle
-      // 3. Render it into the container
-      // Example:
-      // const React = await import('https://cdn.pw.com/react/react.production.min.js');
-      // const ReactDOM = await import('https://cdn.pw.com/react/react-dom.production.min.js');
-      // const FormComponent = await import(`https://cdn.pw.com/forms/${formType}.js`);
-      // const root = ReactDOM.createRoot(container);
-      // root.render(React.createElement(FormComponent.default, { theme }));
 
     } catch (error) {
       console.error('PW Forms: Error loading form', error);

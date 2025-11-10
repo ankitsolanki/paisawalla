@@ -1,7 +1,11 @@
 import axios from 'axios';
 import { retryWithBackoff } from './retry';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+// Support both Vite env variable and window variable (for embedded forms)
+const API_BASE_URL = 
+  (typeof window !== 'undefined' && window.VITE_API_BASE_URL) ||
+  import.meta.env.VITE_API_BASE_URL || 
+  'http://localhost:3000';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
