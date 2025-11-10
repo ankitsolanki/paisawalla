@@ -268,6 +268,17 @@ const Form3 = ({ theme = 'light' }) => {
     );
   }, [formData, errors, handleChange, handleBlur, handleFocus, stage]);
 
+  // All hooks must be called before conditional returns
+  const fields = useMemo(() => Object.keys(form3Schema), []);
+
+  // Select which fields to render based on stage
+  const stageFields = useMemo(() => {
+    if (stage === 'phone') return ['phone'];
+    if (stage === 'otp') return ['phone']; // phone shown (disabled) above OTP box
+    if (stage === 'details') return fields; // all fields
+    return [];
+  }, [stage, fields]);
+
   // Show eligibility checking screen after form submission
   if (checkingEligibility && leadId) {
     return (
@@ -349,16 +360,6 @@ const Form3 = ({ theme = 'light' }) => {
       </ErrorBoundary>
     );
   }
-
-  const fields = useMemo(() => Object.keys(form3Schema), []);
-
-  // Select which fields to render based on stage
-  const stageFields = useMemo(() => {
-    if (stage === 'phone') return ['phone'];
-    if (stage === 'otp') return ['phone']; // phone shown (disabled) above OTP box
-    if (stage === 'details') return fields; // all fields
-    return [];
-  }, [stage, fields]);
 
   return (
     <ErrorBoundary>
