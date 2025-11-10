@@ -92,9 +92,9 @@ const Form3 = ({ theme = 'light' }) => {
     }
 
     if (stage === 'otp') {
-      // Validate OTP = 1234 (hardcoded)
+      // Validate OTP = 1234 (hardcoded for testing)
       if ((formData.otp || '').trim() !== '1234') {
-        setErrors((prev) => ({ ...prev, otp: 'Invalid OTP. Please enter 1234 for testing.' }));
+        setErrors((prev) => ({ ...prev, otp: 'Invalid verification code. Please enter 1234 to continue.' }));
         return;
       }
       setOtpVerifying(true);
@@ -196,9 +196,33 @@ const Form3 = ({ theme = 'light' }) => {
     return (
       <ErrorBoundary>
         <ThemeProvider theme={theme}>
-          <SubmitSuccess
-            message="Thanks! We'll be in touch soon."
-          />
+          <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem', textAlign: 'center' }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                margin: '0 auto 1rem',
+                borderRadius: '50%',
+                backgroundColor: '#edfcf5',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M20 6L9 17L4 12" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
+                Application Submitted!
+              </h2>
+              <p style={{ color: '#656c77', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                We're processing your application and will show you personalized offers shortly.
+              </p>
+              <p style={{ color: '#8b8b8b', fontSize: '0.75rem' }}>
+                Takes under 2 minutes. No paperwork. No hidden surprises.
+              </p>
+            </div>
+          </div>
         </ThemeProvider>
       </ErrorBoundary>
     );
@@ -218,12 +242,41 @@ const Form3 = ({ theme = 'light' }) => {
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem' }}>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 800, marginBottom: '0.75rem' }}>
-            Get started
-          </h2>
-          <p style={{ color: '#6b7280', marginBottom: '1.25rem' }}>
-            Enter your mobile number to continue. We’ll verify with a one-time code.
-          </p>
+          {stage === 'phone' && (
+            <>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
+                Check My Eligibility
+              </h2>
+              <p style={{ color: '#656c77', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
+                Personal loans tailored for you, compare & apply in minutes
+              </p>
+              <p style={{ color: '#8b8b8b', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+                No impact on your credit score, instant soft-check
+              </p>
+            </>
+          )}
+          
+          {stage === 'otp' && (
+            <>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
+                Verify Your Number
+              </h2>
+              <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+                We've sent a one-time code to {formData.phone || 'your number'}. Please enter it below.
+              </p>
+            </>
+          )}
+
+          {stage === 'details' && (
+            <>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
+                Complete Your Application
+              </h2>
+              <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+                From ₹10,000 to ₹10 Lakh. See real offers, no hidden surprises. 100% digital.
+              </p>
+            </>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.25rem' }}>
@@ -232,7 +285,7 @@ const Form3 = ({ theme = 'light' }) => {
               {stage === 'otp' && (
                 <Input
                   name="otp"
-                  label="Enter OTP"
+                  label="Enter Verification Code"
                   required
                   type="text"
                   value={formData.otp || ''}
@@ -241,7 +294,7 @@ const Form3 = ({ theme = 'light' }) => {
                   onFocus={handleFocus}
                   error={errors.otp}
                   fullWidth
-                  placeholder="Enter 1234 to continue"
+                  placeholder="Enter the 4-digit code sent to your mobile"
                   maxLength={6}
                 />
               )}
@@ -281,14 +334,20 @@ const Form3 = ({ theme = 'light' }) => {
               disabled={isSubmitting || otpSending || otpVerifying}
               loading={isSubmitting || otpSending || otpVerifying}
             >
-              {stage === 'phone' && (otpSending ? 'Sending OTP...' : 'Continue')}
-              {stage === 'otp' && (otpVerifying ? 'Verifying...' : 'Verify')}
-              {stage === 'details' && (isSubmitting ? 'Submitting...' : 'Submit')}
+              {stage === 'phone' && (otpSending ? 'Sending OTP...' : 'Check My Eligibility')}
+              {stage === 'otp' && (otpVerifying ? 'Verifying...' : 'Verify OTP')}
+              {stage === 'details' && (isSubmitting ? 'Submitting...' : 'Get My Offers')}
             </Button>
 
             {stage === 'otp' && (
-              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#6b7280', textAlign: 'center' }}>
-                Didn’t receive the code? <span style={{ color: '#2563eb', cursor: 'pointer' }} onClick={() => setStage('phone')}>Change number</span>
+              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#656c77', textAlign: 'center' }}>
+                Didn't receive the code? <span style={{ color: '#160E7A', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setStage('phone')}>Resend OTP</span>
+              </p>
+            )}
+
+            {stage === 'phone' && (
+              <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#8b8b8b', textAlign: 'center' }}>
+                By continuing, you agree to our Terms of Use and Privacy Policy
               </p>
             )}
           </form>
