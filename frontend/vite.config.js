@@ -15,10 +15,8 @@ export default defineConfig({
       output: {
         entryFileNames: 'injectForm.js',
         assetFileNames: 'injectForm.css',
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'form-vendor': ['react-google-recaptcha'],
-        },
+        // Note: manualChunks is not supported for IIFE format (inlineDynamicImports is auto-enabled)
+        // All code will be bundled into a single file for IIFE library builds
       },
     },
     // Optimize chunk size
