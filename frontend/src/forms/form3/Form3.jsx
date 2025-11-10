@@ -83,6 +83,7 @@ const Form3 = ({ theme = 'light' }) => {
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
   const [ReCAPTCHA, setReCAPTCHA] = useState(null);
+  const [recaptchaError, setRecaptchaError] = useState(false);
 
   // Dynamically load ReCAPTCHA only if we have a valid key
   useEffect(() => {
@@ -202,13 +203,18 @@ const Form3 = ({ theme = 'light' }) => {
       return;
     }
 
-    // Only require reCAPTCHA if site key is configured
-    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+    // Only require reCAPTCHA if site key is configured AND reCAPTCHA hasn't errored
+    if (RECAPTCHA_SITE_KEY && !recaptchaError && !recaptchaToken) {
       setErrors((prev) => ({
         ...prev,
         recaptcha: 'Please complete the reCAPTCHA verification',
       }));
       return;
+    }
+    
+    // If reCAPTCHA errored, log it but allow submission
+    if (recaptchaError) {
+      console.log('[Form3] Submitting without reCAPTCHA due to error');
     }
 
     trackSubmitStart();
@@ -267,7 +273,8 @@ const Form3 = ({ theme = 'light' }) => {
       errorDetails: error,
       siteKey: RECAPTCHA_SITE_KEY ? `${RECAPTCHA_SITE_KEY.substring(0, 10)}...` : 'none',
     });
-    console.warn('[Form3] reCAPTCHA failed to load. Form can still be submitted.');
+    console.warn('[Form3] reCAPTCHA failed to load. Disabling reCAPTCHA - form can still be submitted.');
+    setRecaptchaError(true); // Mark that reCAPTCHA has errored
     setRecaptchaToken(null);
   }, []);
 
@@ -419,17 +426,22 @@ const Form3 = ({ theme = 'light' }) => {
             )}
 
             {stage === 'details' && (() => {
-              const shouldRender = RECAPTCHA_SITE_KEY && ReCAPTCHA;
+              const shouldRender = RECAPTCHA_SITE_KEY && ReCAPTCHA && !recaptchaError;
               console.log('[Form3] ReCAPTCHA render check:', {
                 stage,
                 hasKey: !!RECAPTCHA_SITE_KEY,
                 keyValue: RECAPTCHA_SITE_KEY ? `${RECAPTCHA_SITE_KEY.substring(0, 10)}...` : 'none',
                 hasComponent: !!ReCAPTCHA,
+                hasError: recaptchaError,
                 shouldRender,
               });
               
               if (!shouldRender) {
-                console.log('[Form3] ReCAPTCHA not rendered - missing key or component');
+                if (recaptchaError) {
+                  console.log('[Form3] ReCAPTCHA not rendered - error occurred');
+                } else {
+                  console.log('[Form3] ReCAPTCHA not rendered - missing key or component');
+                }
                 return null;
               }
               
