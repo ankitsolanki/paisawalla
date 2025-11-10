@@ -18,13 +18,28 @@ import Form2 from '../forms/form2/index.jsx';
 import Form3 from '../forms/form3/index.jsx';
 import '../index.css';
 
-// Set API URL if provided
+// Provide minimal process polyfill for libraries expecting process.env
+if (typeof window !== 'undefined') {
+  const globalProcess = window.process || {};
+  globalProcess.env = globalProcess.env || {};
+  if (!globalProcess.env.NODE_ENV) {
+    globalProcess.env.NODE_ENV = 'production';
+  }
+  window.process = globalProcess;
+}
+
+// Set global config values based on script attributes (before IIFE runs)
 const script = document.currentScript || document.querySelector('script[data-form]');
 if (script) {
   const apiUrl = script.getAttribute('data-api-url');
   if (apiUrl) {
     // Set API URL in window for apiClient to use
     window.VITE_API_BASE_URL = apiUrl;
+  }
+
+  const recaptchaSiteKey = script.getAttribute('data-recaptcha-site-key') || script.getAttribute('data-recaptcha');
+  if (recaptchaSiteKey) {
+    window.VITE_RECAPTCHA_SITE_KEY = recaptchaSiteKey;
   }
 }
 
