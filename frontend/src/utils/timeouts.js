@@ -40,3 +40,4 @@ export const TIMEOUTS = {
   API_CALL: 30000, // 30 seconds for general API calls
 };
 
+
