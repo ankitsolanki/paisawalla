@@ -21,9 +21,23 @@ export const validators = {
 
   phone: (value) => {
     if (!value) return null;
-    const phoneRegex = /^[\d\s\-\(\)]+$/;
-    if (!phoneRegex.test(value) || value.replace(/\D/g, '').length < 10) {
-      return 'Please enter a valid phone number';
+    // Indian phone number validation: 10 digits, may start with +91 or 0
+    const cleaned = value.replace(/\D/g, '');
+    
+    // Remove country code +91 or leading 0 if present
+    let digits = cleaned;
+    if (cleaned.startsWith('91') && cleaned.length === 12) {
+      digits = cleaned.substring(2);
+    } else if (cleaned.startsWith('0') && cleaned.length === 11) {
+      digits = cleaned.substring(1);
+    }
+    
+    // Must be exactly 10 digits and start with 6-9 (Indian mobile number format)
+    if (digits.length !== 10) {
+      return 'Please enter a valid 10-digit mobile number';
+    }
+    if (!/^[6-9]/.test(digits)) {
+      return 'Mobile number must start with 6, 7, 8, or 9';
     }
     return null;
   },
@@ -72,9 +86,10 @@ export const validators = {
 
   zipCode: (value) => {
     if (!value) return null;
-    const zipRegex = /^\d{5}(-\d{4})?$/;
-    if (!zipRegex.test(value)) {
-      return 'Please enter a valid ZIP code';
+    // Indian PIN code validation: exactly 6 digits
+    const pinRegex = /^\d{6}$/;
+    if (!pinRegex.test(value.trim())) {
+      return 'Please enter a valid 6-digit PIN code';
     }
     return null;
   },
