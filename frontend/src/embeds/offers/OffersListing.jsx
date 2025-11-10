@@ -193,9 +193,8 @@ const OffersListing = ({
         <div
           style={{
             width: '100%',
-            maxWidth: '1200px',
-            margin: '0 auto',
             padding: tokens.spacing.lg,
+            boxSizing: 'border-box',
           }}
         >
           {/* Header with Results Count and Sort Controls */}

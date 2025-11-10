@@ -142,6 +142,10 @@ if (script) {
       // Add scoped container class to prevent style leakage
       container.classList.add('pw-offers-container');
       
+      // Ensure container uses full width
+      container.style.width = '100%';
+      container.style.boxSizing = 'border-box';
+      
       // Create React root and render offers listing
       const root = createRoot(container);
       root.render(
