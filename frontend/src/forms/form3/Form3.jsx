@@ -6,7 +6,6 @@ import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
-import OffersListing from '../../embeds/offers/OffersListing';
 import { validateForm, validateField } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
@@ -230,6 +229,10 @@ const Form3 = ({ theme = 'light' }) => {
       applicationId: appId,
       leadId,
     });
+    
+    // Redirect to listing page with application ID
+    const listingPageUrl = `https://paisawaala.webflow.io/listing-page?applicationId=${encodeURIComponent(appId)}`;
+    window.location.href = listingPageUrl;
   }, [leadId]);
 
   // Handle eligibility checking error
@@ -295,24 +298,19 @@ const Form3 = ({ theme = 'light' }) => {
     );
   }
 
-  // Show offers listing after eligibility check
+  // Note: We no longer show offers listing here - we redirect to the listing page instead
+  // This check is kept for safety but should not be reached in normal flow
   if (applicationId && !checkingEligibility) {
+    // This should not happen as we redirect in handleEligibilityComplete
+    // But keeping as fallback in case redirect fails
     return (
       <ErrorBoundary>
         <ThemeProvider theme={theme}>
-          <OffersListing
-            applicationId={applicationId}
-            leadId={leadId}
-            theme={theme}
-            onStateChange={(status, data) => {
-              webflowBridge.postMessage('offersStateChange', {
-                status,
-                applicationId,
-                leadId,
-                ...data,
-              });
-            }}
-          />
+          <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem', textAlign: 'center' }}>
+            <p style={{ color: '#656c77', marginBottom: '1rem' }}>
+              Redirecting to offers page...
+            </p>
+          </div>
         </ThemeProvider>
       </ErrorBoundary>
     );
