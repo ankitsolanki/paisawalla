@@ -5,14 +5,28 @@ import { buildErrorResponse } from '../utils/responseBuilder.js';
 export const validateRecaptcha = async (req, res, next) => {
   try {
     const { recaptchaToken } = req.body;
+    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
 
+    // If no token provided and no secret key configured, skip validation
     if (!recaptchaToken) {
-      return res.status(400).json(
-        buildErrorResponse('reCAPTCHA token is required', null, 400)
-      );
+      logger.info('reCAPTCHA token not provided - skipping validation', {
+        ip: req.ip,
+        hasSecretKey: !!secretKey,
+      });
+      req.recaptchaResult = { success: false, skipped: true };
+      return next();
     }
 
-    const secretKey = process.env.RECAPTCHA_SECRET_KEY;
+    // If token provided but no secret key configured, skip validation
+    if (!secretKey || secretKey.trim() === '') {
+      logger.warn('reCAPTCHA token provided but secret key not configured - skipping validation', {
+        ip: req.ip,
+      });
+      req.recaptchaResult = { success: false, skipped: true };
+      return next();
+    }
+
+    // Validate token if both token and secret key are provided
     const verifyUrl = 'https://www.google.com/recaptcha/api/siteverify';
 
     const response = await axios.post(verifyUrl, null, {
@@ -48,9 +62,14 @@ export const validateRecaptcha = async (req, res, next) => {
     next();
   } catch (error) {
     logger.error('reCAPTCHA validation error', { error: error.message });
-    return res.status(500).json(
-      buildErrorResponse('reCAPTCHA validation service error', null, 500)
-    );
+    // If validation service fails, allow request to proceed (fail open)
+    // This prevents service errors from blocking form submissions
+    logger.warn('reCAPTCHA validation service error - allowing request to proceed', {
+      error: error.message,
+      ip: req.ip,
+    });
+    req.recaptchaResult = { success: false, error: error.message };
+    next();
   }
 };
 
