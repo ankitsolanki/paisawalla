@@ -15,24 +15,7 @@ import form3Schema from './form3Schema';
 const getRecaptchaKey = () => {
   const windowKey = typeof window !== 'undefined' ? window.VITE_RECAPTCHA_SITE_KEY : undefined;
   const envKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
-  
-  console.log('[Form3] reCAPTCHA Key Detection:', {
-    windowKey: windowKey ? `${windowKey.substring(0, 10)}...` : 'undefined',
-    envKey: envKey ? `${envKey.substring(0, 10)}...` : 'undefined',
-    windowKeyType: typeof windowKey,
-    envKeyType: typeof envKey,
-  });
-  
   const key = windowKey || envKey || '';
-  
-  console.log('[Form3] Raw key value:', {
-    key: key ? `${key.substring(0, 20)}...` : 'empty',
-    keyType: typeof key,
-    keyLength: key ? key.length : 0,
-    isString: typeof key === 'string',
-    trimmed: key ? key.trim() : '',
-    trimmedLength: key ? key.trim().length : 0,
-  });
   
   // Validate key - reCAPTCHA keys are typically 40 characters, minimum 20
   // Also check that it's not a placeholder or invalid value
@@ -45,29 +28,10 @@ const getRecaptchaKey = () => {
       key.trim() !== 'undefined' &&
       key.trim() !== 'null';
   
-  console.log('[Form3] Key validation result:', {
-    isValid,
-    checks: {
-      exists: !!key,
-      isString: typeof key === 'string',
-      notEmpty: key ? key.trim() !== '' : false,
-      minLength: key ? key.trim().length >= 20 : false,
-      notPlaceholder: key ? !key.includes('your-key-here') && !key.includes('placeholder') : false,
-      notUndefined: key ? key.trim() !== 'undefined' : false,
-      notNull: key ? key.trim() !== 'null' : false,
-    },
-  });
-  
   if (isValid) {
-    const trimmedKey = key.trim();
-    console.log('[Form3] Valid reCAPTCHA key found:', {
-      keyLength: trimmedKey.length,
-      keyPreview: `${trimmedKey.substring(0, 10)}...${trimmedKey.substring(trimmedKey.length - 5)}`,
-    });
-    return trimmedKey;
+    return key.trim();
   }
   
-  console.log('[Form3] No valid reCAPTCHA key found - reCAPTCHA will be disabled');
   return '';
 };
 
@@ -87,29 +51,16 @@ const Form3 = ({ theme = 'light' }) => {
 
   // Dynamically load ReCAPTCHA only if we have a valid key
   useEffect(() => {
-    console.log('[Form3] ReCAPTCHA loading check:', {
-      hasKey: !!RECAPTCHA_SITE_KEY,
-      keyValue: RECAPTCHA_SITE_KEY ? `${RECAPTCHA_SITE_KEY.substring(0, 10)}...` : 'none',
-      hasComponent: !!ReCAPTCHA,
-      stage,
-    });
-    
     if (RECAPTCHA_SITE_KEY && !ReCAPTCHA) {
-      console.log('[Form3] Loading reCAPTCHA module...');
       import('react-google-recaptcha')
         .then(module => {
-          console.log('[Form3] reCAPTCHA module loaded successfully');
           setReCAPTCHA(() => module.default);
         })
-        .catch((error) => {
-          console.error('[Form3] reCAPTCHA module could not be loaded:', error);
+        .catch(() => {
+          // Silently fail - reCAPTCHA is optional
         });
-    } else if (!RECAPTCHA_SITE_KEY) {
-      console.log('[Form3] Skipping reCAPTCHA load - no valid key');
-    } else if (ReCAPTCHA) {
-      console.log('[Form3] ReCAPTCHA component already loaded');
     }
-  }, [ReCAPTCHA, stage]);
+  }, [ReCAPTCHA]);
 
   const {
     trackFieldInteraction,
@@ -212,10 +163,7 @@ const Form3 = ({ theme = 'light' }) => {
       return;
     }
     
-    // If reCAPTCHA errored, log it but allow submission
-    if (recaptchaError) {
-      console.log('[Form3] Submitting without reCAPTCHA due to error');
-    }
+    // If reCAPTCHA errored, allow submission without it
 
     trackSubmitStart();
     setIsSubmitting(true);
@@ -250,11 +198,6 @@ const Form3 = ({ theme = 'light' }) => {
   }, [formData, recaptchaToken, trackSubmitStart, trackSubmitSuccess, trackSubmitError]);
 
   const handleRecaptchaChange = useCallback((token) => {
-    console.log('[Form3] reCAPTCHA token received:', {
-      hasToken: !!token,
-      tokenLength: token ? token.length : 0,
-      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
-    });
     setRecaptchaToken(token);
     if (errors.recaptcha) {
       setErrors((prev) => {
@@ -265,16 +208,9 @@ const Form3 = ({ theme = 'light' }) => {
     }
   }, [errors.recaptcha]);
 
-  const handleRecaptchaError = useCallback((error) => {
+  const handleRecaptchaError = useCallback(() => {
     // If reCAPTCHA fails to load, make it optional
-    console.error('[Form3] reCAPTCHA error:', {
-      error: error?.message || error || 'Unknown error',
-      errorType: typeof error,
-      errorDetails: error,
-      siteKey: RECAPTCHA_SITE_KEY ? `${RECAPTCHA_SITE_KEY.substring(0, 10)}...` : 'none',
-    });
-    console.warn('[Form3] reCAPTCHA failed to load. Disabling reCAPTCHA - form can still be submitted.');
-    setRecaptchaError(true); // Mark that reCAPTCHA has errored
+    setRecaptchaError(true);
     setRecaptchaToken(null);
   }, []);
 
@@ -425,47 +361,21 @@ const Form3 = ({ theme = 'light' }) => {
               </div>
             )}
 
-            {stage === 'details' && (() => {
-              const shouldRender = RECAPTCHA_SITE_KEY && ReCAPTCHA && !recaptchaError;
-              console.log('[Form3] ReCAPTCHA render check:', {
-                stage,
-                hasKey: !!RECAPTCHA_SITE_KEY,
-                keyValue: RECAPTCHA_SITE_KEY ? `${RECAPTCHA_SITE_KEY.substring(0, 10)}...` : 'none',
-                hasComponent: !!ReCAPTCHA,
-                hasError: recaptchaError,
-                shouldRender,
-              });
-              
-              if (!shouldRender) {
-                if (recaptchaError) {
-                  console.log('[Form3] ReCAPTCHA not rendered - error occurred');
-                } else {
-                  console.log('[Form3] ReCAPTCHA not rendered - missing key or component');
-                }
-                return null;
-              }
-              
-              console.log('[Form3] Rendering ReCAPTCHA component with key:', {
-                keyPreview: `${RECAPTCHA_SITE_KEY.substring(0, 10)}...${RECAPTCHA_SITE_KEY.substring(RECAPTCHA_SITE_KEY.length - 5)}`,
-                keyLength: RECAPTCHA_SITE_KEY.length,
-              });
-              
-              return (
-                <div style={{ marginBottom: '1.25rem' }}>
-                  <ReCAPTCHA
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    onChange={handleRecaptchaChange}
-                    onErrored={handleRecaptchaError}
-                    onExpired={handleRecaptchaError}
-                  />
-                  {errors.recaptcha && (
-                    <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#dc2626' }}>
-                      {errors.recaptcha}
-                    </p>
-                  )}
-                </div>
-              );
-            })()}
+            {stage === 'details' && RECAPTCHA_SITE_KEY && ReCAPTCHA && !recaptchaError && (
+              <div style={{ marginBottom: '1.25rem' }}>
+                <ReCAPTCHA
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={handleRecaptchaChange}
+                  onErrored={handleRecaptchaError}
+                  onExpired={handleRecaptchaError}
+                />
+                {errors.recaptcha && (
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#dc2626' }}>
+                    {errors.recaptcha}
+                  </p>
+                )}
+              </div>
+            )}
 
             <Button
               type="submit"

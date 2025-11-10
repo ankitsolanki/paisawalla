@@ -112,14 +112,19 @@ class AnalyticsService {
     this.events = [];
 
     try {
+      // Use shorter timeout for analytics to prevent hanging
       await apiClient.post('/api/analytics/events', {
         events: eventsToSend,
         sessionId: this.sessionId,
+      }, {
+        timeout: 5000, // 5 second timeout for analytics
       });
     } catch (error) {
-      // Re-queue events on failure
-      this.events.unshift(...eventsToSend);
-      console.error('[Analytics] Failed to send events:', error);
+      // Re-queue events on failure (but don't log - analytics should be silent)
+      // Don't re-queue on timeout/abort errors
+      if (error.code !== 'ECONNABORTED' && error.message !== 'timeout of 5000ms exceeded') {
+        this.events.unshift(...eventsToSend);
+      }
     }
   }
 
@@ -371,18 +376,40 @@ class AnalyticsService {
    * Send beacon for reliable tracking on page unload
    */
   sendBeacon(formType, formData, lastInteractionTime) {
-    const data = JSON.stringify({
-      eventType: 'form_abandonment',
-      formType,
-      sessionId: this.sessionId,
-      utmParams: this.utmParams,
-      formData: this.sanitizeFormData(formData),
-      timestamp: new Date().toISOString(),
-    });
+    try {
+      const data = JSON.stringify({
+        eventType: 'form_abandonment',
+        formType,
+        sessionId: this.sessionId,
+        utmParams: this.utmParams,
+        formData: this.sanitizeFormData(formData),
+        timestamp: new Date().toISOString(),
+      });
 
-    if (navigator.sendBeacon) {
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
-      navigator.sendBeacon(`${apiUrl}/api/analytics/events/beacon`, data);
+      if (navigator.sendBeacon) {
+        const apiUrl = 
+          (typeof window !== 'undefined' && window.VITE_API_BASE_URL) ||
+          import.meta.env.VITE_API_BASE_URL || 
+          'http://localhost:3000';
+        
+        // Use Blob with proper content-type to avoid CORS issues
+        const blob = new Blob([data], { type: 'application/json' });
+        const success = navigator.sendBeacon(`${apiUrl}/api/analytics/events/beacon`, blob);
+        
+        if (!success) {
+          // Fallback to fetch if sendBeacon fails
+          fetch(`${apiUrl}/api/analytics/events/beacon`, {
+            method: 'POST',
+            body: data,
+            headers: { 'Content-Type': 'application/json' },
+            keepalive: true,
+          }).catch(() => {
+            // Silently fail - analytics should not block page navigation
+          });
+        }
+      }
+    } catch (error) {
+      // Silently fail - analytics should not block page navigation
     }
   }
 }
