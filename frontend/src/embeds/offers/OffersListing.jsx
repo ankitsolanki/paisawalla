@@ -11,6 +11,7 @@ import ErrorState from './ErrorState';
 import TimeoutState from './TimeoutState';
 import Loader from './Loader';
 import { tokens } from '../../design-system/tokens';
+import { useResponsive } from '../../hooks/useResponsive';
 
 /**
  * OffersListing Component
@@ -27,6 +28,7 @@ const OffersListing = ({
   const [status, setStatus] = useState('loading');
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('apr'); // 'apr' or 'amount'
+  const { isMobile, isTablet, isDesktop } = useResponsive();
 
   // Notify Webflow of state changes
   const notifyStateChange = useCallback((newStatus, data = {}) => {
@@ -193,7 +195,7 @@ const OffersListing = ({
         <div
           style={{
             width: '100%',
-            padding: tokens.spacing.lg,
+            padding: isMobile ? tokens.spacing.md : isTablet ? tokens.spacing.lg : tokens.spacing.xl,
             boxSizing: 'border-box',
           }}
         >
@@ -201,16 +203,16 @@ const OffersListing = ({
           <div
             style={{
               display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: tokens.spacing.lg,
-              flexWrap: 'wrap',
+              flexDirection: isMobile ? 'column' : 'row',
+              justifyContent: isMobile ? 'flex-start' : 'space-between',
+              alignItems: isMobile ? 'stretch' : 'center',
+              marginBottom: isMobile ? tokens.spacing.md : tokens.spacing.lg,
               gap: tokens.spacing.md,
             }}
           >
             <h2
               style={{
-                fontSize: tokens.typography.fontSize.xl,
+                fontSize: isMobile ? tokens.typography.fontSize.lg : tokens.typography.fontSize.xl,
                 fontWeight: tokens.typography.fontWeight.bold,
                 color: tokens.colors.gray[900],
                 margin: 0,
@@ -222,21 +224,30 @@ const OffersListing = ({
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                gap: tokens.spacing.md,
-                flexWrap: 'wrap',
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'stretch' : 'center',
+                gap: isMobile ? tokens.spacing.sm : tokens.spacing.md,
+                width: isMobile ? '100%' : 'auto',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm }}>
-                <label
-                  style={{
-                    fontSize: tokens.typography.fontSize.sm,
-                    color: tokens.colors.gray[600],
-                    fontWeight: tokens.typography.fontWeight.medium,
-                  }}
-                >
-                  Sort by:
-                </label>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'stretch' : 'center', 
+                gap: tokens.spacing.sm,
+                width: isMobile ? '100%' : 'auto',
+              }}>
+                {!isMobile && (
+                  <label
+                    style={{
+                      fontSize: tokens.typography.fontSize.sm,
+                      color: tokens.colors.gray[600],
+                      fontWeight: tokens.typography.fontWeight.medium,
+                    }}
+                  >
+                    Sort by:
+                  </label>
+                )}
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -248,7 +259,8 @@ const OffersListing = ({
                     backgroundColor: '#ffffff',
                     color: tokens.colors.gray[700],
                     cursor: 'pointer',
-                    minWidth: '150px',
+                    minWidth: isMobile ? '100%' : '150px',
+                    width: isMobile ? '100%' : 'auto',
                   }}
                 >
                   <option value="apr">Credit Score</option>
@@ -257,16 +269,24 @@ const OffersListing = ({
                 </select>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm }}>
-                <label
-                  style={{
-                    fontSize: tokens.typography.fontSize.sm,
-                    color: tokens.colors.gray[600],
-                    fontWeight: tokens.typography.fontWeight.medium,
-                  }}
-                >
-                  Show:
-                </label>
+              <div style={{ 
+                display: 'flex', 
+                flexDirection: isMobile ? 'column' : 'row',
+                alignItems: isMobile ? 'stretch' : 'center', 
+                gap: tokens.spacing.sm,
+                width: isMobile ? '100%' : 'auto',
+              }}>
+                {!isMobile && (
+                  <label
+                    style={{
+                      fontSize: tokens.typography.fontSize.sm,
+                      color: tokens.colors.gray[600],
+                      fontWeight: tokens.typography.fontWeight.medium,
+                    }}
+                  >
+                    Show:
+                  </label>
+                )}
                 <select
                   style={{
                     padding: `${tokens.spacing.xs} ${tokens.spacing.md}`,
@@ -276,7 +296,8 @@ const OffersListing = ({
                     backgroundColor: '#ffffff',
                     color: tokens.colors.gray[700],
                     cursor: 'pointer',
-                    minWidth: '80px',
+                    minWidth: isMobile ? '100%' : '80px',
+                    width: isMobile ? '100%' : 'auto',
                   }}
                 >
                   <option value="10">10</option>

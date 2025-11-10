@@ -3,6 +3,7 @@ import { tokens } from '../../design-system/tokens';
 import Button from '../../components/ui/Button';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
+import { useResponsive } from '../../hooks/useResponsive';
 
 /**
  * OfferCard Component
@@ -10,6 +11,7 @@ import { webflowBridge } from '../../embed/webflowBridge';
  */
 const OfferCard = ({ offer, applicationId }) => {
   const [showDetails, setShowDetails] = useState(false);
+  const { isMobile, isTablet, isDesktop } = useResponsive();
 
   const handleCheckRate = async () => {
     try {
@@ -84,14 +86,16 @@ const OfferCard = ({ offer, applicationId }) => {
       style={{
         backgroundColor: '#ffffff',
         borderRadius: tokens.borderRadius.lg,
-        padding: tokens.spacing.xl,
+        padding: isMobile ? tokens.spacing.md : isTablet ? tokens.spacing.lg : tokens.spacing.xl,
         border: `1px solid ${tokens.colors.gray[200]}`,
         boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: tokens.spacing.lg,
+        marginBottom: isMobile ? tokens.spacing.md : tokens.spacing.lg,
         transition: `all ${tokens.transitions.normal} ease-in-out`,
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        if (!isMobile) {
+          e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
+        }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
@@ -101,24 +105,32 @@ const OfferCard = ({ offer, applicationId }) => {
       <div
         style={{
           display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: isMobile ? 'flex-start' : 'space-between',
+          alignItems: isMobile ? 'stretch' : 'flex-start',
           marginBottom: tokens.spacing.md,
+          gap: isMobile ? tokens.spacing.md : 0,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.md, flex: 1 }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: isMobile ? 'flex-start' : 'center', 
+          gap: tokens.spacing.md, 
+          flex: 1,
+          width: isMobile ? '100%' : 'auto',
+        }}>
           {/* Logo */}
           <div
             style={{
-              width: '48px',
-              height: '48px',
+              width: isMobile ? '40px' : '48px',
+              height: isMobile ? '40px' : '48px',
               borderRadius: tokens.borderRadius.md,
               backgroundColor: lenderColor,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#ffffff',
-              fontSize: tokens.typography.fontSize.xl,
+              fontSize: isMobile ? tokens.typography.fontSize.lg : tokens.typography.fontSize.xl,
               fontWeight: tokens.typography.fontWeight.bold,
               flexShrink: 0,
             }}
@@ -127,11 +139,18 @@ const OfferCard = ({ offer, applicationId }) => {
           </div>
 
           {/* Lender Name and Description */}
-          <div style={{ flex: 1 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.xs, marginBottom: tokens.spacing.xs }}>
+          <div style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}>
+            <div style={{ 
+              display: 'flex', 
+              flexDirection: isMobile ? 'column' : 'row',
+              alignItems: isMobile ? 'flex-start' : 'center', 
+              gap: tokens.spacing.xs, 
+              marginBottom: tokens.spacing.xs,
+              flexWrap: 'wrap',
+            }}>
               <h3
                 style={{
-                  fontSize: tokens.typography.fontSize.xl,
+                  fontSize: isMobile ? tokens.typography.fontSize.lg : tokens.typography.fontSize.xl,
                   fontWeight: tokens.typography.fontWeight.bold,
                   color: tokens.colors.gray[900],
                   margin: 0,
@@ -147,6 +166,7 @@ const OfferCard = ({ offer, applicationId }) => {
                   padding: `${tokens.spacing.xs} ${tokens.spacing.sm}`,
                   borderRadius: tokens.borderRadius.sm,
                   fontWeight: tokens.typography.fontWeight.medium,
+                  alignSelf: isMobile ? 'flex-start' : 'center',
                 }}
               >
                 ✓ Verified
@@ -165,7 +185,12 @@ const OfferCard = ({ offer, applicationId }) => {
         </div>
 
         {/* CHECK RATE Button */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: isMobile ? 'stretch' : 'flex-end',
+          width: isMobile ? '100%' : 'auto',
+        }}>
           <button
             onClick={handleCheckRate}
             style={{
@@ -173,11 +198,12 @@ const OfferCard = ({ offer, applicationId }) => {
               color: '#ffffff',
               border: 'none',
               borderRadius: tokens.borderRadius.md,
-              padding: `${tokens.spacing.sm} ${tokens.spacing.lg}`,
+              padding: isMobile ? `${tokens.spacing.md} ${tokens.spacing.lg}` : `${tokens.spacing.sm} ${tokens.spacing.lg}`,
               fontSize: tokens.typography.fontSize.base,
               fontWeight: tokens.typography.fontWeight.semibold,
               cursor: 'pointer',
               transition: `all ${tokens.transitions.normal} ease-in-out`,
+              width: isMobile ? '100%' : 'auto',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = tokens.colors.success[700];
@@ -193,7 +219,7 @@ const OfferCard = ({ offer, applicationId }) => {
               fontSize: tokens.typography.fontSize.xs,
               color: tokens.colors.gray[500],
               margin: `${tokens.spacing.xs} 0 0 0`,
-              textAlign: 'right',
+              textAlign: isMobile ? 'center' : 'right',
             }}
           >
             on {lenderName.toLowerCase()}'s website
@@ -205,8 +231,12 @@ const OfferCard = ({ offer, applicationId }) => {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(4, 1fr)',
-          gap: tokens.spacing.md,
+          gridTemplateColumns: isMobile 
+            ? 'repeat(2, 1fr)' 
+            : isTablet 
+            ? 'repeat(4, 1fr)' 
+            : 'repeat(4, 1fr)',
+          gap: isMobile ? tokens.spacing.sm : tokens.spacing.md,
           marginBottom: tokens.spacing.lg,
           padding: `${tokens.spacing.md} 0`,
           borderTop: `1px solid ${tokens.colors.gray[200]}`,
@@ -225,7 +255,7 @@ const OfferCard = ({ offer, applicationId }) => {
           </div>
           <div
             style={{
-              fontSize: tokens.typography.fontSize.lg,
+              fontSize: isMobile ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
               fontWeight: tokens.typography.fontWeight.bold,
               color: tokens.colors.gray[900],
             }}
@@ -245,7 +275,7 @@ const OfferCard = ({ offer, applicationId }) => {
           </div>
           <div
             style={{
-              fontSize: tokens.typography.fontSize.lg,
+              fontSize: isMobile ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
               fontWeight: tokens.typography.fontWeight.bold,
               color: tokens.colors.gray[900],
             }}
@@ -273,7 +303,7 @@ const OfferCard = ({ offer, applicationId }) => {
           </div>
           <div
             style={{
-              fontSize: tokens.typography.fontSize.lg,
+              fontSize: isMobile ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
               fontWeight: tokens.typography.fontWeight.bold,
               color: tokens.colors.gray[900],
             }}
@@ -293,7 +323,7 @@ const OfferCard = ({ offer, applicationId }) => {
           </div>
           <div
             style={{
-              fontSize: tokens.typography.fontSize.lg,
+              fontSize: isMobile ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
               fontWeight: tokens.typography.fontWeight.bold,
               color: tokens.colors.gray[900],
             }}
@@ -351,8 +381,12 @@ const OfferCard = ({ offer, applicationId }) => {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: tokens.spacing.lg,
+            gridTemplateColumns: isMobile 
+              ? '1fr' 
+              : isTablet 
+              ? 'repeat(2, 1fr)' 
+              : 'repeat(3, 1fr)',
+            gap: isMobile ? tokens.spacing.md : tokens.spacing.lg,
             marginBottom: tokens.spacing.lg,
             padding: `${tokens.spacing.md} 0`,
             borderTop: `1px solid ${tokens.colors.gray[200]}`,
@@ -466,6 +500,7 @@ const OfferCard = ({ offer, applicationId }) => {
       <div
         style={{
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           gap: tokens.spacing.md,
           paddingTop: tokens.spacing.md,
           borderTop: `1px solid ${tokens.colors.gray[200]}`,
@@ -477,14 +512,17 @@ const OfferCard = ({ offer, applicationId }) => {
             color: tokens.colors.primary[600],
             border: `1px solid ${tokens.colors.primary[600]}`,
             borderRadius: tokens.borderRadius.md,
-            padding: `${tokens.spacing.xs} ${tokens.spacing.md}`,
+            padding: isMobile ? `${tokens.spacing.sm} ${tokens.spacing.md}` : `${tokens.spacing.xs} ${tokens.spacing.md}`,
             fontSize: tokens.typography.fontSize.sm,
             fontWeight: tokens.typography.fontWeight.medium,
             cursor: 'pointer',
             transition: `all ${tokens.transitions.normal} ease-in-out`,
+            width: isMobile ? '100%' : 'auto',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = tokens.colors.primary[50];
+            if (!isMobile) {
+              e.currentTarget.style.backgroundColor = tokens.colors.primary[50];
+            }
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.backgroundColor = 'transparent';
@@ -499,13 +537,15 @@ const OfferCard = ({ offer, applicationId }) => {
             color: tokens.colors.gray[700],
             border: 'none',
             borderRadius: tokens.borderRadius.md,
-            padding: `${tokens.spacing.xs} ${tokens.spacing.md}`,
+            padding: isMobile ? `${tokens.spacing.sm} ${tokens.spacing.md}` : `${tokens.spacing.xs} ${tokens.spacing.md}`,
             fontSize: tokens.typography.fontSize.sm,
             fontWeight: tokens.typography.fontWeight.medium,
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: tokens.spacing.xs,
+            width: isMobile ? '100%' : 'auto',
           }}
         >
           View Details
