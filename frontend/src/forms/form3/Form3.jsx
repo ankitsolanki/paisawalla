@@ -11,7 +11,11 @@ import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
 import form3Schema from './form3Schema';
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+// Get reCAPTCHA site key from environment or window (for embedded forms)
+const RECAPTCHA_SITE_KEY = 
+  (typeof window !== 'undefined' && window.VITE_RECAPTCHA_SITE_KEY) ||
+  import.meta.env.VITE_RECAPTCHA_SITE_KEY || 
+  '';
 
 const Form3 = ({ theme = 'light' }) => {
   const [formData, setFormData] = useState({});
@@ -115,7 +119,8 @@ const Form3 = ({ theme = 'light' }) => {
       return;
     }
 
-    if (!recaptchaToken) {
+    // Only require reCAPTCHA if site key is configured
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
       setErrors((prev) => ({
         ...prev,
         recaptcha: 'Please complete the reCAPTCHA verification',
@@ -130,7 +135,7 @@ const Form3 = ({ theme = 'light' }) => {
       const response = await apiClient.post('/api/leads', {
         ...formData,
         formType: 'form3',
-        recaptchaToken,
+        ...(recaptchaToken && { recaptchaToken }), // Only include if token exists
       });
 
       setIsSubmitted(true);
@@ -165,6 +170,12 @@ const Form3 = ({ theme = 'light' }) => {
       });
     }
   }, [errors.recaptcha]);
+
+  const handleRecaptchaError = useCallback(() => {
+    // If reCAPTCHA fails to load, make it optional
+    console.warn('reCAPTCHA failed to load. Form can still be submitted.');
+    setRecaptchaToken(null);
+  }, []);
 
   const renderField = useCallback((fieldName) => {
     const fieldSchema = form3Schema[fieldName];
@@ -246,7 +257,7 @@ const Form3 = ({ theme = 'light' }) => {
             <>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
                 Check My Eligibility
-              </h2>
+          </h2>
               <p style={{ color: '#656c77', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
                 Personal loans tailored for you, compare & apply in minutes
               </p>
@@ -313,18 +324,20 @@ const Form3 = ({ theme = 'light' }) => {
               </div>
             )}
 
-            {stage === 'details' && (
+            {stage === 'details' && RECAPTCHA_SITE_KEY && RECAPTCHA_SITE_KEY.trim() !== '' && (
               <div style={{ marginBottom: '1.25rem' }}>
-              <ReCAPTCHA
-                sitekey={RECAPTCHA_SITE_KEY}
-                onChange={handleRecaptchaChange}
-              />
-              {errors.recaptcha && (
-                <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#dc2626' }}>
-                  {errors.recaptcha}
-                </p>
-              )}
-            </div>
+                <ReCAPTCHA
+                  sitekey={RECAPTCHA_SITE_KEY}
+                  onChange={handleRecaptchaChange}
+                  onErrored={handleRecaptchaError}
+                  onExpired={handleRecaptchaError}
+                />
+                {errors.recaptcha && (
+                  <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#dc2626' }}>
+                    {errors.recaptcha}
+                  </p>
+                )}
+              </div>
             )}
 
             <Button
