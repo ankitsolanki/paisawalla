@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import ReCAPTCHA from 'react-google-recaptcha';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { useFormTracking } from '../../hooks/useFormTracking';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
@@ -12,10 +11,29 @@ import { webflowBridge } from '../../embed/webflowBridge';
 import form3Schema from './form3Schema';
 
 // Get reCAPTCHA site key from environment or window (for embedded forms)
-const RECAPTCHA_SITE_KEY = 
-  (typeof window !== 'undefined' && window.VITE_RECAPTCHA_SITE_KEY) ||
-  import.meta.env.VITE_RECAPTCHA_SITE_KEY || 
-  '';
+// Only use if it's a valid key (not empty and has reasonable length)
+const getRecaptchaKey = () => {
+  const key = 
+    (typeof window !== 'undefined' && window.VITE_RECAPTCHA_SITE_KEY) ||
+    import.meta.env.VITE_RECAPTCHA_SITE_KEY || 
+    '';
+  
+  // Validate key - reCAPTCHA keys are typically 40 characters, minimum 20
+  // Also check that it's not a placeholder or invalid value
+  if (key && 
+      typeof key === 'string' &&
+      key.trim() !== '' && 
+      key.trim().length >= 20 && 
+      !key.includes('your-key-here') &&
+      !key.includes('placeholder') &&
+      key.trim() !== 'undefined' &&
+      key.trim() !== 'null') {
+    return key.trim();
+  }
+  return '';
+};
+
+const RECAPTCHA_SITE_KEY = getRecaptchaKey();
 
 const Form3 = ({ theme = 'light' }) => {
   const [formData, setFormData] = useState({});
@@ -26,6 +44,21 @@ const Form3 = ({ theme = 'light' }) => {
   const [stage, setStage] = useState('phone'); // 'phone' -> 'otp' -> 'details' -> 'submitted'
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerifying, setOtpVerifying] = useState(false);
+  const [ReCAPTCHA, setReCAPTCHA] = useState(null);
+
+  // Dynamically load ReCAPTCHA only if we have a valid key
+  useEffect(() => {
+    if (RECAPTCHA_SITE_KEY && !ReCAPTCHA) {
+      import('react-google-recaptcha')
+        .then(module => {
+          setReCAPTCHA(() => module.default);
+        })
+        .catch(() => {
+          // Silently fail if reCAPTCHA can't be loaded
+          console.warn('reCAPTCHA module could not be loaded');
+        });
+    }
+  }, [ReCAPTCHA]);
 
   const {
     trackFieldInteraction,
@@ -324,7 +357,7 @@ const Form3 = ({ theme = 'light' }) => {
               </div>
             )}
 
-            {stage === 'details' && RECAPTCHA_SITE_KEY && RECAPTCHA_SITE_KEY.trim() !== '' && (
+            {stage === 'details' && RECAPTCHA_SITE_KEY && ReCAPTCHA && (
               <div style={{ marginBottom: '1.25rem' }}>
                 <ReCAPTCHA
                   sitekey={RECAPTCHA_SITE_KEY}

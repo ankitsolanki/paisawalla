@@ -38,8 +38,9 @@ if (script) {
   }
 
   const recaptchaSiteKey = script.getAttribute('data-recaptcha-site-key') || script.getAttribute('data-recaptcha');
-  if (recaptchaSiteKey) {
-    window.VITE_RECAPTCHA_SITE_KEY = recaptchaSiteKey;
+  // Only set if key exists and looks valid (reCAPTCHA keys are typically 40 characters)
+  if (recaptchaSiteKey && recaptchaSiteKey.trim() !== '' && recaptchaSiteKey.length > 20) {
+    window.VITE_RECAPTCHA_SITE_KEY = recaptchaSiteKey.trim();
   }
 }
 
