@@ -60,11 +60,25 @@ export const rateLimiter = rateLimit({
 });
 
 // Stricter rate limiter for form submissions
+// Use IP + session ID for better tracking (avoids false positives from shared IPs)
+const formSubmissionWindow = parseInt(process.env.FORM_SUBMISSION_WINDOW_MS) || 15 * 60 * 1000; // 15 minutes
+const formSubmissionMax = parseInt(process.env.FORM_SUBMISSION_MAX_REQUESTS) || 10; // 10 submissions per window
+
 export const formSubmissionLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 submissions per 15 minutes
+  windowMs: formSubmissionWindow,
+  max: formSubmissionMax,
   message: 'Too many form submissions, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
+  // Use a custom key generator that includes session ID to avoid false positives
+  keyGenerator: (req) => {
+    const sessionId = req.headers['x-session-id'] || req.ip;
+    return `${req.ip}-${sessionId}`;
+  },
+  // Skip rate limiting for certain conditions (optional)
+  skip: (req) => {
+    // Skip if it's a test environment (you can add more conditions)
+    return process.env.NODE_ENV === 'test';
+  },
 });
 
