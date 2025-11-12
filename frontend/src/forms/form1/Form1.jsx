@@ -8,6 +8,8 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import ProgressBar from '../../components/ProgressBar';
 import SubmitSuccess from '../../components/SubmitSuccess';
+import EligibilityChecking from '../../components/EligibilityChecking';
+import OffersListing from '../../embeds/offers/OffersListing';
 import { validateField, validateForm } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
@@ -52,6 +54,10 @@ const Form1 = ({ theme = 'light' }) => {
   const [stage, setStage] = useState('phone'); // 'phone' -> 'otp' -> 'form'
   const [ReCAPTCHA, setReCAPTCHA] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState(false);
+  const [leadId, setLeadId] = useState(null);
+  const [checkingEligibility, setCheckingEligibility] = useState(false);
+  const [applicationId, setApplicationId] = useState(null);
+  const [eligibilityError, setEligibilityError] = useState(null);
 
   // Dynamically load ReCAPTCHA only if we have a valid key
   useEffect(() => {
@@ -218,11 +224,13 @@ const Form1 = ({ theme = 'light' }) => {
         ...(recaptchaToken && { recaptchaToken }),
       });
 
-      setIsSubmitted(true);
-      trackSubmitSuccess(response.data?._id || response.data?.data?._id);
+      const submittedLeadId = response.data?._id || response.data?.data?._id;
+      setLeadId(submittedLeadId);
+      setCheckingEligibility(true);
+      trackSubmitSuccess(submittedLeadId);
       webflowBridge.postMessage('formSubmitted', {
         success: true,
-        leadId: response.data?._id || response.data?.data?._id,
+        leadId: submittedLeadId,
       });
     } catch (error) {
       setErrors((prev) => ({
@@ -255,6 +263,26 @@ const Form1 = ({ theme = 'light' }) => {
     setRecaptchaError(true);
     setRecaptchaToken(null);
   }, []);
+
+  // Handle eligibility checking completion
+  const handleEligibilityComplete = useCallback((appId) => {
+    setApplicationId(appId);
+    setCheckingEligibility(false);
+    webflowBridge.postMessage('eligibilityComplete', {
+      applicationId: appId,
+      leadId,
+    });
+  }, [leadId]);
+
+  // Handle eligibility checking error
+  const handleEligibilityError = useCallback((error) => {
+    setEligibilityError(error);
+    setCheckingEligibility(false);
+    webflowBridge.postMessage('eligibilityError', {
+      error: error?.message || 'Eligibility check failed',
+      leadId,
+    });
+  }, [leadId]);
 
   const renderField = useCallback((fieldName) => {
     const fieldSchema = form1Schema[fieldName];
@@ -371,17 +399,83 @@ const Form1 = ({ theme = 'light' }) => {
     );
   }, [formData, errors, handleChange, handleBlur, handleFocus, stage]);
 
-  if (isSubmitted) {
+  // Show eligibility checking screen after form submission
+  if (checkingEligibility && leadId) {
     return (
       <ErrorBoundary>
         <ThemeProvider theme={theme}>
-          <SubmitSuccess
-            message="Your loan application has been submitted successfully. We'll review your information and get back to you soon."
-            onCheckEligibility={() => {
-              trackButtonClick('check_eligibility');
-              webflowBridge.postMessage('checkEligibility', { leadId: formData.leadId });
+          <EligibilityChecking
+            leadId={leadId}
+            onComplete={handleEligibilityComplete}
+            onError={handleEligibilityError}
+            theme={theme}
+          />
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  // Show offers listing after eligibility check
+  if (applicationId && !checkingEligibility) {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <OffersListing
+            applicationId={applicationId}
+            leadId={leadId}
+            theme={theme}
+            onStateChange={(status, data) => {
+              webflowBridge.postMessage('offersStateChange', {
+                status,
+                applicationId,
+                leadId,
+                ...data,
+              });
             }}
           />
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  // Show error state if eligibility check failed
+  if (eligibilityError && !checkingEligibility) {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem', textAlign: 'center' }}>
+            <div style={{ marginBottom: '1rem' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                margin: '0 auto 1rem',
+                borderRadius: '50%',
+                backgroundColor: '#fee2e2',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
+                Unable to Process
+              </h2>
+              <p style={{ color: '#656c77', marginBottom: '1rem', fontSize: '0.875rem' }}>
+                {eligibilityError?.message || 'We encountered an issue while processing your application.'}
+              </p>
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setEligibilityError(null);
+                  setCheckingEligibility(true);
+                }}
+              >
+                Try Again
+              </Button>
+            </div>
+          </div>
         </ThemeProvider>
       </ErrorBoundary>
     );
