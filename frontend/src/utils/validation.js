@@ -26,9 +26,21 @@ export const createFieldSchema = (field) => {
       );
       break;
     case 'checkbox':
-      schema = field.required
-        ? z.boolean().refine((val) => val === true, 'This field is required')
-        : z.boolean().optional();
+      // Coerce checkbox values to boolean (handles string "true"/"false" or boolean)
+      schema = z.preprocess(
+        (val) => {
+          if (val === true || val === 'true' || val === 'True' || val === 1 || val === '1') {
+            return true;
+          }
+          if (val === false || val === 'false' || val === 'False' || val === 0 || val === '0' || val === null || val === undefined || val === '') {
+            return false;
+          }
+          return Boolean(val);
+        },
+        field.required
+          ? z.boolean().refine((val) => val === true, 'This field is required')
+          : z.boolean().optional()
+      );
       break;
     case 'date':
       // Validate date format and reasonable range
