@@ -35,6 +35,9 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
   const [checkingEligibility, setCheckingEligibility] = React.useState(false);
   const [applicationId, setApplicationId] = React.useState(null);
   const [eligibilityError, setEligibilityError] = React.useState(null);
+  const [otpSent, setOtpSent] = React.useState(false);
+  const [otpSending, setOtpSending] = React.useState(false);
+  const [otpVerified, setOtpVerified] = React.useState(false);
 
   const {
     trackFieldInteraction,
@@ -45,8 +48,20 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
   } = useFormTracking(schema.formId, formData, schema.steps > 1 ? currentStep : null);
 
   const getCurrentStepFields = React.useCallback(() => {
-    return schema.fields.filter((field) => field.step === currentStep);
-  }, [schema, currentStep]);
+    const fields = schema.fields.filter((field) => field.step === currentStep);
+    
+    // For step 1, conditionally show OTP field only after OTP is sent
+    if (currentStep === 1) {
+      return fields.filter((field) => {
+        if (field.name === 'otp') {
+          return otpSent;
+        }
+        return true;
+      });
+    }
+    
+    return fields;
+  }, [schema, currentStep, otpSent]);
 
   const getStepLabels = React.useCallback(() => {
     if (schema.steps === 1) return [];
@@ -122,12 +137,96 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
     return isValid;
   }, [formData, getCurrentStepFields]);
 
-  const handleNext = React.useCallback(() => {
-    if (validateCurrentStep()) {
-      trackButtonClick('next', { fromStep: currentStep, toStep: currentStep + 1 });
-      setCurrentStep((prev) => Math.min(prev + 1, schema.steps));
+  const sendOtp = React.useCallback(async (phone) => {
+    setOtpSending(true);
+    try {
+      // TODO: Replace with actual API call when backend is ready
+      // await apiClient.post('/api/auth/send-otp', { phone });
+      // For now, simulate OTP send
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      setOtpSent(true);
+      trackButtonClick('otp_sent', { phone });
+    } catch (error) {
+      setErrors((prev) => ({ ...prev, phone: 'Failed to send OTP. Please try again.' }));
+      trackButtonClick('otp_send_error', { error: error.message });
+    } finally {
+      setOtpSending(false);
     }
-  }, [currentStep, validateCurrentStep, schema.steps, trackButtonClick]);
+  }, [trackButtonClick]);
+
+  const verifyOtp = React.useCallback(async (phone, otp) => {
+    try {
+      // TODO: Replace with actual API call when backend is ready
+      // await apiClient.post('/api/auth/verify-otp', { phone, otp });
+      // For now, accept any 6-digit OTP for testing
+      if (!/^\d{6}$/.test(otp)) {
+        setErrors((prev) => ({ ...prev, otp: 'Invalid OTP. Please enter a 6-digit code.' }));
+        return false;
+      }
+      setOtpVerified(true);
+      trackButtonClick('otp_verified', { phone });
+      return true;
+    } catch (error) {
+      setErrors((prev) => ({ ...prev, otp: 'Invalid OTP. Please try again.' }));
+      trackButtonClick('otp_verify_error', { error: error.message });
+      return false;
+    }
+  }, [trackButtonClick]);
+
+  const handleNext = React.useCallback(async () => {
+    // Special handling for step 1 (phone + OTP flow)
+    if (currentStep === 1) {
+      const phoneField = schema.fields.find((f) => f.name === 'phone' && f.step === 1);
+      const phoneValue = formData.phone;
+      
+      // Validate phone first
+      if (phoneField) {
+        const phoneValidation = validateField(phoneValue, phoneField);
+        if (!phoneValidation.isValid) {
+          setErrors((prev) => ({ ...prev, phone: phoneValidation.error }));
+          return;
+        }
+      }
+      
+      // If OTP not sent yet, send it
+      if (!otpSent) {
+        await sendOtp(phoneValue);
+        return;
+      }
+      
+      // If OTP sent but not verified, verify it
+      if (!otpVerified) {
+        const otpField = schema.fields.find((f) => f.name === 'otp' && f.step === 1);
+        const otpValue = formData.otp;
+        
+        if (otpField) {
+          const otpValidation = validateField(otpValue, otpField);
+          if (!otpValidation.isValid) {
+            setErrors((prev) => ({ ...prev, otp: otpValidation.error }));
+            return;
+          }
+        }
+        
+        const verified = await verifyOtp(phoneValue, otpValue);
+        if (!verified) {
+          return;
+        }
+      }
+      
+      // Validate rest of step 1 fields (consent checkboxes)
+      if (!validateCurrentStep()) {
+        return;
+      }
+    } else {
+      // For other steps, normal validation
+      if (!validateCurrentStep()) {
+        return;
+      }
+    }
+    
+    trackButtonClick('next', { fromStep: currentStep, toStep: currentStep + 1 });
+    setCurrentStep((prev) => Math.min(prev + 1, schema.steps));
+  }, [currentStep, validateCurrentStep, schema.steps, schema.fields, formData, trackButtonClick, otpSent, otpVerified, sendOtp, verifyOtp]);
 
   const handlePrevious = React.useCallback(() => {
     trackButtonClick('previous', { fromStep: currentStep, toStep: currentStep - 1 });
@@ -469,8 +568,16 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
                   type="button"
                   variant="primary"
                   onClick={handleNext}
+                  disabled={otpSending}
+                  loading={otpSending}
                 >
-                  Next
+                  {currentStep === 1 && !otpSent
+                    ? otpSending
+                      ? 'Sending OTP...'
+                      : 'Send OTP'
+                    : currentStep === 1 && !otpVerified
+                    ? 'Verify OTP'
+                    : 'Next'}
                 </Button>
               )}
             </div>
