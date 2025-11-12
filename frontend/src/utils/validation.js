@@ -14,6 +14,14 @@ export const createFieldSchema = (field) => {
     return errorMessages[key] || defaultMessage;
   };
 
+  // Preprocess PAN number (ssn) to uppercase before any validation
+  const preprocessValue = (val) => {
+    if (field.name === 'ssn' && typeof val === 'string') {
+      return val.toUpperCase();
+    }
+    return val;
+  };
+
   switch (field.type) {
     case 'email':
       schema = z.string().email(getErrorMessage('email', 'Please enter a valid email address'));
@@ -50,25 +58,141 @@ export const createFieldSchema = (field) => {
       break;
     case 'date':
       // Validate date format and reasonable range
-      schema = z.string().min(1, getErrorMessage('required', 'Date is required')).refine(
+      // HTML date input returns YYYY-MM-DD format
+      // Start with base string schema (required validation will be added later if needed)
+      schema = z.string().refine(
         (val) => {
-          const date = new Date(val);
-          return !isNaN(date.getTime());
+          console.log('[DATE VALIDATION - Format Check]', {
+            fieldName: field.name,
+            value: val,
+            valueType: typeof val,
+            isEmpty: !val || val.trim() === '',
+          });
+          
+          if (!val || typeof val !== 'string' || val.trim() === '') {
+            console.log('[DATE VALIDATION - Format Check] FAILED: Empty or invalid type');
+            return false;
+          }
+          
+          // HTML date input always returns YYYY-MM-DD format
+          // Parse as local date to avoid timezone issues
+          const parts = val.split('-');
+          console.log('[DATE VALIDATION - Format Check]', {
+            parts,
+            partsLength: parts.length,
+          });
+          
+          if (parts.length !== 3) {
+            console.log('[DATE VALIDATION - Format Check] FAILED: Invalid format (not YYYY-MM-DD)');
+            return false;
+          }
+          
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+          const day = parseInt(parts[2], 10);
+          const date = new Date(year, month, day);
+          
+          console.log('[DATE VALIDATION - Format Check]', {
+            year,
+            month: month + 1, // Display as 1-indexed
+            day,
+            parsedDate: date.toISOString(),
+            isValidDate: !isNaN(date.getTime()),
+            dateYear: date.getFullYear(),
+            dateMonth: date.getMonth(),
+            dateDay: date.getDate(),
+            matches: !isNaN(date.getTime()) && 
+                     date.getFullYear() === year && 
+                     date.getMonth() === month && 
+                     date.getDate() === day,
+          });
+          
+          // Check if date is valid and matches input
+          const isValid = !isNaN(date.getTime()) && 
+                 date.getFullYear() === year && 
+                 date.getMonth() === month && 
+                 date.getDate() === day;
+          
+          if (!isValid) {
+            console.log('[DATE VALIDATION - Format Check] FAILED: Date mismatch');
+          }
+          
+          return isValid;
         },
         { message: getErrorMessage('date', 'Please enter a valid date') }
       ).refine(
         (val) => {
-          const date = new Date(val);
+          console.log('[DATE VALIDATION - Range Check]', {
+            fieldName: field.name,
+            value: val,
+          });
+          
+          if (!val || typeof val !== 'string' || val.trim() === '') {
+            console.log('[DATE VALIDATION - Range Check] FAILED: Empty value');
+            return false;
+          }
+          
+          const parts = val.split('-');
+          if (parts.length !== 3) {
+            console.log('[DATE VALIDATION - Range Check] FAILED: Invalid format');
+            return false;
+          }
+          
+          const year = parseInt(parts[0], 10);
+          const month = parseInt(parts[1], 10) - 1;
+          const day = parseInt(parts[2], 10);
+          const inputDate = new Date(year, month, day);
+          
+          console.log('[DATE VALIDATION - Range Check]', {
+            year,
+            month: month + 1,
+            day,
+            inputDate: inputDate.toISOString(),
+            isValidDate: !isNaN(inputDate.getTime()),
+          });
+          
+          if (isNaN(inputDate.getTime())) {
+            console.log('[DATE VALIDATION - Range Check] FAILED: Invalid date');
+            return false;
+          }
+          
+          // Compare dates only (no time)
           const today = new Date();
-          const minDate = new Date('1900-01-01');
-          // Date should be in the past and not before 1900
-          return date <= today && date >= minDate;
+          today.setHours(0, 0, 0, 0);
+          const dateOnly = new Date(year, month, day);
+          const minDate = new Date(1900, 0, 1);
+          
+          console.log('[DATE VALIDATION - Range Check]', {
+            dateOnly: dateOnly.toISOString(),
+            today: today.toISOString(),
+            minDate: minDate.toISOString(),
+            isPastOrToday: dateOnly <= today,
+            isAfterMinDate: dateOnly >= minDate,
+            finalResult: dateOnly <= today && dateOnly >= minDate,
+          });
+          
+          // Date should be in the past (or today) and not before 1900
+          const isValid = dateOnly <= today && dateOnly >= minDate;
+          
+          if (!isValid) {
+            console.log('[DATE VALIDATION - Range Check] FAILED: Date out of range');
+          }
+          
+          return isValid;
         },
         { message: getErrorMessage('dateRange', 'Date must be a valid past date') }
       );
       break;
     default:
-      schema = z.string();
+      // For PAN number (ssn), preprocess to uppercase
+      if (field.name === 'ssn') {
+        schema = z.preprocess(
+          preprocessValue,
+          z.string()
+        );
+      } else {
+        schema = z.string();
+      }
   }
 
   // Apply validation rules based on field type
@@ -78,22 +202,60 @@ export const createFieldSchema = (field) => {
     // String length validations (only for string fields)
     if (isString) {
       if (minLength !== undefined) {
-        schema = schema.min(minLength, getErrorMessage('minLength', `Must be at least ${minLength} characters`));
+        // Check if schema has min method (it's a ZodString), otherwise use refine
+        if (typeof schema.min === 'function') {
+          schema = schema.min(minLength, getErrorMessage('minLength', `Must be at least ${minLength} characters`));
+        } else {
+          // Schema is ZodEffects (from preprocess), use refine
+          schema = schema.refine(
+            (val) => {
+              const strVal = typeof val === 'string' ? val : String(val || '');
+              return strVal.length >= minLength;
+            },
+            { message: getErrorMessage('minLength', `Must be at least ${minLength} characters`) }
+          );
+        }
       }
 
       if (maxLength !== undefined) {
-        schema = schema.max(maxLength, getErrorMessage('maxLength', `Must be no more than ${maxLength} characters`));
+        // Check if schema has max method (it's a ZodString), otherwise use refine
+        if (typeof schema.max === 'function') {
+          schema = schema.max(maxLength, getErrorMessage('maxLength', `Must be no more than ${maxLength} characters`));
+        } else {
+          // Schema is ZodEffects (from preprocess), use refine
+          schema = schema.refine(
+            (val) => {
+              const strVal = typeof val === 'string' ? val : String(val || '');
+              return strVal.length <= maxLength;
+            },
+            { message: getErrorMessage('maxLength', `Must be no more than ${maxLength} characters`) }
+          );
+        }
       }
     }
 
     // Numeric validations (only for number fields)
     if (isNumber) {
       if (min !== undefined) {
-        schema = schema.min(min, getErrorMessage('min', `Must be at least ${min}`));
+        // Number fields use preprocess, so schema is ZodEffects - use refine instead of min
+        schema = schema.refine(
+          (val) => {
+            const num = typeof val === 'number' ? val : Number(val);
+            return !isNaN(num) && num >= min;
+          },
+          { message: getErrorMessage('min', `Must be at least ${min}`) }
+        );
       }
 
       if (max !== undefined) {
-        schema = schema.max(max, getErrorMessage('max', `Must be no more than ${max}`));
+        // Number fields use preprocess, so schema is ZodEffects - use refine instead of max
+        schema = schema.refine(
+          (val) => {
+            const num = typeof val === 'number' ? val : Number(val);
+            return !isNaN(num) && num <= max;
+          },
+          { message: getErrorMessage('max', `Must be no more than ${max}`) }
+        );
       }
     } else {
       // For string fields, min/max can also be used for numeric validation if needed
@@ -115,14 +277,59 @@ export const createFieldSchema = (field) => {
     }
 
     // Regex/pattern validations (only for string fields)
+    // PAN number (ssn) is already converted to uppercase via preprocess
     if (isString && regex !== undefined) {
       const regexPattern = new RegExp(regex);
-      schema = schema.regex(regexPattern, getErrorMessage('regex', getErrorMessage('pattern', 'Invalid format')));
+      // For PAN number, use refine since schema might be ZodEffects after preprocess
+      // Value is already uppercase from preprocess
+      if (field.name === 'ssn') {
+        schema = schema.refine(
+          (val) => {
+            // Value should already be uppercase from preprocess, but ensure it is
+            const upperVal = typeof val === 'string' ? val.toUpperCase() : val;
+            console.log('[PAN VALIDATION]', { original: val, upperVal, regex: regex, testResult: regexPattern.test(upperVal) });
+            return regexPattern.test(upperVal);
+          },
+          { message: getErrorMessage('regex', getErrorMessage('pattern', 'Invalid format')) }
+        );
+      } else {
+        // Check if schema has regex method (it's a ZodString), otherwise use refine
+        if (typeof schema.regex === 'function') {
+          schema = schema.regex(regexPattern, getErrorMessage('regex', getErrorMessage('pattern', 'Invalid format')));
+        } else {
+          schema = schema.refine(
+            (val) => regexPattern.test(val),
+            { message: getErrorMessage('regex', getErrorMessage('pattern', 'Invalid format')) }
+          );
+        }
+      }
     }
 
     if (isString && pattern !== undefined) {
       const patternRegex = new RegExp(pattern);
-      schema = schema.regex(patternRegex, getErrorMessage('pattern', 'Invalid format'));
+      // For PAN number, use refine since schema might be ZodEffects after preprocess
+      // Value is already uppercase from preprocess
+      if (field.name === 'ssn') {
+        schema = schema.refine(
+          (val) => {
+            // Value should already be uppercase from preprocess, but ensure it is
+            const upperVal = typeof val === 'string' ? val.toUpperCase() : val;
+            console.log('[PAN VALIDATION - Pattern]', { original: val, upperVal, pattern: pattern, testResult: patternRegex.test(upperVal) });
+            return patternRegex.test(upperVal);
+          },
+          { message: getErrorMessage('pattern', 'Invalid format') }
+        );
+      } else {
+        // Check if schema has regex method (it's a ZodString), otherwise use refine
+        if (typeof schema.regex === 'function') {
+          schema = schema.regex(patternRegex, getErrorMessage('pattern', 'Invalid format'));
+        } else {
+          schema = schema.refine(
+            (val) => patternRegex.test(val),
+            { message: getErrorMessage('pattern', 'Invalid format') }
+          );
+        }
+      }
     }
   }
 
@@ -130,6 +337,16 @@ export const createFieldSchema = (field) => {
   if (field.required) {
     if (field.type === 'checkbox') {
       // Already handled in checkbox case above
+    } else if (field.type === 'date') {
+      // For date fields, use refine since schema is already ZodEffects after refine calls
+      schema = schema.refine(
+        (val) => {
+          return val !== undefined && val !== null && val !== '' && typeof val === 'string' && val.trim() !== '';
+        },
+        {
+          message: getErrorMessage('required', `${field.label} is required`),
+        }
+      );
     } else if (isNumber) {
       // For numbers, remove optional and validate presence
       schema = schema.refine((val) => {
@@ -139,8 +356,21 @@ export const createFieldSchema = (field) => {
         message: getErrorMessage('required', `${field.label} is required`),
       });
     } else {
-      // For strings, use min(1) to check non-empty
-      schema = schema.min(1, getErrorMessage('required', `${field.label} is required`));
+      // For strings, use min(1) to check non-empty (only if schema is still ZodString)
+      // Check if schema has min method (it's a ZodString), otherwise use refine
+      if (typeof schema.min === 'function') {
+        schema = schema.min(1, getErrorMessage('required', `${field.label} is required`));
+      } else {
+        // Schema is already ZodEffects, use refine
+        schema = schema.refine(
+          (val) => {
+            return val !== undefined && val !== null && val !== '' && typeof val === 'string' && val.trim() !== '';
+          },
+          {
+            message: getErrorMessage('required', `${field.label} is required`),
+          }
+        );
+      }
     }
   }
   // Note: Optional handling for numbers is already in the base schema
@@ -201,19 +431,47 @@ export const validateFormData = (formData, formSchema) => {
  * Validate single field
  */
 export const validateField = (value, field) => {
+  console.log('[VALIDATE FIELD]', {
+    fieldName: field.name,
+    fieldType: field.type,
+    value,
+    valueType: typeof value,
+    isRequired: field.required,
+  });
+  
   try {
     const schema = createFieldSchema(field);
     const result = schema.safeParse(value);
 
+    console.log('[VALIDATE FIELD RESULT]', {
+      fieldName: field.name,
+      success: result.success,
+      errors: result.success ? null : result.error.errors.map(e => ({
+        path: e.path,
+        message: e.message,
+        code: e.code,
+      })),
+    });
+
     if (result.success) {
       return { isValid: true, error: null };
     } else {
+      const errorMessage = result.error.errors[0]?.message || 'Invalid value';
+      console.log('[VALIDATE FIELD] FAILED', {
+        fieldName: field.name,
+        error: errorMessage,
+      });
       return {
         isValid: false,
-        error: result.error.errors[0]?.message || 'Invalid value',
+        error: errorMessage,
       };
     }
   } catch (error) {
+    console.error('[VALIDATE FIELD] EXCEPTION', {
+      fieldName: field.name,
+      error: error.message,
+      stack: error.stack,
+    });
     return {
       isValid: false,
       error: 'Validation error',

@@ -88,7 +88,12 @@ const Input = ({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
-        style={inputStyles}
+        style={{
+          ...inputStyles,
+          ...(props.style || {}),
+          // Add uppercase styling for PAN number (ssn field)
+          ...(name === 'ssn' ? { textTransform: 'uppercase' } : {}),
+        }}
         className={className}
         {...props}
       />

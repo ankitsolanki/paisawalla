@@ -1,15 +1,14 @@
 import React, { Suspense } from 'react';
-import DynamicForm from '../../components/DynamicForm';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import form1Schema from './form1.schema.json';
+import Form1Component from './Form1';
 
 /**
- * Form 1 - Personal Loan Application (25 fields, 5 steps)
+ * Form 1 - Personal Loan Application (matches CSV sheet exactly)
  */
 const Form1 = ({ theme = 'light' }) => {
   return (
     <Suspense fallback={<LoadingSpinner fullScreen />}>
-      <DynamicForm schema={form1Schema} theme={theme} />
+      <Form1Component theme={theme} />
     </Suspense>
   );
 };

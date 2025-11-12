@@ -79,11 +79,37 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
   const handleChange = useCallback(
     (e) => {
       const { name, value } = e.target;
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-      trackFieldInteraction(name, 'change', value);
+      
+      // Get field schema to check if it's PAN number (ssn field)
+      const field = schema.fields.find((f) => f.name === name);
+      let processedValue = value;
+      
+      // Convert PAN number (ssn) to uppercase
+      if (field && field.name === 'ssn' && typeof value === 'string') {
+        processedValue = value.toUpperCase();
+        // Update the input value to show uppercase
+        e.target.value = processedValue;
+      }
+      
+      console.log('[HANDLE CHANGE]', {
+        fieldName: name,
+        value,
+        processedValue,
+        valueType: typeof value,
+        rawValue: e.target.value,
+        inputType: e.target.type,
+      });
+      
+      setFormData((prev) => {
+        const newFormData = { ...prev, [name]: processedValue };
+        console.log('[HANDLE CHANGE] Updated formData', {
+          fieldName: name,
+          newValue: newFormData[name],
+        });
+        return newFormData;
+      });
+      
+      trackFieldInteraction(name, 'change', processedValue);
       if (errors[name]) {
         setErrors((prev) => {
           const newErrors = { ...prev };
@@ -92,20 +118,66 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
         });
       }
     },
-    [errors, trackFieldInteraction]
+    [errors, trackFieldInteraction, schema]
   );
 
   const handleBlur = useCallback(
     (e) => {
       const { name, value } = e.target;
+      console.log('[HANDLE BLUR]', {
+        fieldName: name,
+        value,
+        valueType: typeof value,
+        rawValue: e.target.value,
+      });
+      
       trackFieldInteraction(name, 'blur', value);
       const field = schema.fields.find((f) => f.name === name);
+      
       if (field) {
-        const validation = validateField(value, field);
-        if (!validation.isValid) {
-          setErrors((prev) => ({ ...prev, [name]: validation.error }));
-          trackFieldInteraction(name, 'error', value);
+        console.log('[HANDLE BLUR] Field found', {
+          fieldName: field.name,
+          fieldType: field.type,
+          isRequired: field.required,
+        });
+        
+        // Only validate if field has a value or is required
+        // For number fields, 0 is a valid value, so check differently
+        const hasValue = field.type === 'number' 
+          ? (value !== undefined && value !== null && value !== '' && !isNaN(Number(value)))
+          : (value !== undefined && value !== null && value !== '');
+        console.log('[HANDLE BLUR] Validation check', {
+          hasValue,
+          isRequired: field.required,
+          willValidate: hasValue || field.required,
+        });
+        
+        if (hasValue || field.required) {
+          console.log('[HANDLE BLUR] Calling validateField', {
+            fieldName: name,
+            value,
+          });
+          const validation = validateField(value, field);
+          console.log('[HANDLE BLUR] Validation result', {
+            fieldName: name,
+            isValid: validation.isValid,
+            error: validation.error,
+          });
+          
+          if (!validation.isValid) {
+            setErrors((prev) => ({ ...prev, [name]: validation.error }));
+            trackFieldInteraction(name, 'error', value);
+          } else {
+            // Clear error if validation passes
+            setErrors((prev) => {
+              const newErrors = { ...prev };
+              delete newErrors[name];
+              return newErrors;
+            });
+          }
         }
+      } else {
+        console.warn('[HANDLE BLUR] Field not found in schema', { fieldName: name });
       }
     },
     [schema, trackFieldInteraction]
@@ -120,22 +192,82 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
   );
 
   const validateCurrentStep = useCallback(() => {
+    console.log('[VALIDATE CURRENT STEP]', {
+      currentStep,
+      formData,
+    });
+    
     const currentFields = getCurrentStepFields();
+    console.log('[VALIDATE CURRENT STEP] Fields to validate', {
+      fieldNames: currentFields.map(f => f.name),
+      fieldCount: currentFields.length,
+    });
+    
     const stepErrors = {};
     let isValid = true;
 
     currentFields.forEach((field) => {
       const value = formData[field.name];
-      const validation = validateField(value, field);
-      if (!validation.isValid) {
-        stepErrors[field.name] = validation.error;
-        isValid = false;
+      
+      console.log('[VALIDATE CURRENT STEP] Processing field', {
+        fieldName: field.name,
+        fieldType: field.type,
+        value,
+        valueType: typeof value,
+        isRequired: field.required,
+      });
+      
+      // Simple check: is field empty?
+      // For number fields, 0 is a valid value, so only check for empty/null/undefined
+      const isEmpty = value === undefined || 
+                      value === null || 
+                      value === '' || 
+                      (field.type === 'checkbox' && value === false) ||
+                      (field.type === 'number' && (value === '' || value === null || value === undefined || (typeof value === 'string' && value.trim() === '')));
+      
+      console.log('[VALIDATE CURRENT STEP] Field empty check', {
+        fieldName: field.name,
+        isEmpty,
+      });
+      
+      if (isEmpty) {
+        // Field is empty
+        if (field.required) {
+          console.log('[VALIDATE CURRENT STEP] Field is required and empty', {
+            fieldName: field.name,
+          });
+          stepErrors[field.name] = `${field.label} is required`;
+          isValid = false;
+        }
+        // If not required and empty, skip validation
+      } else {
+        // Field has value - validate it
+        console.log('[VALIDATE CURRENT STEP] Field has value, validating', {
+          fieldName: field.name,
+          value,
+        });
+        const validation = validateField(value, field);
+        console.log('[VALIDATE CURRENT STEP] Field validation result', {
+          fieldName: field.name,
+          isValid: validation.isValid,
+          error: validation.error,
+        });
+        
+        if (!validation.isValid) {
+          stepErrors[field.name] = validation.error;
+          isValid = false;
+        }
       }
+    });
+
+    console.log('[VALIDATE CURRENT STEP] Final result', {
+      isValid,
+      errors: stepErrors,
     });
 
     setErrors((prev) => ({ ...prev, ...stepErrors }));
     return isValid;
-  }, [formData, getCurrentStepFields]);
+  }, [formData, getCurrentStepFields, currentStep]);
 
   const sendOtp = useCallback(async (phone) => {
     setOtpSending(true);
@@ -225,11 +357,20 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
     }
     
     trackButtonClick('next', { fromStep: currentStep, toStep: currentStep + 1 });
+    // Clear errors for current step when moving forward
+    const currentFieldNames = getCurrentStepFields().map(f => f.name);
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      currentFieldNames.forEach(name => delete newErrors[name]);
+      return newErrors;
+    });
     setCurrentStep((prev) => Math.min(prev + 1, schema.steps));
   }, [currentStep, validateCurrentStep, schema.steps, schema.fields, formData, trackButtonClick, otpSent, otpVerified, sendOtp, verifyOtp]);
 
   const handlePrevious = useCallback(() => {
     trackButtonClick('previous', { fromStep: currentStep, toStep: currentStep - 1 });
+    // Clear errors when going back
+    setErrors({});
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   }, [currentStep, trackButtonClick]);
 
@@ -300,6 +441,12 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
     trackSubmitError,
     trackButtonClick,
   ]);
+
+  // Clear errors when step changes
+  useEffect(() => {
+    // Clear all errors when navigating to a new step
+    setErrors({});
+  }, [currentStep]);
 
   useEffect(() => {
     if (schema.steps === 1 || currentStep === schema.steps) {

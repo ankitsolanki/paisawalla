@@ -1,5 +1,4 @@
-import React, { useState, useCallback, lazy, Suspense } from 'react';
-import ReCAPTCHA from 'react-google-recaptcha';
+import React, { useState, useCallback, lazy, Suspense, useEffect } from 'react';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { useFormTracking } from '../../hooks/useFormTracking';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
@@ -7,7 +6,6 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
-import FormStepper from '../../components/FormStepper';
 import ProgressBar from '../../components/ProgressBar';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import { validateField, validateForm } from '../../utils/validationRules';
@@ -15,7 +13,32 @@ import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
 import form1Schema from './form1Schema';
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
+// Get reCAPTCHA site key from environment or window (for embedded forms)
+// Only use if it's a valid key (not empty and has reasonable length)
+const getRecaptchaKey = () => {
+  const windowKey = typeof window !== 'undefined' ? window.VITE_RECAPTCHA_SITE_KEY : undefined;
+  const envKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+  const key = windowKey || envKey || '';
+  
+  // Validate key - reCAPTCHA keys are typically 40 characters, minimum 20
+  // Also check that it's not a placeholder or invalid value
+  const isValid = key && 
+      typeof key === 'string' &&
+      key.trim() !== '' && 
+      key.trim().length >= 20 && 
+      !key.includes('your-key-here') &&
+      !key.includes('placeholder') &&
+      key.trim() !== 'undefined' &&
+      key.trim() !== 'null';
+  
+  if (isValid) {
+    return key.trim();
+  }
+  
+  return '';
+};
+
+const RECAPTCHA_SITE_KEY = getRecaptchaKey();
 
 const Form1 = ({ theme = 'light' }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -24,13 +47,29 @@ const Form1 = ({ theme = 'light' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState(null);
+  const [otpSending, setOtpSending] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [stage, setStage] = useState('phone'); // 'phone' -> 'otp' -> 'form'
+  const [ReCAPTCHA, setReCAPTCHA] = useState(null);
+  const [recaptchaError, setRecaptchaError] = useState(false);
+
+  // Dynamically load ReCAPTCHA only if we have a valid key
+  useEffect(() => {
+    if (RECAPTCHA_SITE_KEY && !ReCAPTCHA) {
+      import('react-google-recaptcha')
+        .then(module => {
+          setReCAPTCHA(() => module.default);
+        })
+        .catch(() => {
+          // Silently fail - reCAPTCHA is optional
+        });
+    }
+  }, [ReCAPTCHA]);
 
   const steps = [
-    { label: 'Personal Info' },
-    { label: 'Address' },
-    { label: 'Employment' },
-    { label: 'Loan Details' },
-    { label: 'Review' },
+    { label: 'Personal Information' },
+    { label: 'Employment Details' },
+    { label: 'Address Details' },
   ];
 
   const {
@@ -112,18 +151,62 @@ const Form1 = ({ theme = 'light' }) => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   }, [currentStep, trackButtonClick]);
 
+  const handlePhoneSubmit = useCallback(async () => {
+    // Validate phone
+    const phoneRules = form1Schema.phone.rules;
+    const phoneError = validateField(formData.phone || '', phoneRules);
+    if (phoneError) {
+      setErrors((prev) => ({ ...prev, phone: phoneError }));
+      return;
+    }
+    
+    // Validate consent checkbox
+    if (!formData.consentCreditCheck) {
+      setErrors((prev) => ({ ...prev, consentCreditCheck: 'This field is required' }));
+      return;
+    }
+    
+    // Send OTP
+    setOtpSending(true);
+    try {
+      // In production, POST to your OTP endpoint
+      // await apiClient.post('/api/auth/send-otp', { phone: formData.phone });
+      setStage('otp');
+    } catch (error) {
+      setErrors((prev) => ({ ...prev, phone: 'Failed to send OTP. Please try again.' }));
+    } finally {
+      setOtpSending(false);
+    }
+  }, [formData.phone, formData.consentCreditCheck]);
+
+  const handleOtpSubmit = useCallback(async () => {
+    // Validate OTP = 1234 (hardcoded for testing)
+    if ((formData.otp || '').trim() !== '1234') {
+      setErrors((prev) => ({ ...prev, otp: 'Invalid verification code. Please enter 1234 to continue.' }));
+      return;
+    }
+    
+    setOtpVerified(true);
+    setStage('form');
+    // In production, verify OTP via API
+    // await apiClient.post('/api/auth/verify-otp', { phone: formData.phone, otp: formData.otp });
+  }, [formData.otp]);
+
   const handleSubmit = useCallback(async () => {
     if (!validateStep(currentStep)) {
       return;
     }
 
-    if (!recaptchaToken) {
+    // Only require reCAPTCHA on final step if site key is configured AND reCAPTCHA hasn't errored
+    if (currentStep === steps.length && RECAPTCHA_SITE_KEY && !recaptchaError && !recaptchaToken) {
       setErrors((prev) => ({
         ...prev,
         recaptcha: 'Please complete the reCAPTCHA verification',
       }));
       return;
     }
+    
+    // If reCAPTCHA errored, allow submission without it
 
     trackSubmitStart();
     setIsSubmitting(true);
@@ -132,14 +215,14 @@ const Form1 = ({ theme = 'light' }) => {
       const response = await apiClient.post('/api/leads', {
         ...formData,
         formType: 'form1',
-        recaptchaToken,
+        ...(recaptchaToken && { recaptchaToken }),
       });
 
       setIsSubmitted(true);
-      trackSubmitSuccess(response.data._id);
+      trackSubmitSuccess(response.data?._id || response.data?.data?._id);
       webflowBridge.postMessage('formSubmitted', {
         success: true,
-        leadId: response.data._id,
+        leadId: response.data?._id || response.data?.data?._id,
       });
     } catch (error) {
       setErrors((prev) => ({
@@ -154,7 +237,7 @@ const Form1 = ({ theme = 'light' }) => {
     } finally {
       setIsSubmitting(false);
     }
-  }, [currentStep, validateStep, recaptchaToken, formData, trackSubmitStart, trackSubmitSuccess, trackSubmitError]);
+  }, [currentStep, validateStep, recaptchaToken, recaptchaError, formData, trackSubmitStart, trackSubmitSuccess, trackSubmitError, steps.length]);
 
   const handleRecaptchaChange = useCallback((token) => {
     setRecaptchaToken(token);
@@ -167,9 +250,20 @@ const Form1 = ({ theme = 'light' }) => {
     }
   }, [errors.recaptcha]);
 
+  const handleRecaptchaError = useCallback(() => {
+    // If reCAPTCHA fails to load, make it optional
+    setRecaptchaError(true);
+    setRecaptchaToken(null);
+  }, []);
+
   const renderField = useCallback((fieldName) => {
     const fieldSchema = form1Schema[fieldName];
     if (!fieldSchema) return null;
+
+    // Skip phone and OTP in form stage (handled separately)
+    if (stage === 'form' && (fieldName === 'phone' || fieldName === 'otp')) {
+      return null;
+    }
 
     const commonProps = {
       name: fieldName,
@@ -183,6 +277,33 @@ const Form1 = ({ theme = 'light' }) => {
       fullWidth: fieldSchema.fullWidth !== false,
       placeholder: fieldSchema.placeholder,
     };
+
+    // Handle checkbox type
+    if (fieldSchema.type === 'checkbox') {
+      return (
+        <div key={fieldName} style={{ gridColumn: '1 / -1', marginBottom: '0.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              name={fieldName}
+              checked={formData[fieldName] || false}
+              onChange={(e) => handleChange({ target: { name: fieldName, value: e.target.checked } })}
+              required={fieldSchema.required}
+              style={{ marginRight: '0.5rem' }}
+            />
+            <span>
+              {fieldSchema.label}
+              {fieldSchema.required && <span style={{ color: '#ef4444', marginLeft: '0.25rem' }}>*</span>}
+            </span>
+          </label>
+          {errors[fieldName] && (
+            <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#dc2626' }}>
+              {errors[fieldName]}
+            </p>
+          )}
+        </div>
+      );
+    }
 
     if (fieldSchema.type === 'select') {
       return (
@@ -245,9 +366,10 @@ const Form1 = ({ theme = 'light' }) => {
         min={fieldSchema.min}
         max={fieldSchema.max}
         step={fieldSchema.step}
+        maxLength={fieldSchema.maxLength}
       />
     );
-  }, [formData, errors, handleChange, handleBlur, handleFocus]);
+  }, [formData, errors, handleChange, handleBlur, handleFocus, stage]);
 
   if (isSubmitted) {
     return (
@@ -260,6 +382,73 @@ const Form1 = ({ theme = 'light' }) => {
               webflowBridge.postMessage('checkEligibility', { leadId: formData.leadId });
             }}
           />
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  // Handle phone/OTP stage before form
+  if (stage === 'phone') {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+              Personal Loan Application
+            </h2>
+            <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+              Enter your mobile number to get started
+            </p>
+            <form onSubmit={(e) => { e.preventDefault(); handlePhoneSubmit(); }}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                {renderField('phone')}
+              </div>
+              <div style={{ marginBottom: '1.25rem' }}>
+                {renderField('consentCreditCheck')}
+              </div>
+              <Button
+                type="submit"
+                variant="primary"
+                fullWidth
+                disabled={otpSending || !formData.consentCreditCheck}
+                loading={otpSending}
+              >
+                {otpSending ? 'Sending OTP...' : 'Send OTP'}
+              </Button>
+            </form>
+          </div>
+        </ThemeProvider>
+      </ErrorBoundary>
+    );
+  }
+
+  if (stage === 'otp') {
+    return (
+      <ErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+              Verify Your Number
+            </h2>
+            <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+              We've sent a one-time code to {formData.phone || 'your number'}. Please enter it below.
+            </p>
+            <form onSubmit={(e) => { e.preventDefault(); handleOtpSubmit(); }}>
+              <div style={{ marginBottom: '1.25rem' }}>
+                {renderField('otp')}
+              </div>
+              <Button
+                type="submit"
+                variant="primary"
+                fullWidth
+              >
+                Verify OTP
+              </Button>
+              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#656c77', textAlign: 'center' }}>
+                Didn't receive the code? <span style={{ color: '#160E7A', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setStage('phone')}>Resend OTP</span>
+              </p>
+            </form>
+          </div>
         </ThemeProvider>
       </ErrorBoundary>
     );
@@ -279,7 +468,6 @@ const Form1 = ({ theme = 'light' }) => {
             Personal Loan Application
           </h2>
           
-          <FormStepper currentStep={currentStep} totalSteps={steps.length} steps={steps} />
           <ProgressBar current={currentStep} total={steps.length} />
 
           <form onSubmit={(e) => e.preventDefault()}>
@@ -300,11 +488,13 @@ const Form1 = ({ theme = 'light' }) => {
               </div>
             )}
 
-            {currentStep === steps.length && (
+            {currentStep === steps.length && RECAPTCHA_SITE_KEY && ReCAPTCHA && !recaptchaError && (
               <div style={{ marginBottom: '1.5rem' }}>
                 <ReCAPTCHA
                   sitekey={RECAPTCHA_SITE_KEY}
                   onChange={handleRecaptchaChange}
+                  onErrored={handleRecaptchaError}
+                  onExpired={handleRecaptchaError}
                 />
                 {errors.recaptcha && (
                   <p style={{ marginTop: '0.5rem', fontSize: '0.875rem', color: '#dc2626' }}>

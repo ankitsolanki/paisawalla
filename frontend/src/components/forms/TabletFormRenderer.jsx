@@ -79,11 +79,23 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
   const handleChange = React.useCallback(
     (e) => {
       const { name, value } = e.target;
+      
+      // Get field schema to check if it's PAN number (ssn field)
+      const field = schema.fields.find((f) => f.name === name);
+      let processedValue = value;
+      
+      // Convert PAN number (ssn) to uppercase
+      if (field && field.name === 'ssn' && typeof value === 'string') {
+        processedValue = value.toUpperCase();
+        // Update the input value to show uppercase
+        e.target.value = processedValue;
+      }
+      
       setFormData((prev) => ({
         ...prev,
-        [name]: value,
+        [name]: processedValue,
       }));
-      trackFieldInteraction(name, 'change', value);
+      trackFieldInteraction(name, 'change', processedValue);
       if (errors[name]) {
         setErrors((prev) => {
           const newErrors = { ...prev };
@@ -92,7 +104,7 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
         });
       }
     },
-    [errors, trackFieldInteraction]
+    [errors, trackFieldInteraction, schema]
   );
 
   const handleBlur = React.useCallback(
@@ -101,10 +113,24 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
       trackFieldInteraction(name, 'blur', value);
       const field = schema.fields.find((f) => f.name === name);
       if (field) {
-        const validation = validateField(value, field);
-        if (!validation.isValid) {
-          setErrors((prev) => ({ ...prev, [name]: validation.error }));
-          trackFieldInteraction(name, 'error', value);
+        // Only validate if field has a value or is required
+        // For number fields, 0 is a valid value, so check differently
+        const hasValue = field.type === 'number' 
+          ? (value !== undefined && value !== null && value !== '' && !isNaN(Number(value)))
+          : (value !== undefined && value !== null && value !== '');
+        if (hasValue || field.required) {
+          const validation = validateField(value, field);
+          if (!validation.isValid) {
+            setErrors((prev) => ({ ...prev, [name]: validation.error }));
+            trackFieldInteraction(name, 'error', value);
+          } else {
+            // Clear error if validation passes
+            setErrors((prev) => {
+              const newErrors = { ...prev };
+              delete newErrors[name];
+              return newErrors;
+            });
+          }
         }
       }
     },
@@ -126,10 +152,29 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
 
     currentFields.forEach((field) => {
       const value = formData[field.name];
-      const validation = validateField(value, field);
-      if (!validation.isValid) {
-        stepErrors[field.name] = validation.error;
-        isValid = false;
+      
+      // Simple check: is field empty?
+      // For number fields, 0 is a valid value, so only check for empty/null/undefined
+      const isEmpty = value === undefined || 
+                      value === null || 
+                      value === '' || 
+                      (field.type === 'checkbox' && value === false) ||
+                      (field.type === 'number' && (value === '' || value === null || value === undefined || (typeof value === 'string' && value.trim() === '')));
+      
+      if (isEmpty) {
+        // Field is empty
+        if (field.required) {
+          stepErrors[field.name] = `${field.label} is required`;
+          isValid = false;
+        }
+        // If not required and empty, skip validation
+      } else {
+        // Field has value - validate it
+        const validation = validateField(value, field);
+        if (!validation.isValid) {
+          stepErrors[field.name] = validation.error;
+          isValid = false;
+        }
       }
     });
 
@@ -225,11 +270,20 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
     }
     
     trackButtonClick('next', { fromStep: currentStep, toStep: currentStep + 1 });
+    // Clear errors for current step when moving forward
+    const currentFieldNames = getCurrentStepFields().map(f => f.name);
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      currentFieldNames.forEach(name => delete newErrors[name]);
+      return newErrors;
+    });
     setCurrentStep((prev) => Math.min(prev + 1, schema.steps));
-  }, [currentStep, validateCurrentStep, schema.steps, schema.fields, formData, trackButtonClick, otpSent, otpVerified, sendOtp, verifyOtp]);
+  }, [currentStep, validateCurrentStep, schema.steps, schema.fields, formData, trackButtonClick, otpSent, otpVerified, sendOtp, verifyOtp, getCurrentStepFields]);
 
   const handlePrevious = React.useCallback(() => {
     trackButtonClick('previous', { fromStep: currentStep, toStep: currentStep - 1 });
+    // Clear errors when going back
+    setErrors({});
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   }, [currentStep, trackButtonClick]);
 
@@ -300,6 +354,12 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
     trackSubmitError,
     trackButtonClick,
   ]);
+
+  // Clear errors when step changes
+  React.useEffect(() => {
+    // Clear all errors when navigating to a new step
+    setErrors({});
+  }, [currentStep]);
 
   React.useEffect(() => {
     if (schema.steps === 1 || currentStep === schema.steps) {

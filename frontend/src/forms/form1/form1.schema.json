@@ -35,14 +35,16 @@
       "label": "I authorize PW.com to access my credit information",
       "type": "checkbox",
       "required": true,
-      "step": 1
+      "step": 1,
+      "fullWidth": true
     },
     {
       "name": "consentMarketing",
       "label": "I consent to receive marketing communications",
       "type": "checkbox",
       "required": false,
-      "step": 1
+      "step": 1,
+      "fullWidth": true
     },
     {
       "name": "firstName",
@@ -108,7 +110,7 @@
       "validation": {
         "minLength": 5
       },
-      "step": 2,
+      "step": 3,
       "fullWidth": true
     },
     {
@@ -120,7 +122,7 @@
       "validation": {
         "minLength": 2
       },
-      "step": 2
+      "step": 3
     },
     {
       "name": "state",
@@ -140,7 +142,7 @@
         { "value": "Haryana", "label": "Haryana" },
         { "value": "Other", "label": "Other" }
       ],
-      "step": 2
+      "step": 3
     },
     {
       "name": "zipCode",
@@ -153,7 +155,7 @@
         "minLength": 6,
         "maxLength": 6
       },
-      "step": 2
+      "step": 3
     },
     {
       "name": "yearsAtAddress",
@@ -165,7 +167,7 @@
         "min": 0,
         "max": 50
       },
-      "step": 2
+      "step": 3
     },
     {
       "name": "employmentStatus",
@@ -179,7 +181,7 @@
         { "value": "retired", "label": "Retired" },
         { "value": "student", "label": "Student" }
       ],
-      "step": 3
+      "step": 4
     },
     {
       "name": "employerName",
@@ -190,7 +192,7 @@
       "validation": {
         "minLength": 2
       },
-      "step": 3
+      "step": 4
     },
     {
       "name": "jobTitle",
@@ -201,7 +203,7 @@
       "validation": {
         "minLength": 2
       },
-      "step": 3
+      "step": 4
     },
     {
       "name": "monthlyIncome",
@@ -213,7 +215,7 @@
         "min": 10000,
         "max": 10000000
       },
-      "step": 3
+      "step": 4
     },
     {
       "name": "yearsEmployed",
@@ -225,7 +227,7 @@
         "min": 0,
         "max": 50
       },
-      "step": 3
+      "step": 4
     },
     {
       "name": "loanAmount",
@@ -237,7 +239,7 @@
         "min": 10000,
         "max": 50000000
       },
-      "step": 4
+      "step": 5
     },
     {
       "name": "loanPurpose",
@@ -253,7 +255,7 @@
         { "value": "vacation", "label": "Vacation" },
         { "value": "other", "label": "Other" }
       ],
-      "step": 4
+      "step": 5
     },
     {
       "name": "creditScore",
@@ -265,7 +267,7 @@
         "min": 300,
         "max": 850
       },
-      "step": 4
+      "step": 5
     },
     {
       "name": "bankAccountNumber",
@@ -277,7 +279,7 @@
         "minLength": 9,
         "maxLength": 18
       },
-      "step": 4
+      "step": 5
     },
     {
       "name": "routingNumber",
@@ -290,7 +292,7 @@
         "minLength": 11,
         "maxLength": 11
       },
-      "step": 4
+      "step": 5
     },
     {
       "name": "hasCoSigner",
