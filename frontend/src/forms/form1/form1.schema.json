@@ -2,43 +2,8 @@
   "formId": "form1",
   "title": "Personal Loan Application",
   "submitEndpoint": "/api/leads",
-  "steps": 5,
+  "steps": 6,
   "fields": [
-    {
-      "name": "firstName",
-      "label": "First Name",
-      "type": "text",
-      "placeholder": "Enter your first name",
-      "required": true,
-      "validation": {
-        "minLength": 2,
-        "maxLength": 50
-      },
-      "step": 1
-    },
-    {
-      "name": "lastName",
-      "label": "Last Name",
-      "type": "text",
-      "placeholder": "Enter your last name",
-      "required": true,
-      "validation": {
-        "minLength": 2,
-        "maxLength": 50
-      },
-      "step": 1
-    },
-    {
-      "name": "email",
-      "label": "Email Address",
-      "type": "email",
-      "placeholder": "you@example.com",
-      "required": true,
-      "validation": {
-        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
-      },
-      "step": 1
-    },
     {
       "name": "phone",
       "label": "Mobile Number",
@@ -53,11 +18,73 @@
       "step": 1
     },
     {
+      "name": "otp",
+      "label": "Enter Verification Code",
+      "type": "otp",
+      "placeholder": "Enter the 6-digit code sent to your mobile",
+      "required": true,
+      "validation": {
+        "regex": "^[0-9]{6}$",
+        "minLength": 6,
+        "maxLength": 6
+      },
+      "step": 1
+    },
+    {
+      "name": "consentCreditCheck",
+      "label": "I authorize PW.com to access my credit information",
+      "type": "checkbox",
+      "required": true,
+      "step": 1
+    },
+    {
+      "name": "consentMarketing",
+      "label": "I consent to receive marketing communications",
+      "type": "checkbox",
+      "required": false,
+      "step": 1
+    },
+    {
+      "name": "firstName",
+      "label": "First Name",
+      "type": "text",
+      "placeholder": "Enter your first name",
+      "required": true,
+      "validation": {
+        "minLength": 2,
+        "maxLength": 50
+      },
+      "step": 2
+    },
+    {
+      "name": "lastName",
+      "label": "Last Name",
+      "type": "text",
+      "placeholder": "Enter your last name",
+      "required": true,
+      "validation": {
+        "minLength": 2,
+        "maxLength": 50
+      },
+      "step": 2
+    },
+    {
+      "name": "email",
+      "label": "Email Address",
+      "type": "email",
+      "placeholder": "you@example.com",
+      "required": true,
+      "validation": {
+        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+      },
+      "step": 2
+    },
+    {
       "name": "dateOfBirth",
       "label": "Date of Birth",
       "type": "date",
       "required": true,
-      "step": 1
+      "step": 2
     },
     {
       "name": "ssn",
@@ -70,7 +97,7 @@
         "minLength": 10,
         "maxLength": 10
       },
-      "step": 1
+      "step": 2
     },
     {
       "name": "address",
@@ -274,7 +301,7 @@
         { "value": "yes", "label": "Yes" },
         { "value": "no", "label": "No" }
       ],
-      "step": 5
+      "step": 6
     },
     {
       "name": "previousLoans",
@@ -285,21 +312,7 @@
         { "value": "yes", "label": "Yes" },
         { "value": "no", "label": "No" }
       ],
-      "step": 5
-    },
-    {
-      "name": "consentMarketing",
-      "label": "I consent to receive marketing communications",
-      "type": "checkbox",
-      "required": false,
-      "step": 5
-    },
-    {
-      "name": "consentCreditCheck",
-      "label": "I authorize PW.com to access my credit information",
-      "type": "checkbox",
-      "required": true,
-      "step": 5
+      "step": 6
     }
   ]
 }

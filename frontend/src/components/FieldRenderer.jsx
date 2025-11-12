@@ -221,6 +221,17 @@ const FieldRenderer = ({
         </div>
       );
 
+    case 'otp':
+      return (
+        <Input
+          {...commonProps}
+          type="text"
+          maxLength={6}
+          inputMode="numeric"
+          pattern="[0-9]*"
+        />
+      );
+
     default:
       return (
         <Input
