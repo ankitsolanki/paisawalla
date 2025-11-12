@@ -8,9 +8,15 @@ export const createFieldSchema = (field) => {
   const isNumber = field.type === 'number';
   const isString = field.type !== 'number' && field.type !== 'checkbox' && field.type !== 'date';
 
+  // Get custom error messages if available
+  const errorMessages = field.validation?.errorMessages || {};
+  const getErrorMessage = (key, defaultMessage) => {
+    return errorMessages[key] || defaultMessage;
+  };
+
   switch (field.type) {
     case 'email':
-      schema = z.string().email('Please enter a valid email address');
+      schema = z.string().email(getErrorMessage('email', 'Please enter a valid email address'));
       break;
     case 'number':
       // Use preprocess to handle NaN from empty strings and convert to number
@@ -22,7 +28,7 @@ export const createFieldSchema = (field) => {
           const num = Number(val);
           return isNaN(num) ? undefined : num;
         },
-        z.number({ invalid_type_error: 'Must be a valid number' }).optional()
+        z.number({ invalid_type_error: getErrorMessage('number', 'Must be a valid number') }).optional()
       );
       break;
     case 'checkbox':
@@ -38,18 +44,18 @@ export const createFieldSchema = (field) => {
           return Boolean(val);
         },
         field.required
-          ? z.boolean().refine((val) => val === true, 'This field is required')
+          ? z.boolean().refine((val) => val === true, getErrorMessage('required', 'This field is required'))
           : z.boolean().optional()
       );
       break;
     case 'date':
       // Validate date format and reasonable range
-      schema = z.string().min(1, 'Date is required').refine(
+      schema = z.string().min(1, getErrorMessage('required', 'Date is required')).refine(
         (val) => {
           const date = new Date(val);
           return !isNaN(date.getTime());
         },
-        { message: 'Please enter a valid date' }
+        { message: getErrorMessage('date', 'Please enter a valid date') }
       ).refine(
         (val) => {
           const date = new Date(val);
@@ -58,7 +64,7 @@ export const createFieldSchema = (field) => {
           // Date should be in the past and not before 1900
           return date <= today && date >= minDate;
         },
-        { message: 'Date must be a valid past date' }
+        { message: getErrorMessage('dateRange', 'Date must be a valid past date') }
       );
       break;
     default:
@@ -72,22 +78,22 @@ export const createFieldSchema = (field) => {
     // String length validations (only for string fields)
     if (isString) {
       if (minLength !== undefined) {
-        schema = schema.min(minLength, `Must be at least ${minLength} characters`);
+        schema = schema.min(minLength, getErrorMessage('minLength', `Must be at least ${minLength} characters`));
       }
 
       if (maxLength !== undefined) {
-        schema = schema.max(maxLength, `Must be no more than ${maxLength} characters`);
+        schema = schema.max(maxLength, getErrorMessage('maxLength', `Must be no more than ${maxLength} characters`));
       }
     }
 
     // Numeric validations (only for number fields)
     if (isNumber) {
       if (min !== undefined) {
-        schema = schema.min(min, `Must be at least ${min}`);
+        schema = schema.min(min, getErrorMessage('min', `Must be at least ${min}`));
       }
 
       if (max !== undefined) {
-        schema = schema.max(max, `Must be no more than ${max}`);
+        schema = schema.max(max, getErrorMessage('max', `Must be no more than ${max}`));
       }
     } else {
       // For string fields, min/max can also be used for numeric validation if needed
@@ -97,26 +103,26 @@ export const createFieldSchema = (field) => {
         schema = schema.refine((val) => {
           const num = Number(val);
           return !isNaN(num) && num >= min;
-        }, `Must be at least ${min}`);
+        }, getErrorMessage('min', `Must be at least ${min}`));
       }
 
       if (max !== undefined && !isNumber) {
         schema = schema.refine((val) => {
           const num = Number(val);
           return !isNaN(num) && num <= max;
-        }, `Must be no more than ${max}`);
+        }, getErrorMessage('max', `Must be no more than ${max}`));
       }
     }
 
     // Regex/pattern validations (only for string fields)
     if (isString && regex !== undefined) {
       const regexPattern = new RegExp(regex);
-      schema = schema.regex(regexPattern, 'Invalid format');
+      schema = schema.regex(regexPattern, getErrorMessage('regex', getErrorMessage('pattern', 'Invalid format')));
     }
 
     if (isString && pattern !== undefined) {
       const patternRegex = new RegExp(pattern);
-      schema = schema.regex(patternRegex, 'Invalid format');
+      schema = schema.regex(patternRegex, getErrorMessage('pattern', 'Invalid format'));
     }
   }
 
@@ -130,11 +136,11 @@ export const createFieldSchema = (field) => {
         // Check if value exists and is a valid number
         return val !== undefined && val !== null && !isNaN(val);
       }, {
-        message: `${field.label} is required`,
+        message: getErrorMessage('required', `${field.label} is required`),
       });
     } else {
       // For strings, use min(1) to check non-empty
-      schema = schema.min(1, `${field.label} is required`);
+      schema = schema.min(1, getErrorMessage('required', `${field.label} is required`));
     }
   }
   // Note: Optional handling for numbers is already in the base schema

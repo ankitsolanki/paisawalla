@@ -592,7 +592,7 @@ const MobileFormRenderer = ({ schema, theme = 'light' }) => {
                   type="button"
                   variant="outline"
                   onClick={handlePrevious}
-                  disabled={currentStep === 1 || isSubmitting}
+                  disabled={isSubmitting}
                   fullWidth
                   style={{
                     fontSize: tokens.typography.fontSize.base,

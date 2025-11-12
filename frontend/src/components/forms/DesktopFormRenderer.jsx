@@ -542,12 +542,12 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
                 gap: tokens.spacing.lg,
               }}
             >
-              {schema.steps > 1 && (
+              {schema.steps > 1 && currentStep > 1 && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handlePrevious}
-                  disabled={currentStep === 1 || isSubmitting}
+                  disabled={isSubmitting}
                 >
                   Previous
                 </Button>
