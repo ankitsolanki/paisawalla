@@ -1,17 +1,50 @@
-import React, { useState } from 'react';
-import { tokens } from '../../design-system/tokens';
-import Button from '../../components/ui/Button';
-import apiClient from '../../utils/apiClient';
+import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { webflowBridge } from '../../embed/webflowBridge';
 import { useResponsive } from '../../hooks/useResponsive';
 
-/**
- * OfferCard Component
- * Displays individual loan offer details in a card format matching the reference design
- */
 const OfferCard = ({ offer, applicationId }) => {
-  const [showDetails, setShowDetails] = useState(false);
-  const { isMobile, isTablet, isDesktop } = useResponsive();
+  const [isDetailSheetOpen, setDetailSheetOpen] = useState(false);
+  const { isMobile } = useResponsive();
+
+  const lenderName = offer.lender || offer.lenderName || 'Lender';
+  const lenderColor = useMemo(() => getLenderColor(lenderName), [lenderName]);
+  const apr = offer.apr || offer.interestRate || 0;
+  const termMonths = offer.term || offer.termMonths || 36;
+  const emiAmount = offer.monthlyPayment || Math.round((offer.amount || 0) / Math.max(termMonths, 1));
+  const features = offer.features || offer.offerData?.features || [];
+  const badges = features.slice(0, 2);
+
+  const approvalScore = useMemo(() => {
+    const base =
+      offer.offerType === 'pre-approved' ? 920 :
+      offer.offerType === 'conditional' ? 800 : 720;
+    const aprWeight = apr ? Math.max(0, 120 - apr * 2) : 60;
+    return Math.min(990, base + aprWeight);
+  }, [offer.offerType, apr]);
+
+  const approvalMeta = useMemo(() => {
+    if (approvalScore > 900) return { label: 'EXCELLENT', progress: 95, level: 'excellent' };
+    if (approvalScore > 820) return { label: 'VERY GOOD', progress: 80, level: 'good' };
+    if (approvalScore > 760) return { label: 'GOOD', progress: 65, level: 'ok' };
+    return { label: 'FAIR', progress: 45, level: 'fair' };
+  }, [approvalScore]);
+
+  const processingLabel = useMemo(() => {
+    const info = offer.offerData?.processingTime || '';
+    if (typeof info === 'string' && info.length > 0) return info;
+    if (offer.offerData?.disbursalTimeHours) {
+      return `${offer.offerData.disbursalTimeHours} hrs`;
+    }
+    return 'Instant';
+  }, [offer]);
+
+  const charges = {
+    partPrepayment: offer.offerData?.charges?.partPrepayment ?? offer.offerData?.partPrepayment ?? 'NIL',
+    processingFee: offer.offerData?.charges?.processingFee ?? offer.offerData?.processingFee ?? '4.5%',
+    foreclosure: offer.offerData?.charges?.foreclosure ?? offer.offerData?.foreclosure ?? '3%',
+    interestRate: apr ? `${apr}% onwards` : 'As per lender',
+  };
 
   const handleCheckRate = async () => {
     try {
@@ -20,8 +53,7 @@ const OfferCard = ({ offer, applicationId }) => {
         lenderName: offer.lender || offer.lenderName,
         offerId: offer.id || offer._id,
       });
-      
-      // If there's a CTA URL, open it
+
       if (offer.ctaUrl) {
         window.open(offer.ctaUrl, '_blank', 'noopener,noreferrer');
       }
@@ -30,532 +62,230 @@ const OfferCard = ({ offer, applicationId }) => {
     }
   };
 
-  const formatCurrency = (amount) => {
-    // Format in Indian Rupees
-    if (amount >= 100000) {
-      // Show in lakhs for amounts >= 1 lakh
-      const lakhs = amount / 100000;
-      return `₹${lakhs.toFixed(lakhs % 1 === 0 ? 0 : 1)} Lakh${lakhs !== 1 ? 's' : ''}`;
-    } else {
-      // Show in thousands for smaller amounts
-      return new Intl.NumberFormat('en-IN', {
-        style: 'currency',
-        currency: 'INR',
-        maximumFractionDigits: 0,
-      }).format(amount);
-    }
-  };
-
-  // Get lender initial for logo
-  const getLenderInitial = (name) => {
-    return name ? name.charAt(0).toUpperCase() : 'L';
-  };
-
-  // Generate lender color based on name
-  const getLenderColor = (name) => {
-    const colors = [
-      '#1c3693', // Blue
-      '#16a34a', // Green
-      '#ec3957', // Red/Pink
-      '#f59e0b', // Orange
-      '#6366f1', // Indigo
-    ];
-    const index = (name?.length || 0) % colors.length;
-    return colors[index];
-  };
-
-  const lenderName = offer.lender || offer.lenderName || 'Lender';
-  const lenderColor = getLenderColor(lenderName);
-  const minCreditScore = offer.minCreditScore || 680;
-  const apr = offer.apr || offer.interestRate || 0;
-  const aprRange = offer.aprRange || `${apr}%`;
-  const termMonths = offer.term || offer.termMonths || 36;
-  const termYears = Math.floor(termMonths / 12);
-  const termDisplay = termMonths >= 12 
-    ? `${termYears} - ${termYears + 1} years`
-    : `${termMonths} mo`;
-  const maxLoan = offer.amount || offer.loanAmount || 0;
-  const rating = offer.rating || 4.5;
-  const reviewCount = offer.reviewCount || Math.floor(Math.random() * 500) + 100;
-  const features = offer.features || offer.offerData?.features || [];
-  const pros = offer.pros || ['No fees', 'Fast approval', 'Quick funding'];
-  const cons = offer.cons || [];
-
   return (
-    <div
-      style={{
-        backgroundColor: '#ffffff',
-        borderRadius: tokens.borderRadius.lg,
-        padding: isMobile ? tokens.spacing.md : isTablet ? tokens.spacing.lg : tokens.spacing.xl,
-        border: `1px solid ${tokens.colors.gray[200]}`,
-        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-        marginBottom: isMobile ? tokens.spacing.md : tokens.spacing.lg,
-        transition: `all ${tokens.transitions.normal} ease-in-out`,
-      }}
-      onMouseEnter={(e) => {
-        if (!isMobile) {
-          e.currentTarget.style.boxShadow = '0 4px 6px rgba(0, 0, 0, 0.1)';
-        }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-      }}
-    >
-      {/* Header Section */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          justifyContent: isMobile ? 'flex-start' : 'space-between',
-          alignItems: isMobile ? 'stretch' : 'flex-start',
-          marginBottom: tokens.spacing.md,
-          gap: isMobile ? tokens.spacing.md : 0,
-        }}
-      >
-        <div style={{ 
-          display: 'flex', 
-          alignItems: isMobile ? 'flex-start' : 'center', 
-          gap: tokens.spacing.md, 
-          flex: 1,
-          width: isMobile ? '100%' : 'auto',
-        }}>
-          {/* Logo */}
-          <div
-            style={{
-              width: isMobile ? '40px' : '48px',
-              height: isMobile ? '40px' : '48px',
-              borderRadius: tokens.borderRadius.md,
-              backgroundColor: lenderColor,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#ffffff',
-              fontSize: isMobile ? tokens.typography.fontSize.lg : tokens.typography.fontSize.xl,
-              fontWeight: tokens.typography.fontWeight.bold,
-              flexShrink: 0,
-            }}
-          >
-            {getLenderInitial(lenderName)}
-          </div>
-
-          {/* Lender Name and Description */}
-          <div style={{ flex: 1, width: isMobile ? '100%' : 'auto' }}>
-            <div style={{ 
-              display: 'flex', 
-              flexDirection: isMobile ? 'column' : 'row',
-              alignItems: isMobile ? 'flex-start' : 'center', 
-              gap: tokens.spacing.xs, 
-              marginBottom: tokens.spacing.xs,
-              flexWrap: 'wrap',
-            }}>
-              <h3
-                style={{
-                  fontSize: isMobile ? tokens.typography.fontSize.lg : tokens.typography.fontSize.xl,
-                  fontWeight: tokens.typography.fontWeight.bold,
-                  color: tokens.colors.gray[900],
-                  margin: 0,
-                }}
-              >
-                {lenderName}
-              </h3>
-              <span
-                style={{
-                  fontSize: tokens.typography.fontSize.xs,
-                  color: tokens.colors.success[600],
-                  backgroundColor: tokens.colors.success[50],
-                  padding: `${tokens.spacing.xs} ${tokens.spacing.sm}`,
-                  borderRadius: tokens.borderRadius.sm,
-                  fontWeight: tokens.typography.fontWeight.medium,
-                  alignSelf: isMobile ? 'flex-start' : 'center',
-                }}
-              >
-                ✓ Verified
-              </span>
-            </div>
-            <p
-              style={{
-                fontSize: tokens.typography.fontSize.sm,
-                color: tokens.colors.gray[600],
-                margin: 0,
-              }}
+    <>
+      <div className="offer-card">
+        <div className="offer-card__header">
+          <div className="offer-card__identity">
+            <div
+              className="offer-card__logo"
+              style={{ backgroundColor: lenderColor }}
             >
-              Best personal loans in India for your needs
+              {getLenderInitial(lenderName)}
+            </div>
+            <div>
+              <p className="offer-card__name">{lenderName}</p>
+              <p className="offer-card__type">
+                {offer.offerType === 'pre-approved' ? 'Pre-approved offer' : 'Curated for you'}
+              </p>
+            </div>
+          </div>
+          <div className="offer-card__cta-group">
+            <button className="offer-card__cta" onClick={handleCheckRate}>
+              Apply Now
+            </button>
+            <span className="offer-card__cta-helper">
+              on {lenderName.toLowerCase()}'s site
+            </span>
+          </div>
+        </div>
+
+        {badges.length > 0 && (
+          <div className="offer-card__badges">
+            {badges.map((badge, index) => (
+              <span key={`${badge}-${index}`} className="offer-card__badge">
+                {badge}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className="offer-card__metrics">
+          <div className="offer-card__metric">
+            <span className="offer-card__metric-label">Processing Time</span>
+            <span className="offer-card__metric-value">{processingLabel}</span>
+          </div>
+          <div className="offer-card__metric">
+            <span className="offer-card__metric-label">Chances of Approval</span>
+            <div className="offer-card__approval">
+              <span className={`offer-card__approval-label offer-card__approval-label--${approvalMeta.level}`}>
+                {approvalMeta.label}
+              </span>
+              <div className="offer-card__approval-gauge">
+                <span style={{ width: `${approvalMeta.progress}%` }} />
+              </div>
+            </div>
+          </div>
+          <div className="offer-card__metric">
+            <span className="offer-card__metric-label">EMI</span>
+            <span className="offer-card__metric-value">{formatCurrency(emiAmount)}</span>
+            <small>onwards</small>
+          </div>
+        </div>
+
+        <div className="offer-card__details">
+          <div>
+            <span className="offer-card__metric-label">Rate of Interest</span>
+            <p className="offer-card__metric-value">{apr ? `${apr}% p.a.` : 'As per lender'}</p>
+          </div>
+          <div>
+            <span className="offer-card__metric-label">Loan Amount</span>
+            <p className="offer-card__metric-value">
+              {formatCurrency(offer.amount || offer.loanAmount || 0)}
+            </p>
+          </div>
+          <div>
+            <span className="offer-card__metric-label">Tenure</span>
+            <p className="offer-card__metric-value">
+              {Math.max(1, Math.round(termMonths / 12))} years
             </p>
           </div>
         </div>
 
-        {/* CHECK RATE Button */}
-        <div style={{ 
-          display: 'flex', 
-          flexDirection: 'column', 
-          alignItems: isMobile ? 'stretch' : 'flex-end',
-          width: isMobile ? '100%' : 'auto',
-        }}>
+        <div className="offer-card__footer">
           <button
-            onClick={handleCheckRate}
-            style={{
-              backgroundColor: tokens.colors.success[600],
-              color: '#ffffff',
-              border: 'none',
-              borderRadius: tokens.borderRadius.md,
-              padding: isMobile ? `${tokens.spacing.md} ${tokens.spacing.lg}` : `${tokens.spacing.sm} ${tokens.spacing.lg}`,
-              fontSize: tokens.typography.fontSize.base,
-              fontWeight: tokens.typography.fontWeight.semibold,
-              cursor: 'pointer',
-              transition: `all ${tokens.transitions.normal} ease-in-out`,
-              width: isMobile ? '100%' : 'auto',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = tokens.colors.success[700];
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = tokens.colors.success[600];
-            }}
+            className="offer-card__link-btn"
+            onClick={() => setDetailSheetOpen(true)}
           >
-            CHECK RATE
+            + Show Details
           </button>
-          <p
-            style={{
-              fontSize: tokens.typography.fontSize.xs,
-              color: tokens.colors.gray[500],
-              margin: `${tokens.spacing.xs} 0 0 0`,
-              textAlign: isMobile ? 'center' : 'right',
-            }}
-          >
-            on {lenderName.toLowerCase()}'s website
-          </p>
+          <button className="offer-card__secondary-cta">
+            Quick Disbursal
+          </button>
         </div>
       </div>
 
-      {/* Key Metrics Grid */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile 
-            ? 'repeat(2, 1fr)' 
-            : isTablet 
-            ? 'repeat(4, 1fr)' 
-            : 'repeat(4, 1fr)',
-          gap: isMobile ? tokens.spacing.sm : tokens.spacing.md,
-          marginBottom: tokens.spacing.lg,
-          padding: `${tokens.spacing.md} 0`,
-          borderTop: `1px solid ${tokens.colors.gray[200]}`,
-          borderBottom: `1px solid ${tokens.colors.gray[200]}`,
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontSize: tokens.typography.fontSize.xs,
-              color: tokens.colors.gray[600],
-              marginBottom: tokens.spacing.xs,
-            }}
-          >
-            Min. Credit Score
-          </div>
-          <div
-            style={{
-              fontSize: isMobile ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
-              fontWeight: tokens.typography.fontWeight.bold,
-              color: tokens.colors.gray[900],
-            }}
-          >
-            {minCreditScore}
-          </div>
-        </div>
-        <div>
-          <div
-            style={{
-              fontSize: tokens.typography.fontSize.xs,
-              color: tokens.colors.gray[600],
-              marginBottom: tokens.spacing.xs,
-            }}
-          >
-            Est. APR
-          </div>
-          <div
-            style={{
-              fontSize: isMobile ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
-              fontWeight: tokens.typography.fontWeight.bold,
-              color: tokens.colors.gray[900],
-            }}
-          >
-            {aprRange}
-          </div>
-          <div
-            style={{
-              fontSize: tokens.typography.fontSize.xs,
-              color: tokens.colors.gray[500],
-            }}
-          >
-            Fixed Interest Rate
-          </div>
-        </div>
-        <div>
-          <div
-            style={{
-              fontSize: tokens.typography.fontSize.xs,
-              color: tokens.colors.gray[600],
-              marginBottom: tokens.spacing.xs,
-            }}
-          >
-            Loan Term
-          </div>
-          <div
-            style={{
-              fontSize: isMobile ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
-              fontWeight: tokens.typography.fontWeight.bold,
-              color: tokens.colors.gray[900],
-            }}
-          >
-            {termDisplay}
-          </div>
-        </div>
-        <div>
-          <div
-            style={{
-              fontSize: tokens.typography.fontSize.xs,
-              color: tokens.colors.gray[600],
-              marginBottom: tokens.spacing.xs,
-            }}
-          >
-            Max Loan
-          </div>
-          <div
-            style={{
-              fontSize: isMobile ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
-              fontWeight: tokens.typography.fontWeight.bold,
-              color: tokens.colors.gray[900],
-            }}
-          >
-            {formatCurrency(maxLoan)}
-          </div>
-        </div>
-      </div>
-
-      {/* Rating and Reviews */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: tokens.spacing.lg,
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: tokens.spacing.sm }}>
-          <span
-            style={{
-              fontSize: tokens.typography.fontSize.lg,
-              fontWeight: tokens.typography.fontWeight.bold,
-              color: tokens.colors.gray[900],
-            }}
-          >
-            {rating}
-          </span>
-          <div style={{ display: 'flex', gap: '2px' }}>
-            {[...Array(5)].map((_, i) => (
-              <span
-                key={i}
-                style={{
-                  color: i < Math.floor(rating) ? tokens.colors.success[600] : tokens.colors.gray[300],
-                  fontSize: tokens.typography.fontSize.base,
-                }}
-              >
-                ★
-              </span>
-            ))}
-          </div>
-          <span
-            style={{
-              fontSize: tokens.typography.fontSize.sm,
-              color: tokens.colors.gray[600],
-            }}
-          >
-            {reviewCount} Reviews
-          </span>
-        </div>
-      </div>
-
-      {/* Key Facts / Pros / Cons */}
-      {showDetails && (features.length > 0 || pros.length > 0 || cons.length > 0) && (
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile 
-              ? '1fr' 
-              : isTablet 
-              ? 'repeat(2, 1fr)' 
-              : 'repeat(3, 1fr)',
-            gap: isMobile ? tokens.spacing.md : tokens.spacing.lg,
-            marginBottom: tokens.spacing.lg,
-            padding: `${tokens.spacing.md} 0`,
-            borderTop: `1px solid ${tokens.colors.gray[200]}`,
-          }}
-        >
-          {/* Key Facts */}
-          {features.length > 0 && (
-            <div>
-              <div
-                style={{
-                  fontSize: tokens.typography.fontSize.sm,
-                  fontWeight: tokens.typography.fontWeight.semibold,
-                  color: tokens.colors.gray[900],
-                  marginBottom: tokens.spacing.sm,
-                }}
-              >
-                Key Facts
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {features.slice(0, 4).map((feature, index) => (
-                  <li
-                    key={index}
-                    style={{
-                      fontSize: tokens.typography.fontSize.sm,
-                      color: tokens.colors.gray[700],
-                      marginBottom: tokens.spacing.xs,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: tokens.spacing.xs,
-                    }}
-                  >
-                    <span style={{ color: tokens.colors.primary[600] }}>✓</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Pros */}
-          {pros.length > 0 && (
-            <div>
-              <div
-                style={{
-                  fontSize: tokens.typography.fontSize.sm,
-                  fontWeight: tokens.typography.fontWeight.semibold,
-                  color: tokens.colors.gray[900],
-                  marginBottom: tokens.spacing.sm,
-                }}
-              >
-                Pros
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {pros.slice(0, 3).map((pro, index) => (
-                  <li
-                    key={index}
-                    style={{
-                      fontSize: tokens.typography.fontSize.sm,
-                      color: tokens.colors.gray[700],
-                      marginBottom: tokens.spacing.xs,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: tokens.spacing.xs,
-                    }}
-                  >
-                    <span style={{ color: tokens.colors.success[600] }}>✓</span>
-                    {pro}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {/* Cons */}
-          {cons.length > 0 && (
-            <div>
-              <div
-                style={{
-                  fontSize: tokens.typography.fontSize.sm,
-                  fontWeight: tokens.typography.fontWeight.semibold,
-                  color: tokens.colors.gray[900],
-                  marginBottom: tokens.spacing.sm,
-                }}
-              >
-                Cons
-              </div>
-              <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-                {cons.slice(0, 3).map((con, index) => (
-                  <li
-                    key={index}
-                    style={{
-                      fontSize: tokens.typography.fontSize.sm,
-                      color: tokens.colors.gray[700],
-                      marginBottom: tokens.spacing.xs,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: tokens.spacing.xs,
-                    }}
-                  >
-                    <span style={{ color: tokens.colors.error[600] }}>✗</span>
-                    {con}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Bottom Action Buttons */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          gap: tokens.spacing.md,
-          paddingTop: tokens.spacing.md,
-          borderTop: `1px solid ${tokens.colors.gray[200]}`,
-        }}
-      >
-        <button
-          style={{
-            backgroundColor: 'transparent',
-            color: tokens.colors.primary[600],
-            border: `1px solid ${tokens.colors.primary[600]}`,
-            borderRadius: tokens.borderRadius.md,
-            padding: isMobile ? `${tokens.spacing.sm} ${tokens.spacing.md}` : `${tokens.spacing.xs} ${tokens.spacing.md}`,
-            fontSize: tokens.typography.fontSize.sm,
-            fontWeight: tokens.typography.fontWeight.medium,
-            cursor: 'pointer',
-            transition: `all ${tokens.transitions.normal} ease-in-out`,
-            width: isMobile ? '100%' : 'auto',
-          }}
-          onMouseEnter={(e) => {
-            if (!isMobile) {
-              e.currentTarget.style.backgroundColor = tokens.colors.primary[50];
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-          }}
-        >
-          Read Review
-        </button>
-        <button
-          onClick={() => setShowDetails(!showDetails)}
-          style={{
-            backgroundColor: 'transparent',
-            color: tokens.colors.gray[700],
-            border: 'none',
-            borderRadius: tokens.borderRadius.md,
-            padding: isMobile ? `${tokens.spacing.sm} ${tokens.spacing.md}` : `${tokens.spacing.xs} ${tokens.spacing.md}`,
-            fontSize: tokens.typography.fontSize.sm,
-            fontWeight: tokens.typography.fontWeight.medium,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: tokens.spacing.xs,
-            width: isMobile ? '100%' : 'auto',
-          }}
-        >
-          View Details
-          <span style={{ fontSize: tokens.typography.fontSize.xs }}>
-            {showDetails ? '▲' : '▼'}
-          </span>
-        </button>
-      </div>
-    </div>
+      <OfferDetailsSheet
+        open={isDetailSheetOpen}
+        onClose={() => setDetailSheetOpen(false)}
+        lenderName={lenderName}
+        lenderColor={lenderColor}
+        offer={offer}
+        charges={charges}
+        processingLabel={processingLabel}
+        emiAmount={emiAmount}
+        onApply={handleCheckRate}
+      />
+    </>
   );
+};
+
+const OfferDetailsSheet = ({
+  open,
+  onClose,
+  lenderName,
+  lenderColor,
+  offer,
+  charges,
+  processingLabel,
+  emiAmount,
+  onApply,
+}) => {
+  if (!open) {
+    return null;
+  }
+
+  return createPortal(
+    <div className="offer-details-backdrop" onClick={onClose}>
+      <div className="offer-details" onClick={(event) => event.stopPropagation()}>
+        <button className="offer-details__close" onClick={onClose}>
+          ×
+        </button>
+        <header className="offer-details__header">
+          <div
+            className="offer-card__logo"
+            style={{ backgroundColor: lenderColor }}
+          >
+            {getLenderInitial(lenderName)}
+          </div>
+          <div>
+            <p className="offer-card__name">{lenderName}</p>
+            <p className="offer-card__type">Processing Time: {processingLabel}</p>
+          </div>
+          <div className="offer-details__summary">
+            <div>
+              <span className="offer-card__metric-label">Loan Amount</span>
+              <p className="offer-card__metric-value">{formatCurrency(offer.amount || 0)}</p>
+            </div>
+            <div>
+              <span className="offer-card__metric-label">EMI</span>
+              <p className="offer-card__metric-value">{formatCurrency(emiAmount)}</p>
+            </div>
+          </div>
+        </header>
+
+        <section className="offer-details__body">
+          <h4>Summary of Charges</h4>
+          <div className="offer-details__charges">
+            <div>
+              <span>Part Prepayment</span>
+              <strong>{charges.partPrepayment}</strong>
+            </div>
+            <div>
+              <span>Processing Fee</span>
+              <strong>{charges.processingFee}</strong>
+            </div>
+            <div>
+              <span>Foreclosure</span>
+              <strong>{charges.foreclosure}</strong>
+            </div>
+            <div>
+              <span>Interest Rate</span>
+              <strong>{charges.interestRate}</strong>
+            </div>
+          </div>
+
+          {offer.features?.length > 0 && (
+            <>
+              <h4>Loan Details</h4>
+              <ul className="offer-details__list">
+                {offer.features.map((feature, index) => (
+                  <li key={`${feature}-${index}`}>{feature}</li>
+                ))}
+              </ul>
+            </>
+          )}
+        </section>
+
+        <footer className="offer-details__footer">
+          <button className="offer-card__secondary-cta" onClick={onClose}>
+            Maybe Later
+          </button>
+          <button className="offer-card__cta" onClick={onApply}>
+            Apply Now
+          </button>
+        </footer>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+const formatCurrency = (amount) => {
+  if (!amount) {
+    return '₹0';
+  }
+
+  if (amount >= 100000) {
+    const lakhs = amount / 100000;
+    return `₹${lakhs.toFixed(lakhs % 1 === 0 ? 0 : 1)} Lakh${lakhs !== 1 ? 's' : ''}`;
+  }
+
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+const getLenderInitial = (name) => {
+  return name ? name.charAt(0).toUpperCase() : 'L';
+};
+
+const getLenderColor = (name) => {
+  const colors = ['#1c3693', '#16a34a', '#ec3957', '#f59e0b', '#6366f1'];
+  const index = (name?.length || 0) % colors.length;
+  return colors[index];
 };
 
 export default OfferCard;

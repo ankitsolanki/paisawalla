@@ -1,6 +1,7 @@
 import React, { useState, useCallback, lazy, Suspense, useEffect } from 'react';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { useFormTracking } from '../../hooks/useFormTracking';
+import { useResponsive } from '../../hooks/useResponsive';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Button from '../../components/ui/Button';
@@ -10,10 +11,13 @@ import ProgressBar from '../../components/ProgressBar';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
 import OffersListing from '../../embeds/offers/OffersListing';
+import FormSection from '../../components/forms/FormSection';
 import { validateField, validateForm } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
 import form1Schema from './form1Schema';
+
+const FORM_FIELD_KEYS = Object.keys(form1Schema).filter((key) => key !== 'steps');
 
 // Get reCAPTCHA site key from environment or window (for embedded forms)
 // Only use if it's a valid key (not empty and has reasonable length)
@@ -42,6 +46,85 @@ const getRecaptchaKey = () => {
 
 const RECAPTCHA_SITE_KEY = getRecaptchaKey();
 
+const STEP_SECTIONS = {
+  1: [
+    {
+      id: 'personal-info',
+      title: 'Personal Information',
+      subtitle: 'Complete details for verification',
+      rows: [
+        { fields: ['firstName', 'lastName'], cols: [1, 1] },
+        { fields: ['email'] },
+        { fields: ['dateOfBirth'] },
+        { fields: ['gender'] },
+        { fields: ['panNumber'] },
+      ],
+    },
+    {
+      id: 'personal-location',
+      title: 'Where do you live?',
+      subtitle: 'We use this to personalize offers in your area',
+      rows: [
+        { fields: ['city', 'state'], cols: [1, 1] },
+        { fields: ['pinCode'] },
+      ],
+    },
+  ],
+  2: [
+    {
+      id: 'employment-info',
+      title: 'Employment Details',
+      subtitle: 'Tell us about your work',
+      rows: [
+        { fields: ['loanAmount'] },
+        { fields: ['employmentType'] },
+        { fields: ['netMonthlyIncome'] },
+        { fields: ['companyName'] },
+        { fields: ['modeOfSalary'] },
+        { fields: ['companyEmail'] },
+      ],
+    },
+    {
+      id: 'company-address',
+      title: 'Company Address',
+      subtitle: 'Helps us verify your employment',
+      rows: [
+        { fields: ['companyAddress'] },
+        { fields: ['companyCity', 'companyState'], cols: [1, 1] },
+        { fields: ['companyPinCode'] },
+      ],
+    },
+  ],
+  3: [
+    {
+      id: 'current-address',
+      title: 'Current Address',
+      subtitle: 'Where you currently reside',
+      rows: [
+        { fields: ['currentAddress'] },
+      ],
+    },
+    {
+      id: 'permanent-address',
+      title: 'Permanent Address',
+      subtitle: 'Used for official communication',
+      rows: [
+        { fields: ['address'] },
+      ],
+    },
+    {
+      id: 'additional-info',
+      title: 'Additional Information',
+      rows: [
+        { fields: ['mothersName'] },
+        { fields: ['loanPurpose'] },
+        { fields: ['currentResidentialType'] },
+        { fields: ['organizationType'] },
+      ],
+    },
+  ],
+};
+
 const Form1 = ({ theme = 'light' }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
@@ -51,6 +134,7 @@ const Form1 = ({ theme = 'light' }) => {
   const [recaptchaToken, setRecaptchaToken] = useState(null);
   const [otpSending, setOtpSending] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
+  const [otpProcessing, setOtpProcessing] = useState(false);
   const [stage, setStage] = useState('phone'); // 'phone' -> 'otp' -> 'form'
   const [ReCAPTCHA, setReCAPTCHA] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState(false);
@@ -58,6 +142,12 @@ const Form1 = ({ theme = 'light' }) => {
   const [checkingEligibility, setCheckingEligibility] = useState(false);
   const [applicationId, setApplicationId] = useState(null);
   const [eligibilityError, setEligibilityError] = useState(null);
+  const [prefillStatus, setPrefillStatus] = useState('idle'); // idle | loading | success | error | not_found
+  const [prefillMessage, setPrefillMessage] = useState('');
+  const { windowWidth } = useResponsive();
+  const isMobile = windowWidth < 640;
+  const isTablet = windowWidth >= 640 && windowWidth < 1024;
+  const isCompactLayout = isMobile || isTablet;
 
   // Dynamically load ReCAPTCHA only if we have a valid key
   useEffect(() => {
@@ -71,6 +161,15 @@ const Form1 = ({ theme = 'light' }) => {
         });
     }
   }, [ReCAPTCHA]);
+
+  useEffect(() => {
+    if (stage === 'phone') {
+      setPrefillStatus('idle');
+      setPrefillMessage('');
+      setOtpVerified(false);
+      setOtpProcessing(false);
+    }
+  }, [stage]);
 
   const steps = [
     { label: 'Personal Information' },
@@ -124,6 +223,36 @@ const Form1 = ({ theme = 'light' }) => {
     }
   }, [trackFieldInteraction]);
 
+  const applyPrefillData = useCallback((payload) => {
+    if (!payload || typeof payload !== 'object') {
+      return;
+    }
+
+    setFormData((prev) => {
+      const updated = { ...prev };
+
+      FORM_FIELD_KEYS.forEach((field) => {
+        if (Object.prototype.hasOwnProperty.call(payload, field) && payload[field] !== undefined && payload[field] !== null && payload[field] !== '') {
+          let value = payload[field];
+          
+          // Handle date fields - convert ISO format to yyyy-MM-dd
+          if (field === 'dateOfBirth' && value) {
+            // If value is ISO format, extract just the date part
+            if (typeof value === 'string' && value.includes('T')) {
+              value = value.split('T')[0];
+            }
+          }
+          
+          updated[field] = field === 'panNumber'
+            ? String(value).toUpperCase()
+            : value;
+        }
+      });
+
+      return updated;
+    });
+  }, []);
+
   const handleFocus = useCallback((e) => {
     const { name, value } = e.target;
     trackFieldInteraction(name, 'focus', value);
@@ -176,6 +305,10 @@ const Form1 = ({ theme = 'light' }) => {
       return;
     }
     
+    setPrefillStatus('idle');
+    setPrefillMessage('');
+    setOtpVerified(false);
+
     // Send OTP
     setOtpSending(true);
     try {
@@ -197,10 +330,51 @@ const Form1 = ({ theme = 'light' }) => {
     }
     
     setOtpVerified(true);
-    setStage('form');
+
+    if (!formData.phone) {
+      setPrefillStatus('not_found');
+      setPrefillMessage('');
+      setStage('form');
+      return;
+    }
+
+    setOtpProcessing(true);
+    setPrefillStatus('loading');
+    setPrefillMessage('');
+
+    try {
+      const response = await apiClient.get('/api/leads/lookup', {
+        params: {
+          phone: formData.phone,
+          formType: 'form1',
+        },
+      });
+
+      const leadData = response?.data;
+
+      if (leadData) {
+        applyPrefillData(leadData);
+        setPrefillStatus('success');
+        setPrefillMessage('We found your previous details and filled them in. Please review and update if required.');
+      } else {
+        setPrefillStatus('not_found');
+      }
+    } catch (error) {
+      const errorMessage = error?.message || 'Unable to fetch your existing details.';
+      if (errorMessage.toLowerCase().includes('not found')) {
+        setPrefillStatus('not_found');
+        setPrefillMessage('');
+      } else {
+        setPrefillStatus('error');
+        setPrefillMessage(errorMessage);
+      }
+    } finally {
+      setOtpProcessing(false);
+      setStage('form');
+    }
     // In production, verify OTP via API
     // await apiClient.post('/api/auth/verify-otp', { phone: formData.phone, otp: formData.otp });
-  }, [formData.otp]);
+  }, [formData.otp, formData.phone, applyPrefillData]);
 
   const handleSubmit = useCallback(async () => {
     if (!validateStep(currentStep)) {
@@ -390,10 +564,20 @@ const Form1 = ({ theme = 'light' }) => {
       );
     }
 
+    // For date fields, ensure the value is in yyyy-MM-dd format
+    let adjustedValue = commonProps.value;
+    if (fieldSchema.type === 'date' && adjustedValue) {
+      // If value contains 'T' (ISO format), extract just the date part
+      if (adjustedValue.includes('T')) {
+        adjustedValue = adjustedValue.split('T')[0];
+      }
+    }
+
     return (
       <Input
         key={fieldName}
         {...commonProps}
+        value={adjustedValue}
         type={fieldSchema.type || 'text'}
         min={fieldSchema.min}
         max={fieldSchema.max}
@@ -402,6 +586,24 @@ const Form1 = ({ theme = 'light' }) => {
       />
     );
   }, [formData, errors, handleChange, handleBlur, handleFocus, stage]);
+
+  const renderStepFields = useCallback(
+    (stepNumber) => {
+      const sections = STEP_SECTIONS[stepNumber] || [];
+
+      return sections.map((section) => (
+        <FormSection
+          key={section.id}
+          title={section.title}
+          subtitle={section.subtitle}
+          rows={section.rows}
+          renderField={renderField}
+          isCompact={isCompactLayout}
+        />
+      ));
+    },
+    [renderField, isCompactLayout]
+  );
 
   // Show eligibility checking screen after form submission
   if (checkingEligibility && leadId) {
@@ -539,8 +741,9 @@ const Form1 = ({ theme = 'light' }) => {
                 type="submit"
                 variant="primary"
                 fullWidth
+                loading={otpProcessing}
               >
-                Verify OTP
+                {otpProcessing ? 'Verifying...' : 'Verify OTP'}
               </Button>
               <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#656c77', textAlign: 'center' }}>
                 Didn't receive the code? <span style={{ color: '#160E7A', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setStage('phone')}>Resend OTP</span>
@@ -552,25 +755,98 @@ const Form1 = ({ theme = 'light' }) => {
     );
   }
 
-  const currentStepFields = form1Schema.steps[currentStep - 1] || [];
-  const currentFields = currentStepFields.map((fieldName) => ({
-    name: fieldName,
-    ...form1Schema[fieldName],
-  }));
-
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
-        <div style={{ maxWidth: '56rem', margin: '0 auto', padding: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>
+        <div
+          style={{
+            width: '100%',
+            maxWidth: isCompactLayout ? '100%' : '56rem',
+            margin: '0 auto',
+            padding: isMobile ? '1rem' : '1.5rem',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: isMobile ? '1.25rem' : '1.5rem',
+              fontWeight: 700,
+              marginBottom: isMobile ? '1rem' : '1.5rem',
+              textAlign: isMobile ? 'center' : 'left',
+            }}
+          >
             Personal Loan Application
           </h2>
+
+          {prefillStatus === 'success' && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#ecfdf5',
+                border: '1px solid #34d399',
+                color: '#064e3b',
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Details auto-filled</strong>
+              <span style={{ fontSize: '0.875rem' }}>
+                {prefillMessage || 'We found an existing application and pre-filled your information. Please review and confirm.'}
+              </span>
+            </div>
+          )}
+
+          {prefillStatus === 'error' && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #f87171',
+                color: '#991b1b',
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Unable to auto-fill</strong>
+              <span style={{ fontSize: '0.875rem' }}>
+                {prefillMessage || 'We could not fetch your existing information. Please continue by entering your details.'}
+              </span>
+            </div>
+          )}
+
+          {prefillStatus === 'not_found' && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#f3f4f6',
+                border: '1px solid #e5e7eb',
+                color: '#374151',
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Let’s get your details</strong>
+              <span style={{ fontSize: '0.875rem' }}>
+                We could not find an existing application for this number. Please fill in your information to continue.
+              </span>
+            </div>
+          )}
           
           <ProgressBar current={currentStep} total={steps.length} />
 
           <form onSubmit={(e) => e.preventDefault()}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-              {currentStepFields.map(renderField)}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isMobile
+                  ? '1fr'
+                  : isTablet
+                  ? 'repeat(auto-fit, minmax(260px, 1fr))'
+                  : 'repeat(2, minmax(0, 1fr))',
+                gap: isMobile ? '0.75rem' : '1rem',
+                marginBottom: isMobile ? '1rem' : '1.5rem',
+              }}
+            >
+              {renderStepFields(currentStep)}
             </div>
 
             {errors.submit && (
@@ -586,7 +862,7 @@ const Form1 = ({ theme = 'light' }) => {
               </div>
             )}
 
-            {currentStep === steps.length && RECAPTCHA_SITE_KEY && ReCAPTCHA && !recaptchaError && (
+            {currentStep === steps.length && RECAPTCHA_SITE_KEY && !recaptchaError && ReCAPTCHA && (
               <div style={{ marginBottom: '1.5rem' }}>
                 <ReCAPTCHA
                   sitekey={RECAPTCHA_SITE_KEY}
@@ -602,12 +878,22 @@ const Form1 = ({ theme = 'light' }) => {
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column-reverse' : 'row',
+                justifyContent: isMobile ? 'flex-start' : 'space-between',
+                alignItems: isMobile ? 'stretch' : 'center',
+                marginTop: isMobile ? '1.25rem' : '2rem',
+                gap: isMobile ? '0.75rem' : '1rem',
+              }}
+            >
               <Button
                 type="button"
                 variant="outline"
                 onClick={handlePrevious}
                 disabled={currentStep === 1}
+                fullWidth={isMobile}
               >
                 Previous
               </Button>
@@ -617,6 +903,7 @@ const Form1 = ({ theme = 'light' }) => {
                   type="button"
                   variant="primary"
                   onClick={handleNext}
+                  fullWidth={isMobile}
                 >
                   Next
                 </Button>
@@ -627,6 +914,7 @@ const Form1 = ({ theme = 'light' }) => {
                   onClick={handleSubmit}
                   disabled={isSubmitting}
                   loading={isSubmitting}
+                  fullWidth={isMobile}
                 >
                   {isSubmitting ? 'Submitting...' : 'Submit Application'}
                 </Button>

@@ -37,7 +37,7 @@ Mode of Salary*,Is Salary Credited in Bank Yes/No or Drop down mode type like (b
 Company email address*,"Proper Email format ex.  Abc@test.in, abc@test.com, abc@test.co.in",Please enter a valid Email,This field is required,,,
 Company address*,Office door no/ Locality/area/landmark ,Please enter a valid office locality/area,This field is required,,,
 Company city*,,Plese select a city,This field is required,,,
-company estate*,,Plese select a estate,This field is required,,,
+company state*,,Plese select a state,This field is required dropdown,,,
 company pin code*,,Please select a pin code,This field is required,,,
 Address,door no/ Locality/area/landmark ,Please enter a valid locality/area,This field is required,Required,Address_details,Step_3
 Mothers Name,,,,,,

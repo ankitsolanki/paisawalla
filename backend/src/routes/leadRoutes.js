@@ -1,5 +1,5 @@
 import express from 'express';
-import { createLead, getLead } from '../controllers/leadController.js';
+import { createLead, getLead, lookupLeadByPhone } from '../controllers/leadController.js';
 import { storeConsent } from '../controllers/consentController.js';
 import { validateRecaptcha } from '../middleware/validateRecaptcha.js';
 import { formSubmissionLimiter, rateLimiter } from '../middleware/rateLimiter.js';
@@ -20,6 +20,9 @@ router.post(
   formSubmissionLimiter,
   storeConsent
 );
+
+// GET /api/leads/lookup - Lookup lead by phone (optional formType)
+router.get('/lookup', rateLimiter, lookupLeadByPhone);
 
 // GET /api/leads/:leadId - Get lead by ID
 router.get('/:leadId', rateLimiter, getLead);

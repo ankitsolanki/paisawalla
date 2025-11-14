@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, jest } from '@jest/globals';
-import { createLead, getLead } from '../controllers/leadController.js';
+import { createLead, getLead, lookupLeadByPhone } from '../controllers/leadController.js';
 import { Lead } from '../models/Lead.js';
 
 describe('Lead Controller', () => {
@@ -14,6 +14,7 @@ describe('Lead Controller', () => {
     mockReq = {
       body: {},
       params: {},
+      query: {},
       ip: '127.0.0.1',
       get: jest.fn().mockReturnValue('test-user-agent'),
     };
@@ -128,6 +129,72 @@ describe('Lead Controller', () => {
       await getLead(mockReq, mockRes, mockNext);
 
       expect(mockRes.status).toHaveBeenCalledWith(404);
+    });
+  });
+
+  describe('lookupLeadByPhone', () => {
+    it('should return the most recent lead for a phone number', async () => {
+      mockReq.query = { phone: '1234567890' };
+      const mockLead = {
+        _id: 'lead-id',
+        phone: '1234567890',
+        formType: 'form1',
+        firstName: 'Jane',
+      };
+
+      const mockLean = jest.fn().mockResolvedValue(mockLead);
+      Lead.findOne = jest.fn().mockReturnValue({ lean: mockLean });
+
+      await lookupLeadByPhone(mockReq, mockRes, mockNext);
+
+      expect(Lead.findOne).toHaveBeenCalledWith(
+        { phone: '1234567890' },
+        null,
+        { sort: { createdAt: -1 } }
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(mockRes.json).toHaveBeenCalled();
+      expect(true).toBe(true);
+    });
+
+    it('should include formType in lookup when provided', async () => {
+      mockReq.query = { phone: '1234567890', formType: 'form1' };
+      const mockLead = { _id: 'lead-id', phone: '1234567890', formType: 'form1' };
+
+      const mockLean = jest.fn().mockResolvedValue(mockLead);
+      Lead.findOne = jest.fn().mockReturnValue({ lean: mockLean });
+
+      await lookupLeadByPhone(mockReq, mockRes, mockNext);
+
+      expect(Lead.findOne).toHaveBeenCalledWith(
+        { phone: '1234567890', formType: 'form1' },
+        null,
+        { sort: { createdAt: -1 } }
+      );
+      expect(mockRes.status).toHaveBeenCalledWith(200);
+      expect(true).toBe(true);
+    });
+
+    it('should return 404 when no lead exists for phone', async () => {
+      mockReq.query = { phone: '1234567890' };
+
+      const mockLean = jest.fn().mockResolvedValue(null);
+      Lead.findOne = jest.fn().mockReturnValue({ lean: mockLean });
+
+      await lookupLeadByPhone(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(404);
+      expect(true).toBe(true);
+    });
+
+    it('should return 400 when phone is missing', async () => {
+      mockReq.query = {};
+
+      await lookupLeadByPhone(mockReq, mockRes, mockNext);
+
+      expect(mockRes.status).toHaveBeenCalledWith(400);
+      expect(Lead.findOne).not.toHaveBeenCalled();
+      expect(true).toBe(true);
     });
   });
 });

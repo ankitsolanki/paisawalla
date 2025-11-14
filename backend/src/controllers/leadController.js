@@ -45,3 +45,48 @@ export const getLead = async (req, res, next) => {
   }
 };
 
+export const lookupLeadByPhone = async (req, res, next) => {
+  try {
+    const rawPhone = req.query?.phone;
+    const phone = typeof rawPhone === 'string' ? rawPhone.trim() : '';
+
+    if (!phone) {
+      return res.status(400).json(
+        buildErrorResponse('Phone number is required', null, 400)
+      );
+    }
+
+    const rawFormType = req.query?.formType;
+    const formType = typeof rawFormType === 'string' ? rawFormType.trim() : '';
+
+    const lookupQuery = {
+      phone,
+      ...(formType ? { formType } : {}),
+    };
+
+    const lead = await Lead.findOne(
+      lookupQuery,
+      null,
+      { sort: { createdAt: -1 } }
+    ).lean();
+
+    if (!lead) {
+      return res.status(404).json(
+        buildErrorResponse('Lead not found for this phone number', null, 404)
+      );
+    }
+
+    const { ssn, bankAccountNumber, ...safeLead } = lead;
+
+    logger.info('Lead lookup successful', {
+      phone,
+      leadId: lead._id,
+      formType: lead.formType,
+    });
+
+    res.status(200).json(buildResponse(safeLead));
+  } catch (error) {
+    next(error);
+  }
+};
+
