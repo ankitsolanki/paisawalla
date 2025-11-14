@@ -450,6 +450,10 @@ const Form1 = ({ theme = 'light' }) => {
       applicationId: appId,
       leadId,
     });
+    // Redirect to Webflow listing page with application ID
+    setTimeout(() => {
+      window.location.href = `https://paisawaala.webflow.io/listing-page?applicationId=${appId}`;
+    }, 500);
   }, [leadId]);
 
   // Handle eligibility checking error
