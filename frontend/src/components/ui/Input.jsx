@@ -91,9 +91,11 @@ const Input = ({
         style={{
           ...inputStyles,
           ...(props.style || {}),
-          // Add uppercase styling for PAN number (ssn field)
-          ...(name === 'ssn' ? { textTransform: 'uppercase' } : {}),
+          // Add uppercase styling for PAN number (ssn or panNumber field)
+          ...(name === 'ssn' || name === 'panNumber' ? { textTransform: 'uppercase' } : {}),
         }}
+        autoCapitalize={name === 'panNumber' ? 'characters' : undefined}
+        autoComplete={name === 'panNumber' ? 'off' : undefined}
         className={className}
         {...props}
       />

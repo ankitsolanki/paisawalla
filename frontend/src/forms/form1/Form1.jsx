@@ -88,13 +88,17 @@ const Form1 = ({ theme = 'light' }) => {
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
+    
+    // Auto-capitalize PAN number
+    const processedValue = name === 'panNumber' ? value.toUpperCase() : value;
+    
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: processedValue,
     }));
     
     // Track field change
-    trackFieldInteraction(name, 'change', value);
+    trackFieldInteraction(name, 'change', processedValue);
     
     // Clear error when user starts typing
     if (errors[name]) {
