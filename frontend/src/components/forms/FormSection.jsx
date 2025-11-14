@@ -33,9 +33,14 @@ const FormSection = ({
   return (
     <section
       style={{
+        backgroundColor: '#ffffff',
+        borderRadius: isCompact ? tokens.borderRadius.lg : tokens.borderRadius.xl,
+        border: `1px solid ${tokens.colors.gray[200]}`,
+        boxShadow: isCompact ? 'none' : '0 8px 24px rgba(22, 14, 122, 0.05)',
+        padding: isCompact ? tokens.spacing.md : tokens.spacing.lg,
         display: 'flex',
         flexDirection: 'column',
-        gap: tokens.spacing.lg,
+        gap: isCompact ? tokens.spacing.md : tokens.spacing.lg,
       }}
     >
       {/* Section Header */}
@@ -51,23 +56,25 @@ const FormSection = ({
             <span
               aria-hidden="true"
               style={{
-                fontSize: '1.5rem',
+                fontSize: isCompact ? '1.25rem' : '1.5rem',
                 lineHeight: 1,
                 marginTop: '0.25rem',
+                flexShrink: 0,
               }}
             >
               {icon}
             </span>
           )}
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             {title && (
               <p
                 style={{
-                  fontSize: tokens.typography.fontSize.lg,
+                  fontSize: isCompact ? tokens.typography.fontSize.base : tokens.typography.fontSize.lg,
                   fontWeight: tokens.typography.fontWeight.semibold,
                   color: tokens.colors.gray[900],
                   marginBottom: subtitle ? tokens.spacing.xs : 0,
                   margin: 0,
+                  lineHeight: '1.3',
                 }}
               >
                 {title}
@@ -76,7 +83,7 @@ const FormSection = ({
             {subtitle && (
               <p
                 style={{
-                  fontSize: tokens.typography.fontSize.sm,
+                  fontSize: isCompact ? tokens.typography.fontSize.xs : tokens.typography.fontSize.sm,
                   color: tokens.colors.gray[600],
                   lineHeight: tokens.typography.lineHeight.textRegular,
                   margin: 0,
@@ -94,7 +101,7 @@ const FormSection = ({
         style={{
           display: 'flex',
           flexDirection: 'column',
-          gap: tokens.spacing.md,
+          gap: isCompact ? tokens.spacing.sm : tokens.spacing.md,
         }}
       >
         {rows.map((row, rowIdx) => (
@@ -103,13 +110,11 @@ const FormSection = ({
             style={{
               display: 'grid',
               gridTemplateColumns: isCompact
-                ? row.cols?.length === 1
-                  ? '1fr'
-                  : `repeat(${row.cols?.length || 1}, 1fr)`
+                ? '1fr'
                 : row.cols?.length === 1
                 ? '1fr'
                 : `repeat(${row.cols?.length || 1}, minmax(0, 1fr))`,
-              gap: tokens.spacing.md,
+              gap: isCompact ? tokens.spacing.sm : tokens.spacing.md,
             }}
           >
             {row.fields?.map((fieldName) => (

@@ -102,13 +102,6 @@ const STEP_SECTIONS = {
       subtitle: 'Where you currently reside',
       rows: [
         { fields: ['currentAddress'] },
-      ],
-    },
-    {
-      id: 'permanent-address',
-      title: 'Permanent Address',
-      subtitle: 'Used for official communication',
-      rows: [
         { fields: ['address'] },
       ],
     },
@@ -653,11 +646,17 @@ const Form1 = ({ theme = 'light' }) => {
     return (
       <ErrorBoundary>
         <ThemeProvider theme={theme}>
-          <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem', textAlign: 'center' }}>
-            <div style={{ marginBottom: '1rem' }}>
+          <div style={{
+            width: '100%',
+            maxWidth: isCompactLayout ? '100%' : '32rem',
+            margin: '0 auto',
+            padding: isMobile ? '1rem' : '1.25rem',
+            textAlign: 'center',
+          }}>
+            <div style={{ marginBottom: isMobile ? '1rem' : '1rem' }}>
               <div style={{
-                width: '64px',
-                height: '64px',
+                width: isMobile ? '56px' : '64px',
+                height: isMobile ? '56px' : '64px',
                 margin: '0 auto 1rem',
                 borderRadius: '50%',
                 backgroundColor: '#fee2e2',
@@ -665,18 +664,29 @@ const Form1 = ({ theme = 'light' }) => {
                 alignItems: 'center',
                 justifyContent: 'center',
               }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width={isMobile ? '28' : '32'} height={isMobile ? '28' : '32'} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
+              <h2 style={{
+                fontSize: isMobile ? '1.25rem' : '1.5rem',
+                fontWeight: 700,
+                marginBottom: '0.5rem',
+                color: '#000000',
+              }}>
                 Unable to Process
               </h2>
-              <p style={{ color: '#656c77', marginBottom: '1rem', fontSize: '0.875rem' }}>
+              <p style={{
+                color: '#656c77',
+                marginBottom: isMobile ? '1rem' : '1rem',
+                fontSize: isMobile ? '0.8rem' : '0.875rem',
+                lineHeight: '1.5',
+              }}>
                 {eligibilityError?.message || 'We encountered an issue while processing your application.'}
               </p>
               <Button
                 variant="primary"
+                fullWidth={isMobile}
                 onClick={() => {
                   setEligibilityError(null);
                   setCheckingEligibility(true);
@@ -696,18 +706,33 @@ const Form1 = ({ theme = 'light' }) => {
     return (
       <ErrorBoundary>
         <ThemeProvider theme={theme}>
-          <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+          <div style={{
+            width: '100%',
+            maxWidth: isCompactLayout ? '100%' : '32rem',
+            margin: '0 auto',
+            padding: isMobile ? '1rem' : '1.25rem',
+          }}>
+            <h2 style={{
+              fontSize: isMobile ? '1.25rem' : '1.5rem',
+              fontWeight: 700,
+              marginBottom: isMobile ? '0.5rem' : '0.5rem',
+              textAlign: isMobile ? 'center' : 'left',
+            }}>
               Personal Loan Application
             </h2>
-            <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+            <p style={{
+              color: '#656c77',
+              marginBottom: isMobile ? '1rem' : '1.25rem',
+              fontSize: isMobile ? '0.875rem' : '0.875rem',
+              textAlign: isMobile ? 'center' : 'left',
+            }}>
               Enter your mobile number to get started
             </p>
             <form onSubmit={(e) => { e.preventDefault(); handlePhoneSubmit(); }}>
-              <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ marginBottom: isMobile ? '1rem' : '1.25rem' }}>
                 {renderField('phone')}
               </div>
-              <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ marginBottom: isMobile ? '1rem' : '1.25rem' }}>
                 {renderField('consentCreditCheck')}
               </div>
               <Button
@@ -730,15 +755,30 @@ const Form1 = ({ theme = 'light' }) => {
     return (
       <ErrorBoundary>
         <ThemeProvider theme={theme}>
-          <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+          <div style={{
+            width: '100%',
+            maxWidth: isCompactLayout ? '100%' : '32rem',
+            margin: '0 auto',
+            padding: isMobile ? '1rem' : '1.25rem',
+          }}>
+            <h2 style={{
+              fontSize: isMobile ? '1.25rem' : '1.5rem',
+              fontWeight: 700,
+              marginBottom: isMobile ? '0.5rem' : '0.5rem',
+              textAlign: isMobile ? 'center' : 'left',
+            }}>
               Verify Your Number
             </h2>
-            <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+            <p style={{
+              color: '#656c77',
+              marginBottom: isMobile ? '1rem' : '1.25rem',
+              fontSize: isMobile ? '0.875rem' : '0.875rem',
+              textAlign: isMobile ? 'center' : 'left',
+            }}>
               We've sent a one-time code to {formData.phone || 'your number'}. Please enter it below.
             </p>
             <form onSubmit={(e) => { e.preventDefault(); handleOtpSubmit(); }}>
-              <div style={{ marginBottom: '1.25rem' }}>
+              <div style={{ marginBottom: isMobile ? '1rem' : '1.25rem' }}>
                 {renderField('otp')}
               </div>
               <Button
@@ -749,7 +789,12 @@ const Form1 = ({ theme = 'light' }) => {
               >
                 {otpProcessing ? 'Verifying...' : 'Verify OTP'}
               </Button>
-              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#656c77', textAlign: 'center' }}>
+              <p style={{
+                marginTop: isMobile ? '0.75rem' : '0.75rem',
+                fontSize: isMobile ? '0.8rem' : '0.875rem',
+                color: '#656c77',
+                textAlign: 'center',
+              }}>
                 Didn't receive the code? <span style={{ color: '#160E7A', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setStage('phone')}>Resend OTP</span>
               </p>
             </form>
