@@ -319,7 +319,7 @@ export default {
   },
 
   // Step organization - exactly as per CSV
-  // Note: phone, otp, and consentCreditCheck are handled in the phone/OTP stage before the form
+  // Note: phone and otp are handled by AuthForm component, not in these steps
   steps: [
     // Step 1: Personal Information
     ['firstName', 'lastName', 'email', 'dateOfBirth', 'city', 'state', 'pinCode', 'gender', 'panNumber'],

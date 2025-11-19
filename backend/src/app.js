@@ -20,6 +20,7 @@ import offerRoutes from './routes/offerRoutes.js';
 import partnerRoutes from './routes/partnerRoutes.js';
 import pageRoutes from './routes/pageRoutes.js';
 import analyticsRoutes from './routes/analyticsRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,6 +50,7 @@ app.use('/api/offers', offerRoutes);
 app.use('/api/partners', partnerRoutes);
 app.use('/api/pages', pageRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/auth', authRoutes);
 
 // 404 handler
 app.use((req, res) => {

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import ReCAPTCHA from 'react-google-recaptcha';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { useFormTracking } from '../../hooks/useFormTracking';
@@ -10,6 +10,7 @@ import SubmitSuccess from '../../components/SubmitSuccess';
 import { validateForm, validateField } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
+import { getAuthParamsFromUrl } from '../../utils/queryEncoder';
 import form2Schema from './form2Schema';
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
@@ -27,6 +28,17 @@ const Form2 = ({ theme = 'light' }) => {
     trackSubmitSuccess,
     trackSubmitError,
   } = useFormTracking('form2', formData);
+
+  // Check for encoded auth params on mount and pre-fill phone if present
+  useEffect(() => {
+    const authParams = getAuthParamsFromUrl();
+    if (authParams && authParams.authenticated && authParams.phone) {
+      // Pre-fill phone number if form2 has a phone field
+      if (form2Schema.phone) {
+        setFormData((prev) => ({ ...prev, phone: authParams.phone }));
+      }
+    }
+  }, []);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;

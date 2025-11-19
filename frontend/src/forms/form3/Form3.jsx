@@ -9,6 +9,7 @@ import EligibilityChecking from '../../components/EligibilityChecking';
 import { validateForm, validateField } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
+import { getAuthParamsFromUrl } from '../../utils/queryEncoder';
 import form3Schema from './form3Schema';
 
 // Get reCAPTCHA site key from environment or window (for embedded forms)
@@ -44,15 +45,23 @@ const Form3 = ({ theme = 'light' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState(null);
-  const [stage, setStage] = useState('phone'); // 'phone' -> 'otp' -> 'details' -> 'submitted'
-  const [otpSending, setOtpSending] = useState(false);
-  const [otpVerifying, setOtpVerifying] = useState(false);
+  const [stage, setStage] = useState('details'); // 'details' -> 'submitted' (phone/otp removed)
   const [ReCAPTCHA, setReCAPTCHA] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState(false);
   const [leadId, setLeadId] = useState(null);
   const [checkingEligibility, setCheckingEligibility] = useState(false);
   const [applicationId, setApplicationId] = useState(null);
   const [eligibilityError, setEligibilityError] = useState(null);
+
+  // Check for encoded auth params on mount
+  useEffect(() => {
+    const authParams = getAuthParamsFromUrl();
+    if (authParams && authParams.authenticated && authParams.phone) {
+      // User is already authenticated, skip auth and go directly to details stage
+      setFormData((prev) => ({ ...prev, phone: authParams.phone }));
+      setStage('details');
+    }
+  }, []);
 
   // Dynamically load ReCAPTCHA only if we have a valid key
   useEffect(() => {
@@ -114,45 +123,7 @@ const Form3 = ({ theme = 'light' }) => {
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
 
-    // Stage-based submission handling
-    if (stage === 'phone') {
-      // Validate phone only
-      const phoneRules = form3Schema.phone.rules;
-      const phoneError = validateField(formData.phone || '', phoneRules);
-      if (phoneError) {
-        setErrors((prev) => ({ ...prev, phone: phoneError }));
-        return;
-      }
-      // Simulate OTP request
-      setOtpSending(true);
-      try {
-        // In production, POST to your OTP endpoint with the phone
-        // await apiClient.post('/api/auth/send-otp', { phone: formData.phone });
-        setStage('otp');
-      } finally {
-        setOtpSending(false);
-      }
-      return;
-    }
-
-    if (stage === 'otp') {
-      // Validate OTP = 1234 (hardcoded for testing)
-      if ((formData.otp || '').trim() !== '1234') {
-        setErrors((prev) => ({ ...prev, otp: 'Invalid verification code. Please enter 1234 to continue.' }));
-        return;
-      }
-      setOtpVerifying(true);
-      try {
-        // In production, verify OTP via API
-        // await apiClient.post('/api/auth/verify-otp', { phone: formData.phone, otp: formData.otp });
-        setStage('details');
-      } finally {
-        setOtpVerifying(false);
-      }
-      return;
-    }
-
-    // Final details stage: validate full form and submit lead
+    // Validate full form and submit lead
     const validation = validateForm(formData, form3Schema);
     if (!validation.isValid) {
       setErrors(validation.errors);
@@ -266,7 +237,7 @@ const Form3 = ({ theme = 'light' }) => {
         min={fieldSchema.min}
         max={fieldSchema.max}
         step={fieldSchema.step}
-        disabled={fieldName === 'phone' && (stage === 'otp' || stage === 'details')}
+        disabled={false}
       />
     );
   }, [formData, errors, handleChange, handleBlur, handleFocus, stage]);
@@ -274,10 +245,8 @@ const Form3 = ({ theme = 'light' }) => {
   // All hooks must be called before conditional returns
   const fields = useMemo(() => Object.keys(form3Schema), []);
 
-  // Select which fields to render based on stage
+  // Select which fields to render (all fields for details stage)
   const stageFields = useMemo(() => {
-    if (stage === 'phone') return ['phone'];
-    if (stage === 'otp') return ['phone']; // phone shown (disabled) above OTP box
     if (stage === 'details') return fields; // all fields
     return [];
   }, [stage, fields]);
@@ -363,31 +332,6 @@ const Form3 = ({ theme = 'light' }) => {
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem' }}>
-          {stage === 'phone' && (
-            <>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
-                Check My Eligibility
-          </h2>
-              <p style={{ color: '#656c77', marginBottom: '0.75rem', fontSize: '0.875rem' }}>
-                Personal loans tailored for you, compare & apply in minutes
-              </p>
-              <p style={{ color: '#8b8b8b', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
-                No impact on your credit score, instant soft-check
-              </p>
-            </>
-          )}
-          
-          {stage === 'otp' && (
-            <>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
-                Verify Your Number
-              </h2>
-              <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
-                We've sent a one-time code to {formData.phone || 'your number'}. Please enter it below.
-              </p>
-            </>
-          )}
-
           {stage === 'details' && (
             <>
               <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
@@ -402,23 +346,6 @@ const Form3 = ({ theme = 'light' }) => {
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.25rem' }}>
               {stageFields.map(renderField)}
-
-              {stage === 'otp' && (
-                <Input
-                  name="otp"
-                  label="Enter Verification Code"
-                  required
-                  type="text"
-                  value={formData.otp || ''}
-                  onChange={handleChange}
-                  onBlur={handleBlur}
-                  onFocus={handleFocus}
-                  error={errors.otp}
-                  fullWidth
-                  placeholder="Enter the 4-digit code sent to your mobile"
-                  maxLength={6}
-                />
-              )}
             </div>
 
             {errors.submit && (
@@ -454,25 +381,11 @@ const Form3 = ({ theme = 'light' }) => {
               type="submit"
               variant="primary"
               fullWidth
-              disabled={isSubmitting || otpSending || otpVerifying}
-              loading={isSubmitting || otpSending || otpVerifying}
+              disabled={isSubmitting}
+              loading={isSubmitting}
             >
-              {stage === 'phone' && (otpSending ? 'Sending OTP...' : 'Check My Eligibility')}
-              {stage === 'otp' && (otpVerifying ? 'Verifying...' : 'Verify OTP')}
-              {stage === 'details' && (isSubmitting ? 'Submitting...' : 'Get My Offers')}
+              {isSubmitting ? 'Submitting...' : 'Get My Offers'}
             </Button>
-
-            {stage === 'otp' && (
-              <p style={{ marginTop: '0.75rem', fontSize: '0.875rem', color: '#656c77', textAlign: 'center' }}>
-                Didn't receive the code? <span style={{ color: '#160E7A', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setStage('phone')}>Resend OTP</span>
-              </p>
-            )}
-
-            {stage === 'phone' && (
-              <p style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: '#8b8b8b', textAlign: 'center' }}>
-                By continuing, you agree to our Terms of Use and Privacy Policy
-              </p>
-            )}
           </form>
         </div>
       </ThemeProvider>

@@ -46,7 +46,7 @@ applicationSchema.pre('save', async function (next) {
 
 // Indexes
 applicationSchema.index({ leadId: 1 });
-applicationSchema.index({ applicationNumber: 1 });
+// applicationNumber index is automatically created by unique: true
 applicationSchema.index({ status: 1 });
 applicationSchema.index({ createdAt: -1 });
 

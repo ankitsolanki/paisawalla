@@ -15,6 +15,7 @@ import FormSection from '../../components/forms/FormSection';
 import { validateField, validateForm } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
+import { getAuthParamsFromUrl } from '../../utils/queryEncoder';
 import form1Schema from './form1Schema';
 
 const FORM_FIELD_KEYS = Object.keys(form1Schema).filter((key) => key !== 'steps');
@@ -125,10 +126,6 @@ const Form1 = ({ theme = 'light' }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState(null);
-  const [otpSending, setOtpSending] = useState(false);
-  const [otpVerified, setOtpVerified] = useState(false);
-  const [otpProcessing, setOtpProcessing] = useState(false);
-  const [stage, setStage] = useState('phone'); // 'phone' -> 'otp' -> 'form'
   const [ReCAPTCHA, setReCAPTCHA] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState(false);
   const [leadId, setLeadId] = useState(null);
@@ -155,14 +152,44 @@ const Form1 = ({ theme = 'light' }) => {
     }
   }, [ReCAPTCHA]);
 
+  // Check for encoded auth params on mount
   useEffect(() => {
-    if (stage === 'phone') {
-      setPrefillStatus('idle');
-      setPrefillMessage('');
-      setOtpVerified(false);
-      setOtpProcessing(false);
+    const authParams = getAuthParamsFromUrl();
+    if (authParams && authParams.authenticated && authParams.phone) {
+      // User is already authenticated, skip auth and go directly to form
+      setFormData((prev) => ({ ...prev, phone: authParams.phone }));
+      
+      // Try to prefill data from existing lead
+      setPrefillStatus('loading');
+      apiClient.get('/api/leads/lookup', {
+        params: {
+          phone: authParams.phone,
+          formType: 'form1',
+        },
+      })
+        .then((response) => {
+          const leadData = response?.data;
+          if (leadData) {
+            applyPrefillData(leadData);
+            setPrefillStatus('success');
+            setPrefillMessage('We found your previous details and filled them in. Please review and update if required.');
+          } else {
+            setPrefillStatus('not_found');
+          }
+        })
+        .catch((error) => {
+          const errorMessage = error?.message || 'Unable to fetch your existing details.';
+          if (errorMessage.toLowerCase().includes('not found')) {
+            setPrefillStatus('not_found');
+            setPrefillMessage('');
+          } else {
+            setPrefillStatus('error');
+            setPrefillMessage(errorMessage);
+          }
+        });
     }
-  }, [stage]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const steps = [
     { label: 'Personal Information' },
@@ -283,91 +310,6 @@ const Form1 = ({ theme = 'light' }) => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   }, [currentStep, trackButtonClick]);
 
-  const handlePhoneSubmit = useCallback(async () => {
-    // Validate phone
-    const phoneRules = form1Schema.phone.rules;
-    const phoneError = validateField(formData.phone || '', phoneRules);
-    if (phoneError) {
-      setErrors((prev) => ({ ...prev, phone: phoneError }));
-      return;
-    }
-    
-    // Validate consent checkbox
-    if (!formData.consentCreditCheck) {
-      setErrors((prev) => ({ ...prev, consentCreditCheck: 'This field is required' }));
-      return;
-    }
-    
-    setPrefillStatus('idle');
-    setPrefillMessage('');
-    setOtpVerified(false);
-
-    // Send OTP
-    setOtpSending(true);
-    try {
-      // In production, POST to your OTP endpoint
-      // await apiClient.post('/api/auth/send-otp', { phone: formData.phone });
-      setStage('otp');
-    } catch (error) {
-      setErrors((prev) => ({ ...prev, phone: 'Failed to send OTP. Please try again.' }));
-    } finally {
-      setOtpSending(false);
-    }
-  }, [formData.phone, formData.consentCreditCheck]);
-
-  const handleOtpSubmit = useCallback(async () => {
-    // Validate OTP = 1234 (hardcoded for testing)
-    if ((formData.otp || '').trim() !== '1234') {
-      setErrors((prev) => ({ ...prev, otp: 'Invalid verification code. Please enter 1234 to continue.' }));
-      return;
-    }
-    
-    setOtpVerified(true);
-
-    if (!formData.phone) {
-      setPrefillStatus('not_found');
-      setPrefillMessage('');
-      setStage('form');
-      return;
-    }
-
-    setOtpProcessing(true);
-    setPrefillStatus('loading');
-    setPrefillMessage('');
-
-    try {
-      const response = await apiClient.get('/api/leads/lookup', {
-        params: {
-          phone: formData.phone,
-          formType: 'form1',
-        },
-      });
-
-      const leadData = response?.data;
-
-      if (leadData) {
-        applyPrefillData(leadData);
-        setPrefillStatus('success');
-        setPrefillMessage('We found your previous details and filled them in. Please review and update if required.');
-      } else {
-        setPrefillStatus('not_found');
-      }
-    } catch (error) {
-      const errorMessage = error?.message || 'Unable to fetch your existing details.';
-      if (errorMessage.toLowerCase().includes('not found')) {
-        setPrefillStatus('not_found');
-        setPrefillMessage('');
-      } else {
-        setPrefillStatus('error');
-        setPrefillMessage(errorMessage);
-      }
-    } finally {
-      setOtpProcessing(false);
-      setStage('form');
-    }
-    // In production, verify OTP via API
-    // await apiClient.post('/api/auth/verify-otp', { phone: formData.phone, otp: formData.otp });
-  }, [formData.otp, formData.phone, applyPrefillData]);
 
   const handleSubmit = useCallback(async () => {
     if (!validateStep(currentStep)) {
@@ -463,8 +405,8 @@ const Form1 = ({ theme = 'light' }) => {
     const fieldSchema = form1Schema[fieldName];
     if (!fieldSchema) return null;
 
-    // Skip phone and OTP in form stage (handled separately)
-    if (stage === 'form' && (fieldName === 'phone' || fieldName === 'otp')) {
+    // Skip phone and OTP fields (handled by AuthForm)
+    if (fieldName === 'phone' || fieldName === 'otp') {
       return null;
     }
 
@@ -582,7 +524,7 @@ const Form1 = ({ theme = 'light' }) => {
         maxLength={fieldSchema.maxLength}
       />
     );
-  }, [formData, errors, handleChange, handleBlur, handleFocus, stage]);
+  }, [formData, errors, handleChange, handleBlur, handleFocus]);
 
   const renderStepFields = useCallback(
     (stepNumber) => {
@@ -701,108 +643,6 @@ const Form1 = ({ theme = 'light' }) => {
     );
   }
 
-  // Handle phone/OTP stage before form
-  if (stage === 'phone') {
-    return (
-      <ErrorBoundary>
-        <ThemeProvider theme={theme}>
-          <div style={{
-            width: '100%',
-            maxWidth: isCompactLayout ? '100%' : '32rem',
-            margin: '0 auto',
-            padding: isMobile ? '1rem' : '1.25rem',
-          }}>
-            <h2 style={{
-              fontSize: isMobile ? '1.25rem' : '1.5rem',
-              fontWeight: 700,
-              marginBottom: isMobile ? '0.5rem' : '0.5rem',
-              textAlign: isMobile ? 'center' : 'left',
-            }}>
-              Personal Loan Application
-            </h2>
-            <p style={{
-              color: '#656c77',
-              marginBottom: isMobile ? '1rem' : '1.25rem',
-              fontSize: isMobile ? '0.875rem' : '0.875rem',
-              textAlign: isMobile ? 'center' : 'left',
-            }}>
-              Enter your mobile number to get started
-            </p>
-            <form onSubmit={(e) => { e.preventDefault(); handlePhoneSubmit(); }}>
-              <div style={{ marginBottom: isMobile ? '1rem' : '1.25rem' }}>
-                {renderField('phone')}
-              </div>
-              <div style={{ marginBottom: isMobile ? '1rem' : '1.25rem' }}>
-                {renderField('consentCreditCheck')}
-              </div>
-              <Button
-                type="submit"
-                variant="primary"
-                fullWidth
-                disabled={otpSending || !formData.consentCreditCheck}
-                loading={otpSending}
-              >
-                {otpSending ? 'Sending OTP...' : 'Send OTP'}
-              </Button>
-            </form>
-          </div>
-        </ThemeProvider>
-      </ErrorBoundary>
-    );
-  }
-
-  if (stage === 'otp') {
-    return (
-      <ErrorBoundary>
-        <ThemeProvider theme={theme}>
-          <div style={{
-            width: '100%',
-            maxWidth: isCompactLayout ? '100%' : '32rem',
-            margin: '0 auto',
-            padding: isMobile ? '1rem' : '1.25rem',
-          }}>
-            <h2 style={{
-              fontSize: isMobile ? '1.25rem' : '1.5rem',
-              fontWeight: 700,
-              marginBottom: isMobile ? '0.5rem' : '0.5rem',
-              textAlign: isMobile ? 'center' : 'left',
-            }}>
-              Verify Your Number
-            </h2>
-            <p style={{
-              color: '#656c77',
-              marginBottom: isMobile ? '1rem' : '1.25rem',
-              fontSize: isMobile ? '0.875rem' : '0.875rem',
-              textAlign: isMobile ? 'center' : 'left',
-            }}>
-              We've sent a one-time code to {formData.phone || 'your number'}. Please enter it below.
-            </p>
-            <form onSubmit={(e) => { e.preventDefault(); handleOtpSubmit(); }}>
-              <div style={{ marginBottom: isMobile ? '1rem' : '1.25rem' }}>
-                {renderField('otp')}
-              </div>
-              <Button
-                type="submit"
-                variant="primary"
-                fullWidth
-                loading={otpProcessing}
-              >
-                {otpProcessing ? 'Verifying...' : 'Verify OTP'}
-              </Button>
-              <p style={{
-                marginTop: isMobile ? '0.75rem' : '0.75rem',
-                fontSize: isMobile ? '0.8rem' : '0.875rem',
-                color: '#656c77',
-                textAlign: 'center',
-              }}>
-                Didn't receive the code? <span style={{ color: '#160E7A', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => setStage('phone')}>Resend OTP</span>
-              </p>
-            </form>
-          </div>
-        </ThemeProvider>
-      </ErrorBoundary>
-    );
-  }
 
   return (
     <ErrorBoundary>

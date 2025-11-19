@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react';
 // Check if we're building the library or the app
 const isLibraryBuild = process.env.BUILD_MODE === 'library';
 const isOffersBuild = process.env.BUILD_MODE === 'offers';
+const isAuthBuild = process.env.BUILD_MODE === 'auth';
 
 export default defineConfig({
   plugins: [react()],
@@ -27,6 +28,27 @@ export default defineConfig({
           output: {
             entryFileNames: 'injectForm.js',
             assetFileNames: 'injectForm.css',
+            // Note: manualChunks is not supported for IIFE format (inlineDynamicImports is auto-enabled)
+            // All code will be bundled into a single file for IIFE library builds
+          },
+        },
+        chunkSizeWarningLimit: 1000,
+      }
+    : isAuthBuild
+    ? {
+        // Auth build configuration (for auth form)
+        lib: {
+          entry: 'src/embed/injectAuth.js',
+          name: 'PWAuth',
+          fileName: 'injectAuth',
+          formats: ['iife'],
+        },
+        outDir: 'dist',
+        emptyOutDir: false, // Don't empty so we can have both app and library
+        rollupOptions: {
+          output: {
+            entryFileNames: 'injectAuth.js',
+            assetFileNames: 'injectAuth.css',
             // Note: manualChunks is not supported for IIFE format (inlineDynamicImports is auto-enabled)
             // All code will be bundled into a single file for IIFE library builds
           },

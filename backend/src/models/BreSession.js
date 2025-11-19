@@ -33,7 +33,7 @@ const breSessionSchema = new mongoose.Schema(
 
 // Indexes
 breSessionSchema.index({ applicationId: 1 });
-breSessionSchema.index({ breRequestId: 1 });
+// breRequestId index is automatically created by unique: true
 breSessionSchema.index({ status: 1 });
 breSessionSchema.index({ createdAt: -1 });
 
