@@ -6,6 +6,8 @@ import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
+import CurrencyInput from '../../components/ui/CurrencyInput';
+import PincodeInput from '../../components/PincodeInput';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import { validateForm, validateField } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
@@ -159,6 +161,37 @@ const Form2 = ({ theme = 'light' }) => {
           key={fieldName}
           {...commonProps}
           options={fieldSchema.options || []}
+        />
+      );
+    }
+
+    if (fieldSchema.type === 'currency') {
+      return (
+        <CurrencyInput
+          key={fieldName}
+          {...commonProps}
+          min={fieldSchema.min}
+          max={fieldSchema.max}
+        />
+      );
+    }
+
+    if (fieldSchema.type === 'pincode') {
+      return (
+        <PincodeInput
+          key={fieldName}
+          {...commonProps}
+          onPincodeLookup={(details) => {
+            // Auto-populate city and state if available
+            if (details && details.city && details.cityFieldName) {
+              handleChange({ target: { name: details.cityFieldName, value: details.city } });
+            }
+            if (details && details.state && details.stateFieldName) {
+              handleChange({ target: { name: details.stateFieldName, value: details.state } });
+            }
+          }}
+          cityFieldName={fieldSchema.cityFieldName}
+          stateFieldName={fieldSchema.stateFieldName}
         />
       );
     }

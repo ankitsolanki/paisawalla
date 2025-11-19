@@ -26,10 +26,11 @@ export default {
   },
   loanAmount: {
     label: 'Desired Loan Amount',
-    type: 'number',
+    type: 'currency',
     required: true,
-    rules: ['required', 'numeric', { type: 'min', params: [1000] }],
-    step: 100,
+    rules: ['required', 'numeric', { type: 'min', params: [10000] }, { type: 'max', params: [100000000] }],
+    min: 10000,
+    max: 100000000,
   },
   loanPurpose: {
     label: 'Loan Purpose',
@@ -37,11 +38,12 @@ export default {
     required: true,
     rules: ['required'],
     options: [
-      { value: 'debt_consolidation', label: 'Debt Consolidation' },
-      { value: 'home_improvement', label: 'Home Improvement' },
-      { value: 'major_purchase', label: 'Major Purchase' },
-      { value: 'medical_expenses', label: 'Medical Expenses' },
-      { value: 'other', label: 'Other' },
+      { value: 'Medical Emergency', label: 'Medical Emergency' },
+      { value: 'Home Renovation', label: 'Home Renovation' },
+      { value: 'Wedding /Marriage', label: 'Wedding /Marriage' },
+      { value: 'Travel / Vacation', label: 'Travel / Vacation' },
+      { value: 'Debt Consolidation', label: 'Debt Consolidation' },
+      { value: 'Others', label: 'Others' },
     ],
   },
   employmentStatus: {
@@ -70,10 +72,13 @@ export default {
     rules: [{ type: 'min', params: [300] }, { type: 'max', params: [850] }],
   },
   zipCode: {
-    label: 'ZIP Code',
-    type: 'text',
+    label: 'PIN Code',
+    type: 'pincode',
     required: true,
     rules: ['required', 'zipCode'],
+    placeholder: 'Enter 6-digit PIN code',
+    cityFieldName: 'city',
+    stateFieldName: 'state',
   },
   consentMarketing: {
     label: 'I consent to receive marketing communications',

@@ -216,15 +216,18 @@ export const validators = {
     return null;
   },
 
-  // Net monthly income: max 8 digits
+  // Net monthly income: min 10000, max 10000000
   netMonthlyIncome: (value) => {
     if (!value) return null;
     const num = parseFloat(value);
     if (isNaN(num)) {
-      return 'Please enter a Net monthly income (not more than 8 numeric digit)';
+      return 'Please enter a valid Net monthly income';
     }
-    if (value.toString().replace(/[^0-9]/g, '').length > 8) {
-      return 'Please enter a Net monthly income (not more than 8 numeric digit)';
+    if (num < 10000) {
+      return 'Net monthly income must be at least ₹10,000';
+    }
+    if (num > 10000000) {
+      return 'Net monthly income must not exceed ₹1,00,00,000';
     }
     return null;
   },

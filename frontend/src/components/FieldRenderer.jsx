@@ -2,6 +2,8 @@ import React from 'react';
 import { useTheme } from '../design-system/ThemeProvider';
 import Input from './ui/Input';
 import Select from './ui/Select';
+import CurrencyInput from './ui/CurrencyInput';
+import PincodeInput from './PincodeInput';
 import { tokens } from '../design-system/tokens';
 
 /**
@@ -15,6 +17,7 @@ const FieldRenderer = ({
   onFocus,
   error,
   disabled = false,
+  onPincodeLookup, // Optional callback for PIN code lookup
 }) => {
   const { colors } = useTheme();
 
@@ -229,6 +232,25 @@ const FieldRenderer = ({
           maxLength={6}
           inputMode="numeric"
           pattern="[0-9]*"
+        />
+      );
+
+    case 'currency':
+      return (
+        <CurrencyInput
+          {...commonProps}
+          min={field.min || field.validation?.min}
+          max={field.max || field.validation?.max}
+        />
+      );
+
+    case 'pincode':
+      return (
+        <PincodeInput
+          {...commonProps}
+          onPincodeLookup={onPincodeLookup}
+          cityFieldName={field.cityFieldName}
+          stateFieldName={field.stateFieldName}
         />
       );
 

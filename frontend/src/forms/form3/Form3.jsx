@@ -4,6 +4,8 @@ import { useFormTracking } from '../../hooks/useFormTracking';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import CurrencyInput from '../../components/ui/CurrencyInput';
+import PincodeInput from '../../components/PincodeInput';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
 import { validateForm, validateField } from '../../utils/validationRules';
@@ -220,24 +222,59 @@ const Form3 = ({ theme = 'light' }) => {
     const fieldSchema = form3Schema[fieldName];
     if (!fieldSchema) return null;
 
+    const commonProps = {
+      name: fieldName,
+      label: fieldSchema.label,
+      required: fieldSchema.required,
+      value: formData[fieldName] || '',
+      onChange: handleChange,
+      onBlur: handleBlur,
+      onFocus: handleFocus,
+      error: errors[fieldName],
+      fullWidth: true,
+      placeholder: fieldSchema.placeholder,
+      disabled: false,
+    };
+
+    if (fieldSchema.type === 'currency') {
+      return (
+        <CurrencyInput
+          key={fieldName}
+          {...commonProps}
+          min={fieldSchema.min}
+          max={fieldSchema.max}
+        />
+      );
+    }
+
+    if (fieldSchema.type === 'pincode') {
+      return (
+        <PincodeInput
+          key={fieldName}
+          {...commonProps}
+          onPincodeLookup={(details) => {
+            // Auto-populate city and state if available
+            if (details && details.city && details.cityFieldName) {
+              handleChange({ target: { name: details.cityFieldName, value: details.city } });
+            }
+            if (details && details.state && details.stateFieldName) {
+              handleChange({ target: { name: details.stateFieldName, value: details.state } });
+            }
+          }}
+          cityFieldName={fieldSchema.cityFieldName}
+          stateFieldName={fieldSchema.stateFieldName}
+        />
+      );
+    }
+
     return (
       <Input
         key={fieldName}
-        name={fieldName}
-        label={fieldSchema.label}
-        required={fieldSchema.required}
+        {...commonProps}
         type={fieldSchema.type || 'text'}
-        value={formData[fieldName] || ''}
-        onChange={handleChange}
-        onBlur={handleBlur}
-        onFocus={handleFocus}
-        error={errors[fieldName]}
-        fullWidth
-        placeholder={fieldSchema.placeholder}
         min={fieldSchema.min}
         max={fieldSchema.max}
         step={fieldSchema.step}
-        disabled={false}
       />
     );
   }, [formData, errors, handleChange, handleBlur, handleFocus, stage]);

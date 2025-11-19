@@ -7,6 +7,8 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
+import CurrencyInput from '../../components/ui/CurrencyInput';
+import PincodeInput from '../../components/PincodeInput';
 import ProgressBar from '../../components/ProgressBar';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
@@ -278,6 +280,53 @@ const Form1 = ({ theme = 'light' }) => {
     trackFieldInteraction(name, 'focus', value);
   }, [trackFieldInteraction]);
 
+  // Handle PIN code lookup and auto-populate city/state
+  const handlePincodeLookup = useCallback((details) => {
+    if (!details) return;
+
+    const { city, state, cityFieldName, stateFieldName } = details;
+
+    setFormData((prev) => {
+      const updated = { ...prev };
+      
+      // Auto-populate city if field name is provided and city is available
+      if (cityFieldName && city) {
+        updated[cityFieldName] = city;
+        trackFieldInteraction(cityFieldName, 'auto-populated', city);
+      }
+      
+      // Auto-populate state if field name is provided and state is available
+      if (stateFieldName && state) {
+        // Find matching state option value from the state dropdown
+        const stateSchema = form1Schema[stateFieldName];
+        if (stateSchema && stateSchema.options) {
+          // Try to find exact match first
+          const exactMatch = stateSchema.options.find(
+            (opt) => opt.label.toLowerCase() === state.toLowerCase()
+          );
+          
+          if (exactMatch) {
+            updated[stateFieldName] = exactMatch.value;
+            trackFieldInteraction(stateFieldName, 'auto-populated', exactMatch.value);
+          } else {
+            // Try partial match
+            const partialMatch = stateSchema.options.find(
+              (opt) => opt.label.toLowerCase().includes(state.toLowerCase()) ||
+                       state.toLowerCase().includes(opt.label.toLowerCase())
+            );
+            
+            if (partialMatch) {
+              updated[stateFieldName] = partialMatch.value;
+              trackFieldInteraction(stateFieldName, 'auto-populated', partialMatch.value);
+            }
+          }
+        }
+      }
+      
+      return updated;
+    });
+  }, [trackFieldInteraction]);
+
   const validateStep = useCallback((step) => {
     const stepFields = form1Schema.steps[step - 1] || [];
     const stepErrors = {};
@@ -503,6 +552,29 @@ const Form1 = ({ theme = 'light' }) => {
       );
     }
 
+    if (fieldSchema.type === 'currency') {
+      return (
+        <CurrencyInput
+          key={fieldName}
+          {...commonProps}
+          min={fieldSchema.min}
+          max={fieldSchema.max}
+        />
+      );
+    }
+
+    if (fieldSchema.type === 'pincode') {
+      return (
+        <PincodeInput
+          key={fieldName}
+          {...commonProps}
+          onPincodeLookup={handlePincodeLookup}
+          cityFieldName={fieldSchema.cityFieldName}
+          stateFieldName={fieldSchema.stateFieldName}
+        />
+      );
+    }
+
     // For date fields, ensure the value is in yyyy-MM-dd format
     let adjustedValue = commonProps.value;
     if (fieldSchema.type === 'date' && adjustedValue) {
@@ -524,7 +596,7 @@ const Form1 = ({ theme = 'light' }) => {
         maxLength={fieldSchema.maxLength}
       />
     );
-  }, [formData, errors, handleChange, handleBlur, handleFocus]);
+  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeLookup]);
 
   const renderStepFields = useCallback(
     (stepNumber) => {

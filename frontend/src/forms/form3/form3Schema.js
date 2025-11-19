@@ -30,18 +30,21 @@ export default {
   },
   loanAmount: {
     label: 'Loan Amount (₹)',
-    type: 'number',
+    type: 'currency',
     required: true,
-    rules: ['required', 'numeric', { type: 'min', params: [10000] }, { type: 'max', params: [1000000] }],
-    step: 1000,
-    placeholder: 'From ₹10,000 to ₹10 Lakh',
+    rules: ['required', 'numeric', { type: 'min', params: [10000] }, { type: 'max', params: [100000000] }],
+    placeholder: 'Enter loan amount (min ₹10,000, max ₹10,00,00,000)',
+    min: 10000,
+    max: 100000000,
   },
   zipCode: {
     label: 'PIN Code',
-    type: 'text',
+    type: 'pincode',
     required: true,
     rules: ['required', 'zipCode'],
     placeholder: 'Enter your 6-digit PIN code',
+    cityFieldName: 'city',
+    stateFieldName: 'state',
   },
 };
 
