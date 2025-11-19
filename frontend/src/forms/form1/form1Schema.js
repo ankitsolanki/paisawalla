@@ -162,7 +162,8 @@ export default {
     errorMessage: 'Please enter a valid Employment type',
     options: [
       { value: 'Salaried', label: 'Salaried' },
-      { value: 'Self Employed', label: 'Self Employed' },
+      { value: 'Self-employed professional', label: 'Self-employed professional' },
+      { value: 'Self-employed business', label: 'Self-employed business' },
       { value: 'Student', label: 'Student' },
     ],
   },
@@ -196,6 +197,42 @@ export default {
       { value: 'cash', label: 'Cash' },
       { value: 'cheque', label: 'Cheque' },
     ],
+  },
+  annualIncome: {
+    label: 'Annual Income',
+    type: 'currency',
+    required: false, // Will be conditionally required
+    rules: ['numeric', { type: 'min', params: [100000] }, { type: 'max', params: [100000000] }],
+    placeholder: 'Enter annual income',
+    errorMessage: 'Please enter a valid annual income (min ₹1,00,000, max ₹10,00,00,000)',
+    min: 100000,
+    max: 100000000,
+  },
+  organizationName: {
+    label: 'Organization Name',
+    type: 'text',
+    required: false, // Will be conditionally required
+    rules: [],
+    placeholder: 'Enter organization name',
+    errorMessage: 'Please enter a valid organization name',
+  },
+  profession: {
+    label: 'Profession',
+    type: 'text',
+    required: false, // Will be conditionally required
+    rules: [],
+    placeholder: 'Enter your profession',
+    errorMessage: 'Please enter your profession',
+  },
+  annualTurnover: {
+    label: 'Annual Turnover',
+    type: 'currency',
+    required: false, // Will be conditionally required
+    rules: ['numeric', { type: 'min', params: [100000] }, { type: 'max', params: [1000000000] }],
+    placeholder: 'Enter annual turnover',
+    errorMessage: 'Please enter a valid annual turnover (min ₹1,00,000, max ₹100,00,00,000)',
+    min: 100000,
+    max: 1000000000,
   },
   companyEmail: {
     label: 'Company Email Address',
@@ -355,7 +392,8 @@ export default {
     // Step 1: Personal Information
     ['firstName', 'lastName', 'email', 'dateOfBirth', 'city', 'state', 'pinCode', 'gender', 'panNumber'],
     // Step 2: Employment Details
-    ['loanAmount', 'employmentType', 'netMonthlyIncome', 'companyName', 'modeOfSalary', 'companyEmail', 'companyAddress', 'companyCity', 'companyState', 'companyPinCode'],
+    // Include all employment-related fields (visibility handled conditionally in Form1.jsx)
+    ['loanAmount', 'employmentType', 'netMonthlyIncome', 'companyName', 'modeOfSalary', 'annualIncome', 'organizationName', 'profession', 'annualTurnover', 'companyEmail', 'companyAddress', 'companyCity', 'companyState', 'companyPinCode'],
     // Step 3: Address Details
     ['currentAddress', 'address', 'mothersName', 'loanPurpose', 'currentResidentialType', 'organizationType'],
   ],

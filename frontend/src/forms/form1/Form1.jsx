@@ -81,9 +81,16 @@ const STEP_SECTIONS = {
       rows: [
         { fields: ['loanAmount'] },
         { fields: ['employmentType'] },
+        // Salaried fields (conditionally visible)
         { fields: ['netMonthlyIncome'] },
         { fields: ['companyName'] },
         { fields: ['modeOfSalary'] },
+        // Self-employed professional fields (conditionally visible)
+        { fields: ['annualIncome'] },
+        { fields: ['organizationName'] },
+        { fields: ['profession'] },
+        // Self-employed business fields (conditionally visible)
+        { fields: ['annualTurnover'] },
         { fields: ['companyEmail'] },
       ],
     },
@@ -209,16 +216,102 @@ const Form1 = ({ theme = 'light' }) => {
     trackButtonClick,
   } = useFormTracking('form1', formData, currentStep);
 
+  // Helper function to determine if field should be visible based on employment type
+  const isFieldVisible = useCallback((fieldName) => {
+    const employmentType = formData.employmentType;
+    
+    if (!employmentType) {
+      // If no employment type selected, show all fields initially
+      return true;
+    }
+
+    // Fields that are always visible (not dependent on employment type)
+    const alwaysVisibleFields = [
+      'loanAmount', 'employmentType', 'companyEmail', 'companyAddress', 
+      'companyCity', 'companyState', 'companyPinCode'
+    ];
+    
+    if (alwaysVisibleFields.includes(fieldName)) {
+      return true;
+    }
+
+    // Conditional visibility based on employment type
+    switch (employmentType) {
+      case 'Salaried':
+        // Show: netMonthlyIncome, companyName, modeOfSalary
+        // Hide: annualIncome, organizationName, profession, annualTurnover
+        return ['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(fieldName);
+      
+      case 'Self-employed professional':
+        // Show: annualIncome, organizationName, profession
+        // Hide: netMonthlyIncome, companyName, modeOfSalary, annualTurnover
+        return ['annualIncome', 'organizationName', 'profession'].includes(fieldName);
+      
+      case 'Self-employed business':
+        // Show: annualTurnover, annualIncome
+        // Hide: netMonthlyIncome, companyName, modeOfSalary, organizationName, profession
+        return ['annualTurnover', 'annualIncome'].includes(fieldName);
+      
+      case 'Student':
+        // Hide all employment-related income/company fields
+        return !['netMonthlyIncome', 'companyName', 'modeOfSalary', 'annualIncome', 
+                 'organizationName', 'profession', 'annualTurnover'].includes(fieldName);
+      
+      default:
+        return true;
+    }
+  }, [formData.employmentType]);
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     
     // Auto-capitalize PAN number
     const processedValue = name === 'panNumber' ? value.toUpperCase() : value;
     
-    setFormData((prev) => ({
-      ...prev,
-      [name]: processedValue,
-    }));
+    setFormData((prev) => {
+      const updated = { ...prev, [name]: processedValue };
+      
+      // If employment type changed, clear values of fields that are no longer visible
+      if (name === 'employmentType') {
+        const newEmploymentType = processedValue;
+        const fieldsToClear = [
+          'netMonthlyIncome', 'companyName', 'modeOfSalary',
+          'annualIncome', 'organizationName', 'profession', 'annualTurnover'
+        ];
+        
+        // Determine which fields should be visible with the new employment type
+        const shouldBeVisible = (field) => {
+          if (!newEmploymentType) return true;
+          
+          switch (newEmploymentType) {
+            case 'Salaried':
+              return ['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(field);
+            case 'Self-employed professional':
+              return ['annualIncome', 'organizationName', 'profession'].includes(field);
+            case 'Self-employed business':
+              return ['annualTurnover', 'annualIncome'].includes(field);
+            case 'Student':
+              return false; // All employment fields hidden for students
+            default:
+              return true;
+          }
+        };
+        
+        fieldsToClear.forEach((field) => {
+          if (!shouldBeVisible(field)) {
+            updated[field] = '';
+            // Clear errors for hidden fields
+            setErrors((prevErrors) => {
+              const newErrors = { ...prevErrors };
+              delete newErrors[field];
+              return newErrors;
+            });
+          }
+        });
+      }
+      
+      return updated;
+    });
     
     // Track field change
     trackFieldInteraction(name, 'change', processedValue);
@@ -231,21 +324,60 @@ const Form1 = ({ theme = 'light' }) => {
         return newErrors;
       });
     }
-  }, [errors, trackFieldInteraction]);
+  }, [errors, trackFieldInteraction, isFieldVisible]);
 
   const handleBlur = useCallback((e) => {
     const { name, value } = e.target;
     trackFieldInteraction(name, 'blur', value);
     
+    // Skip validation for hidden fields
+    if (!isFieldVisible(name)) {
+      return;
+    }
+
     const fieldSchema = form1Schema[name];
-    if (fieldSchema && fieldSchema.rules) {
-      const error = validateField(value || '', fieldSchema.rules);
+    if (!fieldSchema) return;
+
+    // Determine if field should be required based on employment type
+    const employmentType = formData.employmentType;
+    let rulesToValidate = fieldSchema.rules || [];
+
+    // Add required rule for conditionally visible fields
+    if (employmentType === 'Salaried') {
+      if (['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(name)) {
+        if (!rulesToValidate.includes('required')) {
+          rulesToValidate = ['required', ...rulesToValidate];
+        }
+      }
+    } else if (employmentType === 'Self-employed professional') {
+      if (['annualIncome', 'organizationName', 'profession'].includes(name)) {
+        if (!rulesToValidate.includes('required')) {
+          rulesToValidate = ['required', ...rulesToValidate];
+        }
+      }
+    } else if (employmentType === 'Self-employed business') {
+      if (['annualTurnover', 'annualIncome'].includes(name)) {
+        if (!rulesToValidate.includes('required')) {
+          rulesToValidate = ['required', ...rulesToValidate];
+        }
+      }
+    }
+
+    if (rulesToValidate.length > 0) {
+      const error = validateField(value || '', rulesToValidate);
       if (error) {
         setErrors((prev) => ({ ...prev, [name]: error }));
         trackFieldInteraction(name, 'error', value);
+      } else {
+        // Clear error if validation passes
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
       }
     }
-  }, [trackFieldInteraction]);
+  }, [trackFieldInteraction, formData.employmentType, isFieldVisible]);
 
   const applyPrefillData = useCallback((payload) => {
     if (!payload || typeof payload !== 'object') {
@@ -364,9 +496,50 @@ const Form1 = ({ theme = 'light' }) => {
     let isValid = true;
 
     stepFields.forEach((fieldName) => {
+      // Skip validation for hidden fields
+      if (!isFieldVisible(fieldName)) {
+        return;
+      }
+
       const fieldSchema = form1Schema[fieldName];
-      if (fieldSchema && fieldSchema.rules) {
-        const error = validateField(formData[fieldName] || '', fieldSchema.rules);
+      if (!fieldSchema) return;
+
+      // Determine if field should be required based on employment type
+      const employmentType = formData.employmentType;
+      let shouldValidate = false;
+      let rulesToValidate = fieldSchema.rules || [];
+
+      // Check if field is required based on conditional visibility
+      if (employmentType === 'Salaried') {
+        if (['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(fieldName)) {
+          shouldValidate = true;
+          // Add required rule if not already present
+          if (!rulesToValidate.includes('required')) {
+            rulesToValidate = ['required', ...rulesToValidate];
+          }
+        }
+      } else if (employmentType === 'Self-employed professional') {
+        if (['annualIncome', 'organizationName', 'profession'].includes(fieldName)) {
+          shouldValidate = true;
+          if (!rulesToValidate.includes('required')) {
+            rulesToValidate = ['required', ...rulesToValidate];
+          }
+        }
+      } else if (employmentType === 'Self-employed business') {
+        if (['annualTurnover', 'annualIncome'].includes(fieldName)) {
+          shouldValidate = true;
+          if (!rulesToValidate.includes('required')) {
+            rulesToValidate = ['required', ...rulesToValidate];
+          }
+        }
+      } else if (fieldSchema.required) {
+        // For other fields, validate if they're marked as required in schema
+        shouldValidate = true;
+      }
+
+      // Validate field if it should be validated
+      if (shouldValidate && rulesToValidate.length > 0) {
+        const error = validateField(formData[fieldName] || '', rulesToValidate);
         if (error) {
           stepErrors[fieldName] = error;
           isValid = false;
@@ -376,7 +549,7 @@ const Form1 = ({ theme = 'light' }) => {
 
     setErrors((prev) => ({ ...prev, ...stepErrors }));
     return isValid;
-  }, [formData]);
+  }, [formData, isFieldVisible]);
 
   const handleNext = useCallback(() => {
     if (validateStep(currentStep)) {
@@ -490,10 +663,34 @@ const Form1 = ({ theme = 'light' }) => {
       return null;
     }
 
+    // Check conditional visibility based on employment type
+    if (!isFieldVisible(fieldName)) {
+      return null;
+    }
+
+    // Determine if field should be required based on visibility and employment type
+    const employmentType = formData.employmentType;
+    let isRequired = fieldSchema.required;
+    
+    // Override required status for conditionally visible fields
+    if (employmentType === 'Salaried') {
+      if (['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(fieldName)) {
+        isRequired = true;
+      }
+    } else if (employmentType === 'Self-employed professional') {
+      if (['annualIncome', 'organizationName', 'profession'].includes(fieldName)) {
+        isRequired = true;
+      }
+    } else if (employmentType === 'Self-employed business') {
+      if (['annualTurnover', 'annualIncome'].includes(fieldName)) {
+        isRequired = true;
+      }
+    }
+
     const commonProps = {
       name: fieldName,
       label: fieldSchema.label,
-      required: fieldSchema.required,
+      required: isRequired,
       value: formData[fieldName] || '',
       onChange: handleChange,
       onBlur: handleBlur,
@@ -689,7 +886,7 @@ const Form1 = ({ theme = 'light' }) => {
         maxLength={fieldSchema.maxLength}
       />
     );
-  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeLookup, handlePincodeLoadingChange, handlePincodeChange, autoPopulatedFields, pincodeLoading]);
+  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeLookup, handlePincodeLoadingChange, handlePincodeChange, autoPopulatedFields, pincodeLoading, isFieldVisible]);
 
   const renderStepFields = useCallback(
     (stepNumber) => {
