@@ -93,8 +93,8 @@ const STEP_SECTIONS = {
       subtitle: 'Helps us verify your employment',
       rows: [
         { fields: ['companyAddress'] },
-        { fields: ['companyCity', 'companyState'], cols: [1, 1] },
         { fields: ['companyPinCode'] },
+        { fields: ['companyCity', 'companyState'], cols: [1, 1] },
       ],
     },
   ],
@@ -609,9 +609,10 @@ const Form1 = ({ theme = 'light' }) => {
     }
 
     // Handle city field with loading state
-    if (fieldName === 'city' || fieldName === 'companyCity') {
+    // Only disable personal address city, keep company city editable
+    if (fieldName === 'city') {
       const isAutoPopulated = autoPopulatedFields.has(fieldName);
-      const isLoading = pincodeLoading && (fieldName === 'city' || fieldName === 'companyCity');
+      const isLoading = pincodeLoading && fieldName === 'city';
       
       return (
         <Input
@@ -624,8 +625,22 @@ const Form1 = ({ theme = 'light' }) => {
       );
     }
 
-    // Handle state field - disable if auto-populated
-    if (fieldName === 'state' || fieldName === 'companyState') {
+    // Company city - always editable, show loading state
+    if (fieldName === 'companyCity') {
+      const isLoading = pincodeLoading && fieldName === 'companyCity';
+      
+      return (
+        <Input
+          key={fieldName}
+          {...commonProps}
+          type="text"
+          placeholder={isLoading ? 'Loading...' : commonProps.placeholder}
+        />
+      );
+    }
+
+    // Handle state field - only disable personal address state
+    if (fieldName === 'state') {
       const isAutoPopulated = autoPopulatedFields.has(fieldName);
       
       if (fieldSchema.type === 'select') {
@@ -635,6 +650,19 @@ const Form1 = ({ theme = 'light' }) => {
             {...commonProps}
             options={fieldSchema.options || []}
             disabled={isAutoPopulated}
+          />
+        );
+      }
+    }
+
+    // Company state - always editable
+    if (fieldName === 'companyState') {
+      if (fieldSchema.type === 'select') {
+        return (
+          <Select
+            key={fieldName}
+            {...commonProps}
+            options={fieldSchema.options || []}
           />
         );
       }

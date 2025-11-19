@@ -91,39 +91,66 @@ const CurrencyInput = ({
       return;
     }
 
-    // Apply min/max constraints
-    let constrainedValue = numValue;
-    if (min !== undefined && numValue < min) {
-      constrainedValue = min;
-    }
-    if (max !== undefined && numValue > max) {
-      constrainedValue = max;
-    }
-
-    // Format and update
-    const formatted = formatIndianCurrency(constrainedValue);
+    // Don't apply constraints while typing - allow free input
+    // Format and update display value
+    const formatted = formatIndianCurrency(numValue);
     setDisplayValue(formatted);
 
-    // Call onChange with numeric value
+    // Call onChange with numeric value (without constraints)
     onChange({
       target: {
         name,
-        value: constrainedValue,
+        value: numValue,
       },
     });
   };
 
   const handleBlur = (e) => {
     setIsFocused(false);
+    
+    // Apply min/max constraints on blur
+    const numValue = parseFormattedValue(displayValue);
+    
+    if (numValue !== '') {
+      let constrainedValue = numValue;
+      let valueChanged = false;
+      
+      // Apply min constraint
+      if (min !== undefined && numValue < min) {
+        constrainedValue = min;
+        valueChanged = true;
+      }
+      
+      // Apply max constraint
+      if (max !== undefined && numValue > max) {
+        constrainedValue = max;
+        valueChanged = true;
+      }
+      
+      // If value was constrained, update display and form data
+      if (valueChanged) {
+        const formatted = formatIndianCurrency(constrainedValue);
+        setDisplayValue(formatted);
+        
+        // Update form data with constrained value
+        onChange({
+          target: {
+            name,
+            value: constrainedValue,
+          },
+        });
+      }
+    }
+    
     if (onBlur) {
       // Pass the numeric value in the event
-      const numValue = parseFormattedValue(displayValue);
+      const finalValue = parseFormattedValue(displayValue);
       onBlur({
         ...e,
         target: {
           ...e.target,
           name,
-          value: numValue || '',
+          value: finalValue || '',
         },
       });
     }
