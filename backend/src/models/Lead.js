@@ -69,6 +69,7 @@ const leadSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
+    strict: false, // Allow all fields to be saved (for dynamic form fields)
   }
 );
 

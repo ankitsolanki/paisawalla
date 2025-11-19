@@ -179,8 +179,10 @@ const Form1 = ({ theme = 'light' }) => {
         },
       })
         .then((response) => {
-          const leadData = response?.data;
-          if (leadData) {
+          // Response structure: { success: true, data: leadData, ... }
+          // apiClient interceptor returns response.data, so response is already the JSON body
+          const leadData = response?.data || response;
+          if (leadData && typeof leadData === 'object') {
             applyPrefillData(leadData);
             setPrefillStatus('success');
             setPrefillMessage('We found your previous details and filled them in. Please review and update if required.');
@@ -388,20 +390,46 @@ const Form1 = ({ theme = 'light' }) => {
       const updated = { ...prev };
 
       FORM_FIELD_KEYS.forEach((field) => {
-        if (Object.prototype.hasOwnProperty.call(payload, field) && payload[field] !== undefined && payload[field] !== null && payload[field] !== '') {
+        // Check if field exists in payload (including empty strings and 0 values)
+        if (Object.prototype.hasOwnProperty.call(payload, field)) {
           let value = payload[field];
+          
+          // Skip null and undefined, but allow empty strings, 0, false
+          if (value === null || value === undefined) {
+            return;
+          }
           
           // Handle date fields - convert ISO format to yyyy-MM-dd
           if (field === 'dateOfBirth' && value) {
             // If value is ISO format, extract just the date part
             if (typeof value === 'string' && value.includes('T')) {
               value = value.split('T')[0];
+            } else if (value instanceof Date) {
+              // Convert Date object to yyyy-MM-dd
+              const year = value.getFullYear();
+              const month = String(value.getMonth() + 1).padStart(2, '0');
+              const day = String(value.getDate()).padStart(2, '0');
+              value = `${year}-${month}-${day}`;
             }
           }
           
-          updated[field] = field === 'panNumber'
-            ? String(value).toUpperCase()
-            : value;
+          // Handle PAN number - uppercase
+          if (field === 'panNumber' && value) {
+            value = String(value).toUpperCase();
+          }
+          
+          // Handle currency fields - ensure they're numbers
+          const currencyFields = ['loanAmount', 'netMonthlyIncome', 'annualIncome', 'annualTurnover'];
+          if (currencyFields.includes(field) && value !== '') {
+            // Convert to number if it's a string
+            if (typeof value === 'string') {
+              const numValue = parseFloat(value.replace(/,/g, ''));
+              value = isNaN(numValue) ? value : numValue;
+            }
+          }
+          
+          // Store the value
+          updated[field] = value;
         }
       });
 
@@ -900,10 +928,11 @@ const Form1 = ({ theme = 'light' }) => {
           rows={section.rows}
           renderField={renderField}
           isCompact={isCompactLayout}
+          isFieldVisible={isFieldVisible}
         />
       ));
     },
-    [renderField, isCompactLayout]
+    [renderField, isCompactLayout, isFieldVisible]
   );
 
   // Show eligibility checking screen after form submission
@@ -1179,3 +1208,4 @@ const Form1 = ({ theme = 'light' }) => {
 };
 
 export default React.memo(Form1);
+

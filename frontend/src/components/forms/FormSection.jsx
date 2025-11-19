@@ -25,6 +25,7 @@ const FormSection = ({
   renderField,
   isCompact = false,
   icon,
+  isFieldVisible, // Optional function to check field visibility
 }) => {
   if (!rows.length || !renderField) {
     return null;
@@ -104,24 +105,50 @@ const FormSection = ({
           gap: isCompact ? tokens.spacing.sm : tokens.spacing.md,
         }}
       >
-        {rows.map((row, rowIdx) => (
-          <div
-            key={`row-${rowIdx}`}
-            style={{
-              display: 'grid',
-              gridTemplateColumns: isCompact
-                ? '1fr'
-                : row.cols?.length === 1
-                ? '1fr'
-                : `repeat(${row.cols?.length || 1}, minmax(0, 1fr))`,
-              gap: isCompact ? tokens.spacing.sm : tokens.spacing.md,
-            }}
-          >
-            {row.fields?.map((fieldName) => (
-              <div key={fieldName}>{renderField(fieldName)}</div>
-            ))}
-          </div>
-        ))}
+        {rows.map((row, rowIdx) => {
+          // Filter out hidden fields
+          const visibleFields = row.fields?.filter((fieldName) => {
+            // Use visibility check function if provided, otherwise check render result
+            if (isFieldVisible) {
+              return isFieldVisible(fieldName);
+            }
+            // Fallback: check if renderField returns null
+            const rendered = renderField(fieldName);
+            return rendered !== null && rendered !== undefined;
+          }) || [];
+
+          // Skip empty rows
+          if (visibleFields.length === 0) {
+            return null;
+          }
+
+          // Adjust column spans for visible fields only
+          const visibleCols = row.cols ? 
+            row.cols.filter((_, idx) => {
+              const fieldName = row.fields?.[idx];
+              return fieldName && visibleFields.includes(fieldName);
+            }) : 
+            visibleFields.map(() => 1);
+
+          return (
+            <div
+              key={`row-${rowIdx}`}
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isCompact
+                  ? '1fr'
+                  : visibleCols.length === 1
+                  ? '1fr'
+                  : `repeat(${visibleCols.length}, minmax(0, 1fr))`,
+                gap: isCompact ? tokens.spacing.sm : tokens.spacing.md,
+              }}
+            >
+              {visibleFields.map((fieldName) => (
+                <div key={fieldName}>{renderField(fieldName)}</div>
+              ))}
+            </div>
+          );
+        })}
       </div>
     </section>
   );
