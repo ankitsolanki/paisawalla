@@ -22,6 +22,8 @@ const PincodeInput = ({
   className = '',
   // Callback to auto-populate city and state
   onPincodeLookup,
+  // Callback to notify parent of loading state changes
+  onLoadingChange,
   // Field names for city and state (for auto-population)
   cityFieldName,
   stateFieldName,
@@ -39,6 +41,10 @@ const PincodeInput = ({
 
     setIsLoading(true);
     setLookupError(null);
+    // Notify parent of loading state
+    if (onLoadingChange) {
+      onLoadingChange(true);
+    }
 
     try {
       const response = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
@@ -68,6 +74,10 @@ const PincodeInput = ({
       return null;
     } finally {
       setIsLoading(false);
+      // Notify parent that loading is complete
+      if (onLoadingChange) {
+        onLoadingChange(false);
+      }
     }
   }, []);
 
@@ -111,43 +121,25 @@ const PincodeInput = ({
   const displayError = error || lookupError;
 
   return (
-    <div style={{ width: fullWidth ? '100%' : 'auto', position: 'relative' }}>
-      <Input
-        label={label}
-        name={name}
-        type="text"
-        value={value || ''}
-        onChange={handleChange}
-        onBlur={onBlur}
-        onFocus={onFocus}
-        placeholder={placeholder || 'Enter 6-digit PIN code'}
-        required={required}
-        error={displayError}
-        disabled={disabled}
-        fullWidth={fullWidth}
-        className={className}
-        maxLength={6}
-        inputMode="numeric"
-        pattern="[0-9]*"
-        style={{
-          ...(props.style || {}),
-        }}
-        {...props}
-      />
-      {isLoading && (
-        <div
-          style={{
-            position: 'absolute',
-            right: tokens.spacing.md,
-            top: label ? '42px' : tokens.spacing.md,
-            fontSize: tokens.typography.fontSize.sm,
-            color: tokens.colors.primary[600],
-          }}
-        >
-          Loading...
-        </div>
-      )}
-    </div>
+    <Input
+      label={label}
+      name={name}
+      type="text"
+      value={value || ''}
+      onChange={handleChange}
+      onBlur={onBlur}
+      onFocus={onFocus}
+      placeholder={placeholder || 'Enter 6-digit PIN code'}
+      required={required}
+      error={displayError}
+      disabled={disabled}
+      fullWidth={fullWidth}
+      className={className}
+      maxLength={6}
+      inputMode="numeric"
+      pattern="[0-9]*"
+      {...props}
+    />
   );
 };
 

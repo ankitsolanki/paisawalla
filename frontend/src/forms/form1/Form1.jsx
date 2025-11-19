@@ -68,8 +68,8 @@ const STEP_SECTIONS = {
       title: 'Where do you live?',
       subtitle: 'We use this to personalize offers in your area',
       rows: [
-        { fields: ['city', 'state'], cols: [1, 1] },
         { fields: ['pinCode'] },
+        { fields: ['state', 'city'], cols: [1, 1] },
       ],
     },
   ],
@@ -136,6 +136,8 @@ const Form1 = ({ theme = 'light' }) => {
   const [eligibilityError, setEligibilityError] = useState(null);
   const [prefillStatus, setPrefillStatus] = useState('idle'); // idle | loading | success | error | not_found
   const [prefillMessage, setPrefillMessage] = useState('');
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [autoPopulatedFields, setAutoPopulatedFields] = useState(new Set()); // Track auto-populated fields
   const { windowWidth } = useResponsive();
   const isMobile = windowWidth < 640;
   const isTablet = windowWidth >= 640 && windowWidth < 1024;
@@ -293,6 +295,8 @@ const Form1 = ({ theme = 'light' }) => {
       if (cityFieldName && city) {
         updated[cityFieldName] = city;
         trackFieldInteraction(cityFieldName, 'auto-populated', city);
+        // Mark city as auto-populated
+        setAutoPopulatedFields((prevSet) => new Set(prevSet).add(cityFieldName));
       }
       
       // Auto-populate state if field name is provided and state is available
@@ -308,6 +312,8 @@ const Form1 = ({ theme = 'light' }) => {
           if (exactMatch) {
             updated[stateFieldName] = exactMatch.value;
             trackFieldInteraction(stateFieldName, 'auto-populated', exactMatch.value);
+            // Mark state as auto-populated
+            setAutoPopulatedFields((prevSet) => new Set(prevSet).add(stateFieldName));
           } else {
             // Try partial match
             const partialMatch = stateSchema.options.find(
@@ -318,6 +324,8 @@ const Form1 = ({ theme = 'light' }) => {
             if (partialMatch) {
               updated[stateFieldName] = partialMatch.value;
               trackFieldInteraction(stateFieldName, 'auto-populated', partialMatch.value);
+              // Mark state as auto-populated
+              setAutoPopulatedFields((prevSet) => new Set(prevSet).add(stateFieldName));
             }
           }
         }
@@ -326,6 +334,29 @@ const Form1 = ({ theme = 'light' }) => {
       return updated;
     });
   }, [trackFieldInteraction]);
+
+  // Handle PIN code loading state change
+  const handlePincodeLoadingChange = useCallback((isLoading) => {
+    setPincodeLoading(isLoading);
+  }, []);
+
+  // Clear auto-populated state when PIN code is cleared
+  const handlePincodeChange = useCallback((e) => {
+    const { value } = e.target;
+    handleChange(e);
+    
+    // If PIN code is cleared, clear auto-populated state for city and state
+    if (!value || value.length === 0) {
+      setAutoPopulatedFields((prevSet) => {
+        const newSet = new Set(prevSet);
+        newSet.delete('city');
+        newSet.delete('state');
+        newSet.delete('companyCity');
+        newSet.delete('companyState');
+        return newSet;
+      });
+    }
+  }, [handleChange]);
 
   const validateStep = useCallback((step) => {
     const stepFields = form1Schema.steps[step - 1] || [];
@@ -568,11 +599,45 @@ const Form1 = ({ theme = 'light' }) => {
         <PincodeInput
           key={fieldName}
           {...commonProps}
+          onChange={handlePincodeChange}
           onPincodeLookup={handlePincodeLookup}
+          onLoadingChange={handlePincodeLoadingChange}
           cityFieldName={fieldSchema.cityFieldName}
           stateFieldName={fieldSchema.stateFieldName}
         />
       );
+    }
+
+    // Handle city field with loading state
+    if (fieldName === 'city' || fieldName === 'companyCity') {
+      const isAutoPopulated = autoPopulatedFields.has(fieldName);
+      const isLoading = pincodeLoading && (fieldName === 'city' || fieldName === 'companyCity');
+      
+      return (
+        <Input
+          key={fieldName}
+          {...commonProps}
+          type="text"
+          disabled={isAutoPopulated}
+          placeholder={isLoading ? 'Loading...' : commonProps.placeholder}
+        />
+      );
+    }
+
+    // Handle state field - disable if auto-populated
+    if (fieldName === 'state' || fieldName === 'companyState') {
+      const isAutoPopulated = autoPopulatedFields.has(fieldName);
+      
+      if (fieldSchema.type === 'select') {
+        return (
+          <Select
+            key={fieldName}
+            {...commonProps}
+            options={fieldSchema.options || []}
+            disabled={isAutoPopulated}
+          />
+        );
+      }
     }
 
     // For date fields, ensure the value is in yyyy-MM-dd format
@@ -596,7 +661,7 @@ const Form1 = ({ theme = 'light' }) => {
         maxLength={fieldSchema.maxLength}
       />
     );
-  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeLookup]);
+  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeLookup, handlePincodeLoadingChange, handlePincodeChange, autoPopulatedFields, pincodeLoading]);
 
   const renderStepFields = useCallback(
     (stepNumber) => {
