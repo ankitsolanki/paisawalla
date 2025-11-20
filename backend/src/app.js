@@ -95,8 +95,24 @@ app.use(errorHandler);
 const startServer = async () => {
   try {
     // Start HTTP server first (don't wait for MongoDB)
-    const server = app.listen(PORT, () => {
-      logger.info(`Server running on port ${PORT}`, { environment: env.nodeEnv });
+    // Listen on 0.0.0.0 to make it accessible from reverse proxy
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      const address = server.address();
+      logger.info(`Server running on port ${PORT}`, { 
+        environment: env.nodeEnv,
+        address: address ? `${address.address}:${address.port}` : `0.0.0.0:${PORT}`,
+        ready: true
+      });
+    });
+
+    // Handle server errors
+    server.on('error', (error) => {
+      if (error.code === 'EADDRINUSE') {
+        logger.error(`Port ${PORT} is already in use`, { error: error.message });
+      } else {
+        logger.error('Server error', { error: error.message, stack: error.stack });
+      }
+      process.exit(1);
     });
 
     // Connect to MongoDB in the background (non-blocking)
