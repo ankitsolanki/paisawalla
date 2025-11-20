@@ -1,6 +1,5 @@
 // Load environment variables FIRST before any other imports that might use them
-import dotenv from 'dotenv';
-dotenv.config();
+import "dotenv/config";
 
 import express from 'express';
 import helmet from 'helmet';
