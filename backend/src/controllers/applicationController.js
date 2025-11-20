@@ -2,10 +2,18 @@ import { Application } from '../models/Application.js';
 import { Lead } from '../models/Lead.js';
 import { buildResponse, buildErrorResponse } from '../utils/responseBuilder.js';
 import { logger } from '../utils/logger.js';
+import mongoose from 'mongoose';
 
 export const createApplication = async (req, res, next) => {
   try {
     const { leadId } = req.body;
+
+    // Validate ObjectId format
+    if (!leadId || !mongoose.Types.ObjectId.isValid(leadId)) {
+      return res.status(400).json(
+        buildErrorResponse('Invalid lead ID format', null, 400)
+      );
+    }
 
     // Verify lead exists
     const lead = await Lead.findById(leadId);
@@ -57,6 +65,14 @@ export const createApplication = async (req, res, next) => {
 export const getApplication = async (req, res, next) => {
   try {
     const { applicationId } = req.params;
+    
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(applicationId)) {
+      return res.status(400).json(
+        buildErrorResponse('Invalid application ID format', null, 400)
+      );
+    }
+    
     const application = await Application.findById(applicationId)
       .populate('leadId');
 

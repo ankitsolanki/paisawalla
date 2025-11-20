@@ -34,6 +34,7 @@ export const validateRecaptcha = async (req, res, next) => {
         secret: secretKey,
         response: recaptchaToken,
       },
+      timeout: 10000, // 10 second timeout
     });
 
     const { success, score } = response.data;

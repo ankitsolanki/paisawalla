@@ -38,7 +38,7 @@ const applicationSchema = new mongoose.Schema(
 // Generate application number
 applicationSchema.pre('save', async function (next) {
   if (!this.applicationNumber) {
-    const count = await mongoose.model('Application').countDocuments();
+    const count = await Application.countDocuments();
     this.applicationNumber = `APP-${Date.now()}-${count + 1}`;
   }
   next();

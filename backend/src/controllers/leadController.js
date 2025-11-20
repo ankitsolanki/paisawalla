@@ -1,6 +1,7 @@
 import { Lead } from '../models/Lead.js';
 import { buildResponse, buildErrorResponse } from '../utils/responseBuilder.js';
 import { logger } from '../utils/logger.js';
+import mongoose from 'mongoose';
 
 export const createLead = async (req, res, next) => {
   try {
@@ -17,7 +18,7 @@ export const createLead = async (req, res, next) => {
     logger.info('Lead created successfully', {
       leadId: lead._id,
       formType: lead.formType,
-      email: lead.email,
+      // Don't log PII (email) for privacy/GDPR compliance
     });
 
     res.status(201).json(
@@ -31,6 +32,14 @@ export const createLead = async (req, res, next) => {
 export const getLead = async (req, res, next) => {
   try {
     const { leadId } = req.params;
+    
+    // Validate ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(leadId)) {
+      return res.status(400).json(
+        buildErrorResponse('Invalid lead ID format', null, 400)
+      );
+    }
+    
     const lead = await Lead.findById(leadId);
 
     if (!lead) {
@@ -64,11 +73,9 @@ export const lookupLeadByPhone = async (req, res, next) => {
       ...(formType ? { formType } : {}),
     };
 
-    const lead = await Lead.findOne(
-      lookupQuery,
-      null,
-      { sort: { createdAt: -1 } }
-    ).lean();
+    const lead = await Lead.findOne(lookupQuery)
+      .sort({ createdAt: -1 })
+      .lean();
 
     if (!lead) {
       return res.status(404).json(
@@ -76,10 +83,13 @@ export const lookupLeadByPhone = async (req, res, next) => {
       );
     }
 
-    const { ssn, bankAccountNumber, ...safeLead } = lead;
+    // Remove sensitive fields more explicitly
+    const safeLead = { ...lead };
+    delete safeLead.ssn;
+    delete safeLead.bankAccountNumber;
 
     logger.info('Lead lookup successful', {
-      phone,
+      phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'), // Mask phone in logs
       leadId: lead._id,
       formType: lead.formType,
     });

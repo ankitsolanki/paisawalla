@@ -16,14 +16,14 @@ class BreService {
 
       // STUB MODE: Return random requestId and simulate BRE processing
       if (USE_BRE_STUB || !BRE_API_URL) {
-        const requestId = `BRE-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+        const requestId = `BRE-${Date.now()}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`;
         
         // Get phone number from payload to determine if we should always generate offers
         const phoneNumber = payload?.phone || '';
         // Extract last digit - handle both string and number, remove all non-digits first
         const digitsOnly = phoneNumber.toString().replace(/\D/g, '');
         const lastDigit = digitsOnly.length > 0 ? digitsOnly.slice(-1) : '';
-        const phoneEndsInEven = lastDigit && !isNaN(parseInt(lastDigit)) && parseInt(lastDigit) % 2 === 0;
+        const phoneEndsInEven = lastDigit && !isNaN(parseInt(lastDigit, 10)) && parseInt(lastDigit, 10) % 2 === 0;
         
         // Initialize stub status progression
         // Status will progress: initiated -> processing -> completed/failed
@@ -72,6 +72,7 @@ class BreService {
             'Authorization': `Bearer ${BRE_API_KEY}`,
             'Content-Type': 'application/json',
           },
+          timeout: 30000, // 30 second timeout
         }
       );
 
@@ -82,9 +83,11 @@ class BreService {
     } catch (error) {
       logger.error('BRE service error', {
         error: error.message,
-        applicationId: application._id,
+        stack: error.stack,
+        applicationId: application?._id,
+        isTimeout: error.code === 'ECONNABORTED',
       });
-      throw new Error('Failed to initiate BRE request');
+      throw new Error(`Failed to initiate BRE request: ${error.message}`);
     }
   }
 
@@ -165,6 +168,7 @@ class BreService {
           headers: {
             'Authorization': `Bearer ${BRE_API_KEY}`,
           },
+          timeout: 10000, // 10 second timeout
         }
       );
 
@@ -176,9 +180,11 @@ class BreService {
     } catch (error) {
       logger.error('BRE status check error', {
         error: error.message,
+        stack: error.stack,
         breRequestId,
+        isTimeout: error.code === 'ECONNABORTED',
       });
-      throw new Error('Failed to check BRE status');
+      throw new Error(`Failed to check BRE status: ${error.message}`);
     }
   }
 

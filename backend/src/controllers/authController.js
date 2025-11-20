@@ -1,6 +1,7 @@
 import { logger } from '../utils/logger.js';
 import { buildResponse, buildErrorResponse } from '../utils/responseBuilder.js';
 import { rateLimiter } from '../middleware/rateLimiter.js';
+import crypto from 'crypto';
 
 // In-memory OTP storage (for development/testing)
 // In production, use Redis or a database
@@ -10,10 +11,13 @@ const otpStore = new Map();
 const OTP_EXPIRY_MS = 10 * 60 * 1000;
 
 /**
- * Generate a random 6-digit OTP
+ * Generate a cryptographically secure random 6-digit OTP
  */
 function generateOTP() {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  // Use crypto.randomInt for cryptographically secure random number
+  const min = 100000;
+  const max = 999999;
+  return crypto.randomInt(min, max + 1).toString();
 }
 
 /**
@@ -51,12 +55,17 @@ export const sendOtp = async (req, res, next) => {
     });
 
     // In production, send OTP via SMS service (e.g., Twilio, AWS SNS, etc.)
-    // For now, log it for testing
+    // For now, log it for testing (but mask OTP in logs)
     logger.info('OTP generated', {
-      phone,
-      otp, // Remove this in production
+      phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'), // Mask phone
+      // Never log OTP, even in development
       expiresAt: new Date(expiresAt).toISOString(),
     });
+    
+    // Only log OTP to console in development (not to log files)
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV ONLY] OTP for ${phone}: ${otp}`); // eslint-disable-line no-console
+    }
 
     // TODO: Integrate with SMS service
     // await smsService.sendOTP(phone, otp);
@@ -64,9 +73,8 @@ export const sendOtp = async (req, res, next) => {
     res.status(200).json(
       buildResponse({
         message: 'OTP sent successfully',
-        // In production, don't send OTP in response
-        // For testing/development, include it
-        ...(process.env.NODE_ENV === 'development' && { otp }),
+        // Never send OTP in response, even in development
+        // Check console logs for development OTP
       })
     );
   } catch (error) {

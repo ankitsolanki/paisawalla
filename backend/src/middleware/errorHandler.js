@@ -2,12 +2,21 @@ import { logger } from '../utils/logger.js';
 import { buildErrorResponse } from '../utils/responseBuilder.js';
 
 export const errorHandler = (err, req, res, next) => {
+  // Don't log stack trace in production
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  
   logger.error('Error occurred', {
     error: err.message,
-    stack: err.stack,
+    ...(isDevelopment && { stack: err.stack }),
     path: req.path,
     method: req.method,
+    statusCode: err.statusCode || 500,
   });
+
+  // If response already sent, delegate to default Express error handler
+  if (res.headersSent) {
+    return next(err);
+  }
 
   // Mongoose validation error
   if (err.name === 'ValidationError') {
@@ -23,9 +32,27 @@ export const errorHandler = (err, req, res, next) => {
 
   // Mongoose duplicate key error
   if (err.code === 11000) {
-    const field = Object.keys(err.keyPattern)[0];
+    const fields = Object.keys(err.keyPattern || {});
+    const field = fields.length > 0 ? fields[0] : 'field';
+    const message = fields.length > 1 
+      ? 'Duplicate key violation' 
+      : `${field} already exists`;
     return res.status(409).json(
-      buildErrorResponse(`${field} already exists`, null, 409)
+      buildErrorResponse(message, null, 409)
+    );
+  }
+
+  // Mongoose CastError (invalid ObjectId)
+  if (err.name === 'CastError') {
+    return res.status(400).json(
+      buildErrorResponse('Invalid ID format', null, 400)
+    );
+  }
+
+  // Mongoose timeout error
+  if (err.name === 'MongoServerError' && err.code === 50) {
+    return res.status(504).json(
+      buildErrorResponse('Database operation timed out', null, 504)
     );
   }
 
@@ -36,9 +63,11 @@ export const errorHandler = (err, req, res, next) => {
     );
   }
 
-  // Default error
+  // Default error - don't expose internal error messages in production
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal server error';
+  const message = statusCode === 500 && !isDevelopment
+    ? 'Internal server error'
+    : (err.message || 'Internal server error');
 
   res.status(statusCode).json(
     buildErrorResponse(message, null, statusCode)

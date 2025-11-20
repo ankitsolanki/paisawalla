@@ -10,9 +10,11 @@ export const sanitizeString = (input) => {
   
   return input
     .trim()
-    .replace(/[<>]/g, '') // Remove potential HTML tags
+    .replace(/<[^>]*>/g, '') // Remove HTML tags more comprehensively
     .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, ''); // Remove event handlers
+    .replace(/on\w+\s*=/gi, '') // Remove event handlers (with optional spaces)
+    .replace(/data:text\/html/gi, '') // Remove data URIs with HTML
+    .replace(/vbscript:/gi, ''); // Remove vbscript: protocol
 };
 
 /**
@@ -32,7 +34,7 @@ export const sanitizeObject = (obj) => {
   if (typeof obj === 'object') {
     const sanitized = {};
     for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
         sanitized[key] = sanitizeObject(obj[key]);
       }
     }
@@ -49,7 +51,11 @@ export const sanitizeEmail = (email) => {
   if (typeof email !== 'string') return null;
   
   const sanitized = email.toLowerCase().trim();
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // More comprehensive email regex (still not RFC 5322 compliant but better)
+  const emailRegex = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+  
+  // Additional length check
+  if (sanitized.length > 254) return null; // RFC 5321 limit
   
   return emailRegex.test(sanitized) ? sanitized : null;
 };

@@ -1,9 +1,5 @@
-import dotenv from 'dotenv';
-
-dotenv.config();
-
 export const env = {
-  port: process.env.PORT || 3000,
+  port: parseInt(process.env.PORT, 10) || 3000,
   nodeEnv: process.env.NODE_ENV || 'development',
   mongoURI: process.env.MONGODB_URI,
   recaptchaSecret: process.env.RECAPTCHA_SECRET_KEY,
@@ -24,6 +20,11 @@ export const validateEnv = () => {
   
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+  }
+
+  // Validate MongoDB URI format
+  if (env.mongoURI && !env.mongoURI.startsWith('mongodb://') && !env.mongoURI.startsWith('mongodb+srv://')) {
+    throw new Error('MONGODB_URI must be a valid MongoDB connection string');
   }
 };
 

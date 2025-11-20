@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import { logger } from '../utils/logger.js';
 
-const MAX_RETRY_ATTEMPTS = parseInt(process.env.MONGODB_RETRY_ATTEMPTS) || 5;
-const RETRY_DELAY = parseInt(process.env.MONGODB_RETRY_DELAY) || 5000;
+const MAX_RETRY_ATTEMPTS = parseInt(process.env.MONGODB_RETRY_ATTEMPTS, 10) || 5;
+const RETRY_DELAY = parseInt(process.env.MONGODB_RETRY_DELAY, 10) || 5000;
 
 export const connectDB = async () => {
   const mongoURI = process.env.MONGODB_URI;
@@ -13,26 +13,30 @@ export const connectDB = async () => {
 
   let attempts = 0;
 
+  // Set up event handlers BEFORE connecting
+  mongoose.connection.on('error', (err) => {
+    logger.error('MongoDB connection error', { error: err.message });
+  });
+
+  mongoose.connection.on('disconnected', () => {
+    logger.warn('MongoDB disconnected');
+  });
+
+  mongoose.connection.on('reconnected', () => {
+    logger.info('MongoDB reconnected');
+  });
+
   const connectWithRetry = async () => {
     try {
       await mongoose.connect(mongoURI, {
-        serverSelectionTimeoutMS: 5000,
+        serverSelectionTimeoutMS: 10000, // Increased timeout
+        maxPoolSize: 10,
+        minPoolSize: 2,
+        bufferCommands: false,
       });
       
       logger.info('MongoDB connected successfully', {
-        uri: mongoURI.replace(/\/\/.*@/, '//***@'), // Mask credentials in logs
-      });
-
-      mongoose.connection.on('error', (err) => {
-        logger.error('MongoDB connection error', { error: err.message });
-      });
-
-      mongoose.connection.on('disconnected', () => {
-        logger.warn('MongoDB disconnected');
-      });
-
-      mongoose.connection.on('reconnected', () => {
-        logger.info('MongoDB reconnected');
+        uri: mongoURI.replace(/\/\/[^:]+:[^@]+@/, '//***:***@'), // Better credential masking
       });
     } catch (error) {
       attempts++;
@@ -43,7 +47,8 @@ export const connectDB = async () => {
           nextAttemptIn: `${RETRY_DELAY}ms`,
         });
         
-        setTimeout(connectWithRetry, RETRY_DELAY);
+        await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
+        return connectWithRetry();
       } else {
         logger.error('MongoDB connection failed after max retries', {
           attempts,

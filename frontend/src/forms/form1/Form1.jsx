@@ -222,12 +222,24 @@ const Form1 = ({ theme = 'light' }) => {
   const isFieldVisible = useCallback((fieldName) => {
     const employmentType = formData.employmentType;
     
+    // Employment-related fields that have conditional visibility
+    const employmentFields = [
+      'netMonthlyIncome', 'companyName', 'modeOfSalary',
+      'annualIncome', 'organizationName', 'profession', 'annualTurnover'
+    ];
+    
+    // If field is not employment-related, always show it
+    if (!employmentFields.includes(fieldName)) {
+      return true;
+    }
+    
+    // For employment-related fields, check visibility based on employment type
     if (!employmentType) {
       // If no employment type selected, show all fields initially
       return true;
     }
 
-    // Fields that are always visible (not dependent on employment type)
+    // Fields that are always visible regardless of employment type
     const alwaysVisibleFields = [
       'loanAmount', 'employmentType', 'companyEmail', 'companyAddress', 
       'companyCity', 'companyState', 'companyPinCode'

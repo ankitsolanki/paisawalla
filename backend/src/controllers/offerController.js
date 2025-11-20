@@ -125,7 +125,7 @@ export const getOffers = async (req, res, next) => {
                 for (const breOffer of breResponse.offers) {
                   const offer = new Offer({
                     applicationId,
-                    lenderId: breOffer.id || `LENDER-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    lenderId: breOffer.id || `LENDER-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`,
                     lenderName: breOffer.lender || 'Lender',
                     loanAmount: breOffer.amount || 0,
                     interestRate: breOffer.apr || 0,
