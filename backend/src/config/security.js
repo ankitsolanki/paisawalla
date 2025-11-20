@@ -14,51 +14,32 @@ const normalizeOrigin = (origin) => {
  * If CORS_ORIGIN is set, it will restrict to those specific origins (comma-separated)
  */
 const getCorsOrigin = () => {
-  const corsOrigin = process.env.CORS_ORIGIN;
-
-  // If CORS_ORIGIN is set, use it (supports comma-separated origins)
-  if (corsOrigin) {
-    const origins = corsOrigin
-      .split(',')
-      .map(o => normalizeOrigin(o))
-      .filter(o => o && o.length > 0);
-    
-    if (origins.length === 0) {
-      // If CORS_ORIGIN is set but empty, allow all origins
-      return true;
+  const corsOrigin = process.env.CORS_ORIGIN || "";
+  const origins = corsOrigin
+    .split(',')
+    .map(o => normalizeOrigin(o))
+    .filter(o => o && o.length > 0);
+  
+  // Multiple origins - use callback function
+  return (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, or same-origin requests)
+    if (!origin) {
+      return callback(null, true);
     }
-    
-    if (origins.length === 1) {
-      // For single origin, return it normalized (no trailing slash)
-      return origins[0];
-    }
-    
-    // Multiple origins - use callback function
-    return (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, Postman, or same-origin requests)
-      if (!origin) {
-        return callback(null, true);
-      }
-      
-      const normalizedRequestOrigin = normalizeOrigin(origin);
-      
-      // Check if the normalized origin matches any allowed origin
-      if (normalizedRequestOrigin && origins.includes(normalizedRequestOrigin)) {
-        // Return true to allow this origin (CORS library will use the requested origin)
+    const normalizedRequestOrigin = normalizeOrigin(origin);
+    // Check if the normalized origin matches any allowed origin
+    if (normalizedRequestOrigin && origins.includes(normalizedRequestOrigin)) {
+      // Return true to allow this origin (CORS library will use the requested origin)
+      callback(null, true);
+    } else {
+      // Also check exact match (in case origin doesn't have trailing slash)
+      if (origins.includes(origin)) {
         callback(null, true);
       } else {
-        // Also check exact match (in case origin doesn't have trailing slash)
-        if (origins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
+        callback(new Error('Not allowed by CORS'));
       }
-    };
-  }
-
-  // Allow all origins if CORS_ORIGIN is not set
-  return true;
+    }
+  };
 };
 
 export const securityConfig = {
