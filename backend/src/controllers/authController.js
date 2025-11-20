@@ -72,7 +72,7 @@ export const sendOtp = async (req, res, next) => {
 
     res.status(200).json(
       buildResponse({
-        otp,
+        data: { otp },
         message: 'OTP sent successfully',
         // Never send OTP in response, even in development
         // Check console logs for development OTP
