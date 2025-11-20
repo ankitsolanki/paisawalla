@@ -94,11 +94,18 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
-    // Connect to MongoDB
-    await connectDB();
-    
+    // Start HTTP server first (don't wait for MongoDB)
     const server = app.listen(PORT, () => {
       logger.info(`Server running on port ${PORT}`, { environment: env.nodeEnv });
+    });
+
+    // Connect to MongoDB in the background (non-blocking)
+    connectDB().catch((error) => {
+      logger.error('MongoDB connection failed during startup', { 
+        error: error.message,
+        note: 'Server is running but database operations will fail until connection is established'
+      });
+      // Don't exit - let the server run and retry connection
     });
 
     // Graceful shutdown
