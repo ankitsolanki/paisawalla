@@ -10,13 +10,20 @@ const getCorsOrigin = () => {
 
   // If CORS_ORIGIN is set, use it (supports comma-separated origins)
   if (corsOrigin) {
-    const origins = corsOrigin.split(',').map(o => o.trim());
+    const origins = corsOrigin.split(',').map(o => o.trim()).filter(o => o.length > 0);
+    if (origins.length === 0) {
+      // If CORS_ORIGIN is set but empty, allow all origins
+      return true;
+    }
     if (origins.length === 1) {
       return origins[0];
     }
     // Multiple origins - use callback function
     return (origin, callback) => {
-      if (!origin) return callback(null, true);
+      // Allow requests with no origin (like mobile apps, Postman, or same-origin requests)
+      if (!origin) {
+        return callback(null, true);
+      }
       if (origins.includes(origin)) {
         callback(null, true);
       } else {
@@ -41,9 +48,16 @@ export const securityConfig = {
       'X-Requested-With',
       'Accept',
       'Origin',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers',
     ],
-    exposedHeaders: ['Content-Length'],
+    exposedHeaders: [
+      'Content-Length',
+      'Content-Type',
+      'Authorization',
+    ],
     optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+    preflightContinue: false, // Pass the CORS preflight response to the next handler
   },
 };
 

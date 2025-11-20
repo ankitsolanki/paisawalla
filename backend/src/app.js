@@ -41,6 +41,8 @@ app.use(helmet({
       defaultSrc: ["'self'"],
     },
   },
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  crossOriginEmbedderPolicy: false,
 }));
 app.use(cors(securityConfig.cors));
 app.use(express.json({ limit: '10mb' }));
