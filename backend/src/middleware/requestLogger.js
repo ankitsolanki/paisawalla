@@ -13,6 +13,8 @@ export const requestLogger = (req, res, next) => {
     path: req.path,
     query: req.query,
     ip: req.ip,
+    origin: req.get('origin'),
+    referer: req.get('referer'),
     userAgent: req.get('user-agent'),
     sessionId: req.headers['x-session-id'],
   });
