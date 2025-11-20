@@ -49,7 +49,7 @@ export const sendOtp = async (req, res, next) => {
 
     // Store OTP (in production, use Redis)
     otpStore.set(phone, {
-      otp,
+      otp, //remove if going to production
       expiresAt,
       attempts: 0,
     });
@@ -72,6 +72,7 @@ export const sendOtp = async (req, res, next) => {
 
     res.status(200).json(
       buildResponse({
+        otp,
         message: 'OTP sent successfully',
         // Never send OTP in response, even in development
         // Check console logs for development OTP
