@@ -8,6 +8,8 @@
  *   data-redirect-url="https://example.com/form?form=form1"
  *   data-theme="light"
  *   data-api-url="https://api-paisawalla.gofo.app"
+ *   data-title="Get a Personal loan in 10 mins" (optional)
+ *   data-description="Apply for Instant Loans up to ₹10 Lakhs" (optional)
  * ></script>
  */
 
@@ -64,6 +66,8 @@ if (script) {
   const redirectUrl = scriptTag.getAttribute('data-redirect-url');
   const theme = scriptTag.getAttribute('data-theme') || 'light';
   const containerId = scriptTag.getAttribute('data-container') || 'pw-auth';
+  const title = scriptTag.getAttribute('data-title') || undefined; // Use default if not provided
+  const description = scriptTag.getAttribute('data-description') || undefined; // Use default if not provided
 
   // Validate redirect URL
   if (!redirectUrl || redirectUrl.trim() === '') {
@@ -185,7 +189,10 @@ if (script) {
       
       // Create React root and render auth form
       const root = createRoot(container);
-      root.render(React.createElement(AuthForm, { redirectUrl, theme }));
+      const authFormProps = { redirectUrl, theme };
+      if (title) authFormProps.title = title;
+      if (description) authFormProps.description = description;
+      root.render(React.createElement(AuthForm, authFormProps));
 
       // Post message to Webflow that auth form is ready
       if (window.parent) {

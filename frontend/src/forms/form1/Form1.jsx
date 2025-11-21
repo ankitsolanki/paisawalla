@@ -244,20 +244,25 @@ const Form1 = ({ theme = 'light' }) => {
       return true;
     }
     
-    // For employment-related fields, check visibility based on employment type
-    if (!employmentType) {
-      // If no employment type selected, show all fields initially
-      return true;
-    }
-
     // Fields that are always visible regardless of employment type
     const alwaysVisibleFields = [
-      'loanAmount', 'employmentType', 'companyEmail', 'companyAddress', 
+      'loanAmount', 'employmentType', 'companyAddress', 
       'companyCity', 'companyState', 'companyPinCode'
     ];
     
     if (alwaysVisibleFields.includes(fieldName)) {
       return true;
+    }
+
+    // companyEmail is visible for all employment types except Student
+    if (fieldName === 'companyEmail') {
+      return employmentType && employmentType !== 'Student';
+    }
+
+    // For employment-related fields, check visibility based on employment type
+    // If no employment type selected, hide all conditional fields
+    if (!employmentType || employmentType === '') {
+      return false;
     }
 
     // Conditional visibility based on employment type
@@ -279,11 +284,10 @@ const Form1 = ({ theme = 'light' }) => {
       
       case 'Student':
         // Hide all employment-related income/company fields
-        return !['netMonthlyIncome', 'companyName', 'modeOfSalary', 'annualIncome', 
-                 'organizationName', 'profession', 'annualTurnover'].includes(fieldName);
+        return false;
       
       default:
-        return true;
+        return false;
     }
   }, [formData.employmentType]);
 
@@ -572,8 +576,18 @@ const Form1 = ({ theme = 'light' }) => {
       let shouldValidate = false;
       let rulesToValidate = fieldSchema.rules || [];
 
+      // companyEmail is required for all employment types except Student
+      if (fieldName === 'companyEmail') {
+        if (employmentType && employmentType !== 'Student') {
+          shouldValidate = true;
+          if (!rulesToValidate.includes('required')) {
+            rulesToValidate = ['required', ...rulesToValidate];
+          }
+        }
+        // If Student or no employment type, skip validation
+      }
       // Check if field is required based on conditional visibility
-      if (employmentType === 'Salaried') {
+      else if (employmentType === 'Salaried') {
         if (['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(fieldName)) {
           shouldValidate = true;
           // Add required rule if not already present
@@ -754,8 +768,12 @@ const Form1 = ({ theme = 'light' }) => {
     const employmentType = formData.employmentType;
     let isRequired = fieldSchema.required;
     
+    // companyEmail is required for all employment types except Student
+    if (fieldName === 'companyEmail') {
+      isRequired = employmentType && employmentType !== 'Student';
+    }
     // Override required status for conditionally visible fields
-    if (employmentType === 'Salaried') {
+    else if (employmentType === 'Salaried') {
       if (['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(fieldName)) {
         isRequired = true;
       }

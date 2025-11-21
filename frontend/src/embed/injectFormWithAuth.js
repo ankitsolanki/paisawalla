@@ -13,6 +13,8 @@
  *   data-theme="light"
  *   data-api-url="https://api-paisawalla.gofo.app"
  *   data-recaptcha-site-key="YOUR_RECAPTCHA_KEY" (optional)
+ *   data-title="Get a Personal loan in 10 mins" (optional)
+ *   data-description="Apply for Instant Loans up to ₹10 Lakhs" (optional)
  * ></script>
  */
 
@@ -164,9 +166,16 @@ if (script) {
       // Build redirect URL (current page)
       const redirectUrl = buildRedirectUrl();
       
+      // Get optional title and description from script attributes
+      const title = scriptTag.getAttribute('data-title') || undefined;
+      const description = scriptTag.getAttribute('data-description') || undefined;
+      
       // Create React root and render auth form
       const root = createRoot(container);
-      root.render(React.createElement(AuthForm, { redirectUrl, theme }));
+      const authFormProps = { redirectUrl, theme };
+      if (title) authFormProps.title = title;
+      if (description) authFormProps.description = description;
+      root.render(React.createElement(AuthForm, authFormProps));
 
       // Post message to Webflow that auth form is ready
       if (window.parent) {

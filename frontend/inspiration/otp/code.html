@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Personal Loan Application</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#065f46", // A dark green, similar to the button
+            "background-light": "#f0fdf4", // Light green background
+            "background-dark": "#111827", // Dark gray for dark mode
+          },
+          fontFamily: {
+            display: ["Manrope", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "0.5rem", // 8px
+          },
+        },
+      },
+    };
+  </script>
+<style>
+    body {
+      font-family: 'Manrope', sans-serif;
+    }
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 1, 'wght' 700, 'GRAD' 0, 'opsz' 24;
+    }
+  </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="flex items-center justify-center min-h-screen p-4">
+<div class="w-full max-w-md p-8 space-y-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg">
+<div class="text-left">
+<h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 dark:text-white leading-tight">Get a Personal loan in 10 mins</h1>
+<p class="mt-4 text-lg text-gray-600 dark:text-gray-300">Apply for Instant Loans up to ₹10 Lakhs</p>
+</div>
+<form class="mt-8 space-y-6">
+<div>
+<div class="relative">
+<span class="absolute inset-y-0 left-0 flex items-center pl-4 text-gray-500 dark:text-gray-400">+91</span>
+<input autocomplete="tel" class="w-full pl-12 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white bg-gray-50 dark:bg-gray-700 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:ring-primary focus:border-primary" id="mobile-number" name="mobile-number" placeholder="Enter mobile number" required="" type="tel"/>
+</div>
+<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">An OTP will be sent for verification</p>
+</div>
+<div>
+<button class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-lg font-semibold text-white bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-opacity" type="submit">
+            Apply Now
+          </button>
+</div>
+<div class="space-y-4">
+<div class="flex items-start">
+<div class="flex items-center h-5">
+<input checked="" class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-primary" id="terms" name="terms" type="checkbox"/>
+</div>
+<div class="ml-3 text-sm">
+<label class="text-gray-600 dark:text-gray-300" for="terms">By proceeding, you agree with our <a class="font-semibold text-gray-800 dark:text-gray-100 underline hover:text-primary dark:hover:text-primary" href="#">Terms &amp; Conditions</a> &amp; <a class="font-semibold text-gray-800 dark:text-gray-100 underline hover:text-primary dark:hover:text-primary" href="#">Privacy Policy</a></label>
+</div>
+</div>
+<div class="flex items-start">
+<div class="flex items-center h-5">
+<input checked="" class="h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:checked:bg-primary" id="whatsapp" name="whatsapp" type="checkbox"/>
+</div>
+<div class="ml-3 text-sm">
+<label class="text-gray-600 dark:text-gray-300" for="whatsapp">I agree to receive updates on Whatsapp</label>
+</div>
+</div>
+</div>
+</form>
+</div>
+</div>
+
+</body></html>

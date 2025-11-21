@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { ThemeProvider } from '../design-system/ThemeProvider';
+import { ThemeProvider, useTheme } from '../design-system/ThemeProvider';
 import ErrorBoundary from './ui/ErrorBoundary';
 import Button from './ui/Button';
 import Input from './ui/Input';
@@ -7,6 +7,7 @@ import { validateField } from '../utils/validationRules';
 import apiClient from '../utils/apiClient';
 import { buildUrlWithAuthParams } from '../utils/queryEncoder';
 import { useResponsive } from '../hooks/useResponsive';
+import { tokens } from '../design-system/tokens';
 
 /**
  * Standalone Authentication Form Component
@@ -17,8 +18,15 @@ import { useResponsive } from '../hooks/useResponsive';
  * 
  * @param {string} redirectUrl - URL to redirect to after successful authentication
  * @param {string} theme - Theme ('light' or 'dark')
+ * @param {string} title - Main heading text (default: "Get a Personal loan in 10 mins")
+ * @param {string} description - Subtitle text (default: "Apply for Instant Loans up to ₹10 Lakhs")
  */
-const AuthForm = ({ redirectUrl, theme = 'light' }) => {
+const AuthForm = ({ 
+  redirectUrl, 
+  theme = 'light',
+  title = 'Get a Personal loan in 10 mins',
+  description = 'Apply for Instant Loans up to ₹10 Lakhs'
+}) => {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [stage, setStage] = useState('phone'); // 'phone' | 'otp'
@@ -187,88 +195,269 @@ const AuthForm = ({ redirectUrl, theme = 'light' }) => {
     setErrors({});
   }, []);
 
+  const [termsAccepted, setTermsAccepted] = useState(true);
+  const [whatsappConsent, setWhatsappConsent] = useState(true);
+
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <div
           style={{
-            width: '100%',
-            maxWidth: isMobile ? '100%' : '32rem',
-            margin: '0 auto',
-            padding: isMobile ? '1rem' : '1.25rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: '100vh',
+            padding: '1rem',
+            backgroundColor: tokens.colors.background.light,
           }}
         >
+          <div
+            style={{
+              width: '100%',
+              maxWidth: '28rem', // max-w-md
+              padding: '2rem', // p-8
+              backgroundColor: '#ffffff',
+              borderRadius: '1rem', // rounded-2xl
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // shadow-lg
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '2rem', // space-y-8
+            }}
+          >
+            {/* Header Section */}
+            <div style={{ textAlign: 'left' }}>
           {stage === 'phone' && (
             <>
-              <h2
+                  <h1
                 style={{
-                  fontSize: isMobile ? '1.25rem' : '1.5rem',
-                  fontWeight: 700,
-                  marginBottom: isMobile ? '0.5rem' : '0.5rem',
-                  textAlign: isMobile ? 'center' : 'left',
-                  color: '#000000',
-                }}
-              >
-                Verify Your Number
-              </h2>
+                      fontSize: isMobile ? '2.25rem' : '3rem', // text-4xl md:text-5xl
+                      fontWeight: tokens.typography.fontWeight.extrabold || 800, // font-extrabold
+                      color: tokens.colors.gray[900],
+                      lineHeight: '1.2', // leading-tight
+                      margin: 0,
+                    }}
+                  >
+                    {title}
+                  </h1>
               <p
                 style={{
-                  color: '#656c77',
-                  marginBottom: isMobile ? '1rem' : '1.25rem',
-                  fontSize: isMobile ? '0.875rem' : '0.875rem',
-                  textAlign: isMobile ? 'center' : 'left',
-                }}
-              >
-                Enter your mobile number to receive a verification code
+                      marginTop: '1rem', // mt-4
+                      fontSize: '1.125rem', // text-lg
+                      color: tokens.colors.gray[600],
+                      margin: 0,
+                    }}
+                  >
+                    {description}
               </p>
             </>
           )}
 
           {stage === 'otp' && (
             <>
-              <h2
+                  <h1
                 style={{
-                  fontSize: isMobile ? '1.25rem' : '1.5rem',
-                  fontWeight: 700,
-                  marginBottom: isMobile ? '0.5rem' : '0.5rem',
-                  textAlign: isMobile ? 'center' : 'left',
-                  color: '#000000',
+                      fontSize: isMobile ? '2.25rem' : '3rem',
+                      fontWeight: tokens.typography.fontWeight.extrabold || 800,
+                      color: tokens.colors.gray[900],
+                      lineHeight: '1.2',
+                      margin: 0,
                 }}
               >
                 Enter Verification Code
-              </h2>
+                  </h1>
               <p
                 style={{
-                  color: '#656c77',
-                  marginBottom: isMobile ? '1rem' : '1.25rem',
-                  fontSize: isMobile ? '0.875rem' : '0.875rem',
-                  textAlign: isMobile ? 'center' : 'left',
+                      marginTop: '1rem',
+                      fontSize: '1.125rem',
+                      color: tokens.colors.gray[600],
+                      margin: 0,
                 }}
               >
                 We've sent a one-time code to {phone || 'your number'}. Please enter it below.
               </p>
             </>
           )}
+            </div>
 
-          <form onSubmit={stage === 'phone' ? handleSendOtp : handleVerifyOtp}>
+            {/* Form Section */}
+            <form
+              onSubmit={stage === 'phone' ? handleSendOtp : handleVerifyOtp}
+              style={{
+                marginTop: '2rem', // mt-8
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.5rem', // space-y-6
+              }}
+            >
             {stage === 'phone' && (
-              <div style={{ marginBottom: isMobile ? '1rem' : '1.25rem' }}>
-                <Input
+                <>
+                  {/* Phone Input with +91 prefix */}
+                  <div>
+                    <div style={{ position: 'relative' }}>
+                      <span
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          bottom: 0,
+                          display: 'flex',
+                          alignItems: 'center',
+                          paddingLeft: '1rem', // pl-4
+                          color: tokens.colors.gray[500],
+                          fontSize: tokens.typography.fontSize.base,
+                        }}
+                      >
+                        +91
+                      </span>
+                      <input
+                        type="tel"
                   name="phone"
-                  label="Mobile Number"
-                  type="tel"
                   value={phone}
                   onChange={handlePhoneChange}
-                  placeholder="10-digit mobile number"
+                        placeholder="Enter mobile number"
                   required
-                  error={errors.phone}
-                  fullWidth
+                        autoComplete="tel"
+                        style={{
+                          width: '100%',
+                          paddingLeft: '3rem', // pl-12 (for +91)
+                          paddingRight: '1rem', // pr-4
+                          paddingTop: '0.75rem', // py-3
+                          paddingBottom: '0.75rem',
+                          border: `1px solid ${errors.phone ? tokens.colors.error[500] : tokens.colors.gray[300]}`,
+                          borderRadius: tokens.borderRadius.lg, // rounded-lg
+                          fontSize: tokens.typography.fontSize.base,
+                          color: tokens.colors.gray[900],
+                          backgroundColor: tokens.colors.gray[50],
+                          fontFamily: tokens.typography.fontFamily.sans.join(', '),
+                          outline: 'none',
+                          transition: 'all 0.2s',
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = tokens.colors.primary[500];
+                          e.target.style.boxShadow = `0 0 0 3px ${tokens.colors.primary[50]}`;
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = errors.phone ? tokens.colors.error[500] : tokens.colors.gray[300];
+                          e.target.style.boxShadow = 'none';
+                        }}
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p
+                        style={{
+                          marginTop: '0.5rem',
+                          fontSize: tokens.typography.fontSize.sm,
+                          color: tokens.colors.error[600],
+                        }}
+                      >
+                        {errors.phone}
+                      </p>
+                    )}
+                    <p
+                      style={{
+                        marginTop: '0.5rem', // mt-2
+                        fontSize: tokens.typography.fontSize.sm,
+                        color: tokens.colors.gray[500],
+                      }}
+                    >
+                      An OTP will be sent for verification
+                    </p>
+                  </div>
+
+                  {/* Checkboxes */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {/* Terms & Conditions */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', height: '1.25rem' }}>
+                        <input
+                          type="checkbox"
+                          id="terms"
+                          name="terms"
+                          checked={termsAccepted}
+                          onChange={(e) => setTermsAccepted(e.target.checked)}
+                          style={{
+                            height: '1.25rem', // h-5
+                            width: '1.25rem', // w-5
+                            borderRadius: tokens.borderRadius.sm,
+                            border: `1px solid ${tokens.colors.gray[300]}`,
+                            accentColor: tokens.colors.primary[500],
+                            cursor: 'pointer',
+                          }}
+                        />
+                      </div>
+                      <div style={{ marginLeft: '0.75rem' }}>
+                        <label
+                          htmlFor="terms"
+                          style={{
+                            fontSize: tokens.typography.fontSize.sm,
+                            color: tokens.colors.gray[600],
+                            cursor: 'pointer',
+                          }}
+                        >
+                          By proceeding, you agree with our{' '}
+                          <a
+                            href="#"
+                            style={{
+                              fontWeight: tokens.typography.fontWeight.semibold,
+                              color: tokens.colors.gray[800],
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            Terms & Conditions
+                          </a>{' '}
+                          &{' '}
+                          <a
+                            href="#"
+                            style={{
+                              fontWeight: tokens.typography.fontWeight.semibold,
+                              color: tokens.colors.gray[800],
+                              textDecoration: 'underline',
+                            }}
+                          >
+                            Privacy Policy
+                          </a>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* WhatsApp Consent */}
+                    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', height: '1.25rem' }}>
+                        <input
+                          type="checkbox"
+                          id="whatsapp"
+                          name="whatsapp"
+                          checked={whatsappConsent}
+                          onChange={(e) => setWhatsappConsent(e.target.checked)}
+                          style={{
+                            height: '1.25rem',
+                            width: '1.25rem',
+                            borderRadius: tokens.borderRadius.sm,
+                            border: `1px solid ${tokens.colors.gray[300]}`,
+                            accentColor: tokens.colors.primary[500],
+                            cursor: 'pointer',
+                          }}
                 />
               </div>
+                      <div style={{ marginLeft: '0.75rem' }}>
+                        <label
+                          htmlFor="whatsapp"
+                          style={{
+                            fontSize: tokens.typography.fontSize.sm,
+                            color: tokens.colors.gray[600],
+                            cursor: 'pointer',
+                          }}
+                        >
+                          I agree to receive updates on Whatsapp
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </>
             )}
 
             {stage === 'otp' && (
-              <div style={{ marginBottom: isMobile ? '1rem' : '1.25rem' }}>
+                <div>
                 <Input
                   name="otp"
                   label="Enter Verification Code"
@@ -287,7 +476,6 @@ const AuthForm = ({ redirectUrl, theme = 'light' }) => {
             {errors.submit && (
               <div
                 style={{
-                  marginBottom: '1rem',
                   padding: '0.75rem',
                   backgroundColor: '#fee2e2',
                   border: '1px solid #ef4444',
@@ -304,10 +492,10 @@ const AuthForm = ({ redirectUrl, theme = 'light' }) => {
               type="submit"
               variant="primary"
               fullWidth
-              disabled={otpSending || otpVerifying}
+                disabled={otpSending || otpVerifying || (stage === 'phone' && !termsAccepted)}
               loading={otpSending || otpVerifying}
             >
-              {stage === 'phone' && (otpSending ? 'Sending OTP...' : 'Send OTP')}
+                {stage === 'phone' && (otpSending ? 'Sending...' : 'Apply Now')}
               {stage === 'otp' && (otpVerifying ? 'Verifying...' : 'Verify OTP')}
             </Button>
 
@@ -316,14 +504,14 @@ const AuthForm = ({ redirectUrl, theme = 'light' }) => {
                 style={{
                   marginTop: '0.75rem',
                   fontSize: '0.875rem',
-                  color: '#656c77',
+                    color: tokens.colors.gray[500],
                   textAlign: 'center',
                 }}
               >
                 Didn't receive the code?{' '}
                 <span
                   style={{
-                    color: '#160E7A',
+                      color: tokens.colors.primary[600],
                     cursor: 'pointer',
                     textDecoration: 'underline',
                   }}
@@ -334,6 +522,7 @@ const AuthForm = ({ redirectUrl, theme = 'light' }) => {
               </p>
             )}
           </form>
+          </div>
         </div>
       </ThemeProvider>
     </ErrorBoundary>

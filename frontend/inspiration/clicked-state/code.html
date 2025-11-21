@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Personal Information Form</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#4338CA", // A vibrant purple/indigo
+            "background-light": "#F3F4F6", // Light Gray for light mode
+            "background-dark": "#0A0A0A",  // Near-black for dark mode
+          },
+          fontFamily: {
+            display: ["Inter", "sans-serif"],
+          },
+          borderRadius: {
+            DEFAULT: "1rem", // 16px
+          },
+        },
+      },
+    };
+  </script>
+<style type="text/tailwindcss">.custom-radio:checked {
+        background-color: #4338CA;border-color: #4338CA;
+    }
+    .custom-radio:checked + span {
+        font-weight: 500;
+    }
+    .floating-label-group .floating-label {
+      transform: translateY(1.25rem) scale(1);
+    }
+    .floating-label-group .floating-input:focus ~ .floating-label,
+    .floating-label-group .floating-input:not(:placeholder-shown) ~ .floating-label {
+      transform: translateY(0.5rem) scale(0.75);
+    }
+  </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark text-gray-800 dark:text-gray-200 min-h-screen flex items-center justify-center p-4">
+<div class="w-full max-w-2xl mx-auto bg-background-light dark:bg-background-dark">
+<div class="space-y-8">
+<div class="flex items-center justify-between">
+<span class="text-sm font-medium text-gray-500 dark:text-gray-400">Step 1/3</span>
+</div>
+<div class="flex items-center gap-2">
+<div class="flex-1 h-1.5 bg-primary rounded-full"></div>
+<div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+<div class="flex-1 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+</div>
+<div class="space-y-2">
+<h1 class="text-4xl font-bold text-gray-900 dark:text-white">Personal Information</h1>
+<p class="text-gray-500 dark:text-gray-400">Complete details for validation</p>
+</div>
+<form action="#" class="space-y-6" method="POST">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<div class="relative floating-label-group">
+<input class="floating-input peer w-full px-5 pt-6 pb-2 bg-white dark:bg-gray-800/50 border border-primary ring-2 ring-primary rounded-[12px] text-gray-900 dark:text-white placeholder-transparent focus:outline-none focus:ring-primary focus:border-primary" id="first-name" name="first-name" placeholder="First Name" type="text" value="Enter your first name"/>
+<label class="floating-label absolute left-5 text-primary origin-[0] transition-transform duration-300 ease-in-out pointer-events-none" for="first-name" style="transform: translateY(0.5rem) scale(0.75);">First Name</label>
+</div>
+<div>
+<label class="sr-only" for="last-name">Last Name</label>
+<input class="w-full px-5 py-4 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[12px] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-primary focus:border-primary" id="last-name" name="last-name" placeholder="Last Name" type="text"/>
+</div>
+</div>
+<div>
+<label class="sr-only" for="email">Email Address</label>
+<input class="w-full px-5 py-4 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[12px] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-primary focus:border-primary" id="email" name="email" placeholder="Email Address" type="email"/>
+</div>
+<div>
+<label class="sr-only" for="dob">Date of Birth</label>
+<input class="w-full px-5 py-4 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[12px] text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-primary focus:border-primary" id="dob" name="dob" onblur="(this.type='text')" onfocus="(this.type='date')" placeholder="Date of Birth" type="text"/>
+</div>
+<fieldset>
+<legend class="text-base font-medium text-gray-600 dark:text-gray-400 mb-3">Gender</legend>
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+<label class="flex items-center p-4 border border-gray-300 dark:border-gray-700 rounded-[12px] cursor-pointer has-[:checked]:border-primary has-[:checked]:ring-2 has-[:checked]:ring-primary bg-white dark:bg-gray-800/50" for="male">
+<input checked="" class="h-5 w-5 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary custom-radio" id="male" name="gender" type="radio" value="male"/>
+<span class="ml-3 text-sm font-medium text-gray-900 dark:text-white">Male</span>
+</label>
+<label class="flex items-center p-4 border border-gray-300 dark:border-gray-700 rounded-[12px] cursor-pointer has-[:checked]:border-primary has-[:checked]:ring-2 has-[:checked]:ring-primary bg-white dark:bg-gray-800/50" for="female">
+<input class="h-5 w-5 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary custom-radio" id="female" name="gender" type="radio" value="female"/>
+<span class="ml-3 text-sm font-medium text-gray-900 dark:text-white">Female</span>
+</label>
+<label class="flex items-center p-4 border border-gray-300 dark:border-gray-700 rounded-[12px] cursor-pointer has-[:checked]:border-primary has-[:checked]:ring-2 has-[:checked]:ring-primary bg-white dark:bg-gray-800/50" for="other">
+<input class="h-5 w-5 border-gray-300 dark:border-gray-600 text-primary focus:ring-primary custom-radio" id="other" name="gender" type="radio" value="other"/>
+<span class="ml-3 text-sm font-medium text-gray-900 dark:text-white">Other</span>
+</label>
+</div>
+</fieldset>
+<div class="relative floating-label-group">
+<input class="floating-input peer w-full px-5 pt-6 pb-2 bg-white dark:bg-gray-800/50 border border-gray-300 dark:border-gray-700 rounded-[12px] text-gray-900 dark:text-white placeholder-transparent focus:outline-none focus:ring-primary focus:border-primary" id="pan-number" name="pan-number" placeholder="PAN Number" type="text"/>
+<label class="floating-label absolute left-5 text-gray-500 dark:text-gray-400 origin-[0] transition-transform duration-300 ease-in-out pointer-events-none peer-focus:text-primary" for="pan-number">PAN Number</label>
+</div>
+<div class="flex justify-end pt-4">
+<button class="bg-primary text-white font-semibold py-3 px-8 rounded-full hover:bg-opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus:ring-offset-background-light dark:focus:ring-offset-background-dark transition-colors" type="submit">
+            Next
+          </button>
+</div>
+</form>
+</div>
+</div>
+</body></html>

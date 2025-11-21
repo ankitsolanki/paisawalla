@@ -2,8 +2,9 @@ import React, { useState } from 'react';
 import { useTheme } from '../../design-system/ThemeProvider';
 
 /**
- * Reusable Input Component
+ * Reusable Input Component with Floating Label
  * Consistent input styling across all forms
+ * Implements floating label pattern from inspiration
  */
 const Input = ({
   label,
@@ -26,48 +27,65 @@ const Input = ({
   // Detect if mobile (simple check - can be enhanced)
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
   const [isFocused, setIsFocused] = useState(false);
+  
+  // For date inputs, browsers don't show placeholder, so we need to handle it differently
+  const isDateInput = type === 'date';
+  
+  // Determine if label should float (when focused or has value)
+  const hasValue = value && value.toString().trim() !== '';
+  // For date inputs, only float label when there's a value (not on focus) to avoid overlap with browser format hint
+  const shouldFloatLabel = isDateInput ? hasValue : (isFocused || hasValue);
+  
+  // Show placeholder only when focused and value is empty
+  const shouldShowPlaceholder = isFocused && !hasValue;
+  
+  // For date inputs, use a format hint instead of label to avoid overlap
+  const placeholderText = isDateInput 
+    ? (placeholder || 'DD/MM/YYYY') 
+    : (placeholder || label || '');
 
   const inputStyles = {
     width: fullWidth ? '100%' : 'auto',
-    padding: '16px 20px', // py-4 px-5 from inspiration (16px vertical, 20px horizontal)
+    padding: shouldFloatLabel ? '24px 20px 8px 20px' : '16px 20px', // pt-6 pb-2 when floating, py-4 when not
     fontSize: tokens.typography.fontSize.base, // 1rem
     lineHeight: tokens.typography.lineHeight.textRegular, // 24px
     color: colors.text || '#000000', // Text color
     backgroundColor: colors.input.background,
-    border: `1px solid ${error ? tokens.colors.error[500] : isFocused ? colors.input.focus : colors.input.border}`,
+    border: `1px solid ${error ? tokens.colors.error[500] : isFocused ? tokens.colors.primary[500] : colors.input.border}`,
     borderRadius: '12px', // rounded-[12px] from inspiration
     transition: `all ${tokens.transitions.normal} ease-in-out`,
     outline: 'none',
     fontFamily: tokens.typography.fontFamily.sans.join(', '),
     minHeight: isMobile ? '48px' : 'auto', // Minimum touch target on mobile
     boxShadow: isFocused && !error 
-      ? `0 0 0 3px ${tokens.colors.primary[50]}` 
-      : 'none', // Focus ring
+      ? `0 0 0 2px ${tokens.colors.primary[500]}` // ring-2 ring-primary
+      : 'none',
     opacity: disabled ? 0.6 : 1,
     cursor: disabled ? 'not-allowed' : 'text',
   };
 
+  const labelStyles = {
+    position: 'absolute',
+    left: '20px', // px-5
+    top: shouldFloatLabel ? '0.5rem' : '1.25rem', // translateY(0.5rem) when floating, translateY(1.25rem) when not
+    transformOrigin: '0 0',
+    transform: shouldFloatLabel ? 'scale(0.75)' : 'scale(1)',
+    transition: 'transform 300ms ease-in-out, color 300ms ease-in-out',
+    pointerEvents: 'none',
+    color: isFocused ? tokens.colors.primary[500] : (colors.textSecondary || tokens.colors.gray[500]),
+    fontSize: shouldFloatLabel ? tokens.typography.fontSize.sm : tokens.typography.fontSize.base,
+    lineHeight: 1,
+  };
+
   return (
-    <div style={{ width: fullWidth ? '100%' : 'auto' }}>
-      {label && (
-        <label
-          htmlFor={name}
-          style={{
-            position: 'absolute',
-            width: '1px',
-            height: '1px',
-            padding: 0,
-            margin: '-1px',
-            overflow: 'hidden',
-            clip: 'rect(0, 0, 0, 0)',
-            whiteSpace: 'nowrap',
-            borderWidth: 0,
-          }}
-        >
-          {label}
-          {required && <span> *</span>}
-        </label>
-      )}
+    <div 
+      style={{ 
+        width: fullWidth ? '100%' : 'auto',
+        position: 'relative',
+        marginBottom: tokens.spacing.md,
+      }}
+      className="floating-label-group"
+    >
       <input
         id={name}
         name={name}
@@ -82,7 +100,7 @@ const Input = ({
           setIsFocused(true);
           onFocus?.(e);
         }}
-        placeholder={placeholder || label}
+        placeholder={shouldShowPlaceholder && !isDateInput ? placeholderText : ''} // Show placeholder only when focused and value is empty (not for date inputs)
         required={required}
         disabled={disabled}
         style={{
@@ -93,9 +111,19 @@ const Input = ({
         }}
         autoCapitalize={name === 'panNumber' ? 'characters' : undefined}
         autoComplete={name === 'panNumber' ? 'off' : undefined}
-        className={className}
+        className={`floating-input ${className}`}
         {...props}
       />
+      {label && (
+        <label
+          htmlFor={name}
+          className="floating-label"
+          style={labelStyles}
+        >
+          {label}
+          {required && <span style={{ color: tokens.colors.error[500] }}> *</span>}
+        </label>
+      )}
       {error && (
         <p
           style={{

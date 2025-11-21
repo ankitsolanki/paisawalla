@@ -38,7 +38,7 @@ const FormSection = ({
         borderRadius: isCompact ? tokens.borderRadius.lg : tokens.borderRadius.xl,
         border: 'none',
         boxShadow: 'none',
-        padding: isCompact ? tokens.spacing.md : tokens.spacing.lg,
+        padding: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: isCompact ? tokens.spacing.md : tokens.spacing.lg,

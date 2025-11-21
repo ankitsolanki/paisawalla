@@ -201,25 +201,11 @@ const FieldRenderer = ({
       );
 
     case 'textarea':
+      const hasTextareaValue = value && value.toString().trim() !== '';
+      const shouldFloatTextareaLabel = isTextareaFocused || hasTextareaValue;
+      
       return (
-        <div style={{ marginBottom: tokens.spacing.md, width: field.fullWidth ? '100%' : 'auto' }}>
-          <label
-            htmlFor={field.name}
-            style={{
-              position: 'absolute',
-              width: '1px',
-              height: '1px',
-              padding: 0,
-              margin: '-1px',
-              overflow: 'hidden',
-              clip: 'rect(0, 0, 0, 0)',
-              whiteSpace: 'nowrap',
-              borderWidth: 0,
-            }}
-          >
-            {field.label}
-            {field.required && <span> *</span>}
-          </label>
+        <div style={{ marginBottom: tokens.spacing.md, width: field.fullWidth ? '100%' : 'auto', position: 'relative' }} className="floating-label-group">
           <textarea
             id={field.name}
             name={field.name}
@@ -236,25 +222,51 @@ const FieldRenderer = ({
             required={field.required}
             disabled={disabled}
             rows={field.rows || 3}
-            placeholder={field.placeholder || field.label}
+            placeholder={shouldFloatTextareaLabel ? '' : (field.placeholder || field.label || '')}
+            className="floating-input"
             style={{
               width: '100%',
-              padding: '16px 20px', // py-4 px-5 from inspiration
+              padding: shouldFloatTextareaLabel ? '24px 20px 8px 20px' : '16px 20px',
               fontSize: tokens.typography.fontSize.base,
               lineHeight: tokens.typography.lineHeight.normal,
               color: colors.text || '#000000',
               backgroundColor: colors.input.background,
-              border: `1px solid ${error ? tokens.colors.error[500] : isTextareaFocused ? colors.input.focus : colors.input.border}`,
+              border: `1px solid ${error ? tokens.colors.error[500] : isTextareaFocused ? tokens.colors.primary[500] : colors.input.border}`,
               borderRadius: '12px', // rounded-[12px] from inspiration
               transition: `all ${tokens.transitions.normal} ease-in-out`,
               outline: 'none',
               fontFamily: tokens.typography.fontFamily.sans.join(', '),
               resize: 'vertical',
               boxShadow: isTextareaFocused && !error 
-                ? `0 0 0 3px ${tokens.colors.primary[50]}` 
+                ? `0 0 0 2px ${tokens.colors.primary[500]}` // ring-2 ring-primary
                 : 'none',
             }}
           />
+          {field.label && (
+            <label
+              htmlFor={field.name}
+              className="floating-label"
+              style={{
+                position: 'absolute',
+                left: '20px',
+                top: shouldFloatTextareaLabel ? '0.5rem' : '1.25rem',
+                transformOrigin: '0 0',
+                transform: shouldFloatTextareaLabel ? 'scale(0.75)' : 'scale(1)',
+                transition: 'transform 300ms ease-in-out, color 300ms ease-in-out',
+                pointerEvents: 'none',
+                color: isTextareaFocused ? tokens.colors.primary[500] : (colors.textSecondary || tokens.colors.gray[500]),
+                fontSize: shouldFloatTextareaLabel ? tokens.typography.fontSize.sm : tokens.typography.fontSize.base,
+                lineHeight: 1,
+              }}
+            >
+              {field.label}
+              {field.required && (
+                <span style={{ color: tokens.colors.error[500], marginLeft: tokens.spacing.xs }}>
+                  *
+                </span>
+              )}
+            </label>
+          )}
           {error && (
             <p
               style={{
