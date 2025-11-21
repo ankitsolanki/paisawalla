@@ -33,7 +33,10 @@ const Input = ({
   
   // Determine if label should float (when focused or has value)
   const hasValue = value && value.toString().trim() !== '';
-  // For date inputs, only float label when there's a value (not on focus) to avoid overlap with browser format hint
+  
+  // For date inputs: float label ONLY when there's a value (not on focus)
+  // This prevents overlap with browser's date format hint
+  // For other inputs: float label when focused or has value
   const shouldFloatLabel = isDateInput ? hasValue : (isFocused || hasValue);
   
   // Show placeholder only when focused and value is empty
@@ -83,6 +86,7 @@ const Input = ({
         width: fullWidth ? '100%' : 'auto',
         position: 'relative',
         marginBottom: tokens.spacing.md,
+        paddingBottom: error ? '24px' : '0px', // Reserve space for error message
       }}
       className="floating-label-group"
     >
@@ -108,6 +112,8 @@ const Input = ({
           ...(props.style || {}),
           // Add uppercase styling for PAN number (ssn or panNumber field)
           ...(name === 'ssn' || name === 'panNumber' ? { textTransform: 'uppercase' } : {}),
+          // Ensure date inputs are fully clickable
+          ...(isDateInput ? { cursor: 'pointer' } : {}),
         }}
         autoCapitalize={name === 'panNumber' ? 'characters' : undefined}
         autoComplete={name === 'panNumber' ? 'off' : undefined}
@@ -124,12 +130,31 @@ const Input = ({
           {required && <span style={{ color: tokens.colors.error[500] }}> *</span>}
         </label>
       )}
-      {error && (
+      
+      {/* Helper text for date inputs showing format hint */}
+      {isDateInput && !hasValue && !isFocused && (
         <p
           style={{
             marginTop: tokens.spacing.xs,
             fontSize: tokens.typography.fontSize.sm,
+            color: tokens.colors.gray[400],
+            margin: '4px 0 0 0',
+          }}
+        >
+          Format: DD/MM/YYYY
+        </p>
+      )}
+      
+      {error && (
+        <p
+          style={{
+            position: 'absolute',
+            bottom: '-24px',
+            left: '0px',
+            fontSize: tokens.typography.fontSize.sm,
             color: tokens.colors.error[600],
+            margin: '0px',
+            whiteSpace: 'nowrap',
           }}
         >
           {error}
