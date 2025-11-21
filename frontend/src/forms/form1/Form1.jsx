@@ -14,7 +14,9 @@ import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
 import OffersListing from '../../embeds/offers/OffersListing';
 import FormSection from '../../components/forms/FormSection';
+import GenderField from '../../components/GenderField';
 import { validateField, validateForm } from '../../utils/validationRules';
+import { tokens } from '../../design-system/tokens';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
 import { getAuthParamsFromUrl } from '../../utils/queryEncoder';
@@ -63,6 +65,8 @@ const STEP_SECTIONS = {
         { fields: ['panNumber'] },
       ],
     },
+  ],
+  2: [
     {
       id: 'personal-location',
       title: 'Where do you live?',
@@ -73,7 +77,7 @@ const STEP_SECTIONS = {
       ],
     },
   ],
-  2: [
+  3: [
     {
       id: 'employment-info',
       title: 'Employment Details',
@@ -94,6 +98,8 @@ const STEP_SECTIONS = {
         { fields: ['companyEmail'] },
       ],
     },
+  ],
+  4: [
     {
       id: 'company-address',
       title: 'Company Address',
@@ -105,7 +111,7 @@ const STEP_SECTIONS = {
       ],
     },
   ],
-  3: [
+  5: [
     {
       id: 'current-address',
       title: 'Current Address',
@@ -115,6 +121,8 @@ const STEP_SECTIONS = {
         { fields: ['address'] },
       ],
     },
+  ],
+  6: [
     {
       id: 'additional-info',
       title: 'Additional Information',
@@ -206,8 +214,11 @@ const Form1 = ({ theme = 'light' }) => {
 
   const steps = [
     { label: 'Personal Information' },
+    { label: 'Location' },
     { label: 'Employment Details' },
-    { label: 'Address Details' },
+    { label: 'Company Address' },
+    { label: 'Current Address' },
+    { label: 'Additional Information' },
   ];
 
   const {
@@ -352,33 +363,24 @@ const Form1 = ({ theme = 'light' }) => {
     const fieldSchema = form1Schema[name];
     if (!fieldSchema) return;
 
-    // Determine if field should be required based on employment type
-    const employmentType = formData.employmentType;
+    // Only validate format/pattern rules on blur, NOT required fields
+    // Required validation will only happen when user clicks Next
     let rulesToValidate = fieldSchema.rules || [];
+    
+    // Remove 'required' rule - we don't want to show required errors on blur
+    rulesToValidate = rulesToValidate.filter(rule => {
+      if (typeof rule === 'string') {
+        return rule !== 'required';
+      }
+      if (typeof rule === 'object' && rule.type === 'required') {
+        return false;
+      }
+      return true;
+    });
 
-    // Add required rule for conditionally visible fields
-    if (employmentType === 'Salaried') {
-      if (['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(name)) {
-        if (!rulesToValidate.includes('required')) {
-          rulesToValidate = ['required', ...rulesToValidate];
-        }
-      }
-    } else if (employmentType === 'Self-employed professional') {
-      if (['annualIncome', 'organizationName', 'profession'].includes(name)) {
-        if (!rulesToValidate.includes('required')) {
-          rulesToValidate = ['required', ...rulesToValidate];
-        }
-      }
-    } else if (employmentType === 'Self-employed business') {
-      if (['annualTurnover', 'annualIncome'].includes(name)) {
-        if (!rulesToValidate.includes('required')) {
-          rulesToValidate = ['required', ...rulesToValidate];
-        }
-      }
-    }
-
-    if (rulesToValidate.length > 0) {
-      const error = validateField(value || '', rulesToValidate);
+    // Only validate if field has a value and there are non-required rules to validate
+    if (value && value.trim() !== '' && rulesToValidate.length > 0) {
+      const error = validateField(value, rulesToValidate);
       if (error) {
         setErrors((prev) => ({ ...prev, [name]: error }));
         trackFieldInteraction(name, 'error', value);
@@ -390,8 +392,15 @@ const Form1 = ({ theme = 'light' }) => {
           return newErrors;
         });
       }
+    } else if (value && value.trim() !== '') {
+      // If field has value but no format rules, clear any existing errors
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
-  }, [trackFieldInteraction, formData.employmentType, isFieldVisible]);
+  }, [trackFieldInteraction, isFieldVisible]);
 
   const applyPrefillData = useCallback((payload) => {
     if (!payload || typeof payload !== 'object') {
@@ -531,7 +540,21 @@ const Form1 = ({ theme = 'light' }) => {
   }, [handleChange]);
 
   const validateStep = useCallback((step) => {
-    const stepFields = form1Schema.steps[step - 1] || [];
+    // Get fields for this step from STEP_SECTIONS instead of form1Schema.steps
+    const sections = STEP_SECTIONS[step] || [];
+    const sectionToShow = sections[0];
+    if (!sectionToShow) {
+      return true; // No fields to validate
+    }
+
+    // Collect all field names from all rows in this section
+    const stepFields = [];
+    sectionToShow.rows.forEach((row) => {
+      if (row.fields && Array.isArray(row.fields)) {
+        stepFields.push(...row.fields);
+      }
+    });
+
     const stepErrors = {};
     let isValid = true;
 
@@ -579,7 +602,8 @@ const Form1 = ({ theme = 'light' }) => {
 
       // Validate field if it should be validated
       if (shouldValidate && rulesToValidate.length > 0) {
-        const error = validateField(formData[fieldName] || '', rulesToValidate);
+        const fieldValue = formData[fieldName] || '';
+        const error = validateField(fieldValue, rulesToValidate);
         if (error) {
           stepErrors[fieldName] = error;
           isValid = false;
@@ -591,10 +615,28 @@ const Form1 = ({ theme = 'light' }) => {
     return isValid;
   }, [formData, isFieldVisible]);
 
-  const handleNext = useCallback(() => {
-    if (validateStep(currentStep)) {
+  const handleNext = useCallback((e) => {
+    // Prevent form submission if button is inside a form
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    console.log('handleNext called', { currentStep, stepsLength: steps.length });
+    
+    // Since each step now has only one section, just validate the step and move forward
+    const isValid = validateStep(currentStep);
+    console.log('Validation result:', isValid);
+    
+    if (isValid) {
       trackButtonClick('next', { fromStep: currentStep, toStep: currentStep + 1 });
-      setCurrentStep((prev) => Math.min(prev + 1, steps.length));
+      setCurrentStep((prev) => {
+        const nextStep = Math.min(prev + 1, steps.length);
+        console.log('Moving to step:', nextStep);
+        return nextStep;
+      });
+    } else {
+      console.log('Validation failed, not moving to next step');
     }
   }, [currentStep, validateStep, steps.length, trackButtonClick]);
 
@@ -767,6 +809,48 @@ const Form1 = ({ theme = 'light' }) => {
       );
     }
 
+    // Handle gender field - use GenderField component (regardless of type)
+    if (fieldName === 'gender') {
+      return (
+        <GenderField
+          key={fieldName}
+          name={fieldName}
+          value={formData[fieldName] || ''}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          required={isRequired}
+          error={errors[fieldName]}
+          disabled={false}
+          options={fieldSchema.options || [
+            { value: 'male', label: 'Male' },
+            { value: 'female', label: 'Female' },
+            { value: 'other', label: 'Other' },
+          ]}
+          label={fieldSchema.label || 'Gender'}
+        />
+      );
+    }
+
+    // Handle radio type (for non-gender radio fields)
+    if (fieldSchema.type === 'radio') {
+      return (
+        <GenderField
+          key={fieldName}
+          name={fieldName}
+          value={formData[fieldName] || ''}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          required={isRequired}
+          error={errors[fieldName]}
+          disabled={false}
+          options={fieldSchema.options || []}
+          label={fieldSchema.label}
+        />
+      );
+    }
+
     if (fieldSchema.type === 'select') {
       return (
         <Select
@@ -931,21 +1015,30 @@ const Form1 = ({ theme = 'light' }) => {
   const renderStepFields = useCallback(
     (stepNumber) => {
       const sections = STEP_SECTIONS[stepNumber] || [];
+      // Since each step now has only one section, always show the first (and only) section
+      const sectionToShow = sections[0];
 
-      return sections.map((section) => (
+      // If no section exists, return null
+      if (!sectionToShow) {
+        return null;
+      }
+
+      // Show the section
+      return (
         <FormSection
-          key={section.id}
-          title={section.title}
-          subtitle={section.subtitle}
-          rows={section.rows}
+          key={sectionToShow.id}
+          title={sectionToShow.title}
+          subtitle={sectionToShow.subtitle}
+          rows={sectionToShow.rows}
           renderField={renderField}
           isCompact={isCompactLayout}
           isFieldVisible={isFieldVisible}
         />
-      ));
+      );
     },
     [renderField, isCompactLayout, isFieldVisible]
   );
+
 
   // Show eligibility checking screen after form submission
   if (checkingEligibility && leadId) {
@@ -1128,13 +1221,6 @@ const Form1 = ({ theme = 'light' }) => {
           <form onSubmit={(e) => e.preventDefault()}>
             <div
               style={{
-                display: 'grid',
-                gridTemplateColumns: isMobile
-                  ? '1fr'
-                  : isTablet
-                  ? 'repeat(auto-fit, minmax(260px, 1fr))'
-                  : 'repeat(2, minmax(0, 1fr))',
-                gap: isMobile ? '0.75rem' : '1rem',
                 marginBottom: isMobile ? '1rem' : '1.5rem',
               }}
             >

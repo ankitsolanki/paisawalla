@@ -501,32 +501,32 @@ const MobileFormRenderer = ({ schema, theme = 'light' }) => {
         <div
           style={{
             width: '100%',
+            maxWidth: '672px', // max-w-2xl
             margin: '0 auto',
-            padding: `${tokens.spacing.lg} ${tokens.spacing.md}`, // Better padding for mobile
+            padding: '16px', // p-4
           }}
         >
           {/* Header with title */}
-          <div style={{ marginBottom: tokens.spacing.lg }}>
-            <h2
+          <div style={{ marginBottom: '32px' }}> {/* space-y-8 */}
+            <h1
               style={{
-                fontSize: tokens.typography.fontSize['2xl'], // 1.5rem - better hierarchy
+                fontSize: '2.25rem', // text-4xl (36px)
                 fontWeight: tokens.typography.fontWeight.bold,
-                marginBottom: tokens.spacing.xs,
+                marginBottom: tokens.spacing.sm,
                 color: tokens.colors.gray[900],
                 lineHeight: tokens.typography.lineHeight.tight,
               }}
             >
               {schema.title}
-            </h2>
-            {schema.steps > 1 && (
+            </h1>
+            {schema.description && (
               <p
                 style={{
-                  fontSize: tokens.typography.fontSize.sm,
+                  fontSize: tokens.typography.fontSize.base,
                   color: tokens.colors.gray[500],
-                  marginTop: tokens.spacing.xs,
                 }}
               >
-                Complete all steps to submit your application
+                {schema.description}
               </p>
             )}
           </div>
@@ -540,29 +540,20 @@ const MobileFormRenderer = ({ schema, theme = 'light' }) => {
             />
           )}
 
-          <form onSubmit={(e) => e.preventDefault()}>
-            {/* Mobile: Modern card-based single column layout */}
+          <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}> {/* space-y-6 */}
+            {/* Mobile: Single column layout */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: tokens.spacing.lg,
-                marginBottom: tokens.spacing.xl,
+                gap: '24px', // gap-6
               }}
             >
               {currentFields.map((field, index) => (
                 <div
                   key={field.name}
                   style={{
-                    backgroundColor: '#ffffff',
-                    borderRadius: tokens.borderRadius.xl, // Larger radius for modern look
-                    padding: tokens.spacing.lg, // More padding for breathing room
-                    border: `1px solid ${errors[field.name] ? tokens.colors.error[300] : tokens.colors.gray[200]}`,
-                    boxShadow: errors[field.name]
-                      ? `0 0 0 2px ${tokens.colors.error[500]}20, ${tokens.shadows.md}`
-                      : tokens.shadows.sm,
-                    transition: `all ${tokens.transitions.normal} ease-in-out`,
-                    position: 'relative',
+                    gridColumn: field.fullWidth ? '1 / -1' : 'auto',
                   }}
                 >
                   <FieldRenderer

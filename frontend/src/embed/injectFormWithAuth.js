@@ -1,18 +1,26 @@
 /**
- * injectAuth.js - Webflow embedding script for Auth Form
+ * injectFormWithAuth.js - Webflow embedding script with integrated authentication
+ * 
+ * This script handles the complete auth + form journey:
+ * - If user is authenticated: Shows Form1 directly
+ * - If user is NOT authenticated: Shows auth form first, then redirects to Form1
  * 
  * Usage in Webflow:
- * <div id="pw-auth"></div>
+ * <div id="pw-form"></div>
  * <script 
- *   src="https://app-paisawalla.gofo.app/injectAuth.js"
- *   data-redirect-url="https://example.com/form?form=form1"
+ *   src="https://app-paisawalla.gofo.app/injectFormWithAuth.js"
+ *   data-form="form1"
  *   data-theme="light"
  *   data-api-url="https://api-paisawalla.gofo.app"
+ *   data-recaptcha-site-key="YOUR_RECAPTCHA_KEY" (optional)
  * ></script>
  */
 
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import Form1 from '../forms/form1/index.jsx';
+import Form2 from '../forms/form2/index.jsx';
+import Form3 from '../forms/form3/index.jsx';
 import AuthForm from '../components/AuthForm';
 import { getAuthParamsFromUrl, buildUrlWithAuthParams } from '../utils/queryEncoder';
 import './embed-styles.css';
@@ -28,7 +36,7 @@ if (typeof window !== 'undefined') {
 }
 
 // Set global config values based on script attributes (before IIFE runs)
-const script = document.currentScript || document.querySelector('script[data-redirect-url]');
+const script = document.currentScript || document.querySelector('script[data-form]');
 if (script) {
   const apiUrl = script.getAttribute('data-api-url');
   if (apiUrl) {
@@ -54,27 +62,41 @@ if (script) {
 
   // Get configuration from script tag
   const scriptTag = document.currentScript || 
-    document.querySelector('script[data-redirect-url]');
+    document.querySelector('script[data-form]');
   
   if (!scriptTag) {
-    console.error('PW Auth: Script tag not found');
+    console.error('PW Forms: Script tag not found');
     return;
   }
 
-  const redirectUrl = scriptTag.getAttribute('data-redirect-url');
+  const formType = scriptTag.getAttribute('data-form') || 'form1';
   const theme = scriptTag.getAttribute('data-theme') || 'light';
-  const containerId = scriptTag.getAttribute('data-container') || 'pw-auth';
-
-  // Validate redirect URL
-  if (!redirectUrl || redirectUrl.trim() === '') {
-    console.error('PW Auth: data-redirect-url attribute is required');
-    return;
-  }
+  const containerId = scriptTag.getAttribute('data-container') || 'pw-form';
 
   // Find container element
   const container = document.getElementById(containerId);
   if (!container) {
-    console.error(`PW Auth: Container element #${containerId} not found`);
+    console.error(`PW Forms: Container element #${containerId} not found`);
+    return;
+  }
+
+  // Map form types to components
+  const formComponents = {
+    'form1': Form1,
+    'form2': Form2,
+    'form3': Form3,
+  };
+
+  const FormComponent = formComponents[formType];
+  
+  if (!FormComponent) {
+    container.innerHTML = `
+      <div style="padding: 20px; color: #dc2626; border: 1px solid #dc2626; border-radius: 8px; background: #fee2e2;">
+        <h3 style="margin-top: 0; color: #dc2626;">Error Loading Form</h3>
+        <p>Unknown form type: ${formType}</p>
+        <p style="font-size: 0.9em; margin-top: 10px;">Available forms: form1, form2, form3</p>
+      </div>
+    `;
     return;
   }
 
@@ -94,7 +116,7 @@ if (script) {
     link.href = cssUrl;
     link.onerror = () => {
       // CSS file not found, that's okay - styles might be inline
-      console.warn('PW Auth: CSS file not found, styles may be inline');
+      console.warn('PW Forms: CSS file not found, styles may be inline');
     };
     // Add scoped attribute to prevent affecting host page
     link.setAttribute('data-pw-form-styles', 'true');
@@ -102,66 +124,22 @@ if (script) {
   };
 
   // Check if user is already authenticated
-  const checkExistingAuth = () => {
+  const checkAuth = () => {
     const authParams = getAuthParamsFromUrl();
-    
-    // If user is already authenticated, skip auth and redirect
-    if (authParams && authParams.authenticated && authParams.phone) {
-      // Check if redirectUrl already has auth params
-      try {
-        const redirectUrlObj = new URL(redirectUrl, window.location.origin);
-        const existingAuth = redirectUrlObj.searchParams.get('auth');
-        
-        // If redirectUrl doesn't have auth params, add them
-        let finalRedirectUrl = redirectUrl;
-        if (!existingAuth) {
-          finalRedirectUrl = buildUrlWithAuthParams(
-            redirectUrl,
-            authParams.phone,
-            true // authenticated
-          );
-        }
-        
-        // Show message and redirect
-        container.innerHTML = `
-          <div style="padding: 20px; text-align: center;">
-            <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #10b981; border-top: 4px solid #10b981; border-radius: 50%; margin-bottom: 1rem;"></div>
-            <p style="color: #059669; font-weight: 600; margin-bottom: 0.5rem;">Already Authenticated</p>
-            <p style="color: #6b7280; font-size: 0.875rem;">Redirecting to form...</p>
-          </div>
-        `;
-        
-        // Post message that auth was skipped
-        if (window.parent) {
-          window.parent.postMessage({
-            type: 'pw-form-event',
-            event: 'authSkipped',
-            data: { redirectUrl: finalRedirectUrl, phone: authParams.phone, containerId },
-          }, '*');
-        }
-        
-        // Redirect after a short delay
-        setTimeout(() => {
-          window.location.href = finalRedirectUrl;
-        }, 500);
-        
-        return true; // Auth was skipped
-      } catch (error) {
-        console.warn('PW Auth: Error processing redirect URL, proceeding with auth form', error);
-        return false; // Continue with auth form
-      }
-    }
-    
-    return false; // Not authenticated, proceed with auth form
+    return authParams && authParams.authenticated && authParams.phone;
+  };
+
+  // Build redirect URL (current page with auth params)
+  const buildRedirectUrl = () => {
+    const currentUrl = window.location.href;
+    // Remove existing auth param if present
+    const url = new URL(currentUrl);
+    url.searchParams.delete('auth');
+    return url.toString();
   };
 
   // Render the auth form
   const loadAuthForm = () => {
-    // Check if user is already authenticated first
-    if (checkExistingAuth()) {
-      return; // Auth was skipped, exit early
-    }
-    
     try {
       // Load CSS first
       loadCSS();
@@ -183,6 +161,9 @@ if (script) {
       // Add scoped container class to prevent style leakage
       container.classList.add('pw-form-container');
       
+      // Build redirect URL (current page)
+      const redirectUrl = buildRedirectUrl();
+      
       // Create React root and render auth form
       const root = createRoot(container);
       root.render(React.createElement(AuthForm, { redirectUrl, theme }));
@@ -192,12 +173,12 @@ if (script) {
         window.parent.postMessage({
           type: 'pw-form-event',
           event: 'authFormLoaded',
-          data: { redirectUrl, theme, containerId },
+          data: { redirectUrl, theme, containerId, formType },
         }, '*');
       }
 
     } catch (error) {
-      console.error('PW Auth: Error loading auth form', error);
+      console.error('PW Forms: Error loading auth form', error);
       container.innerHTML = `
         <div style="padding: 20px; color: #dc2626; border: 1px solid #dc2626; border-radius: 8px; background: #fee2e2;">
           <h3 style="margin-top: 0; color: #dc2626;">Error Loading Auth Form</h3>
@@ -216,11 +197,80 @@ if (script) {
     }
   };
 
+  // Render the form
+  const loadForm = () => {
+    try {
+      // Load CSS first
+      loadCSS();
+      
+      // Show loading state
+      container.innerHTML = `
+        <div style="padding: 20px; text-align: center;">
+          <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+          <p style="margin-top: 10px; color: #6b7280;">Loading form...</p>
+        </div>
+        <style>
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        </style>
+      `;
+
+      // Add scoped container class to prevent style leakage
+      container.classList.add('pw-form-container');
+      
+      // Create React root and render form
+      const root = createRoot(container);
+      root.render(React.createElement(FormComponent, { theme }));
+
+      // Post message to Webflow that form is ready
+      if (window.parent) {
+        window.parent.postMessage({
+          type: 'pw-form-event',
+          event: 'formLoaded',
+          data: { formType, theme, containerId },
+        }, '*');
+      }
+
+    } catch (error) {
+      console.error('PW Forms: Error loading form', error);
+      container.innerHTML = `
+        <div style="padding: 20px; color: #dc2626; border: 1px solid #dc2626; border-radius: 8px; background: #fee2e2;">
+          <h3 style="margin-top: 0; color: #dc2626;">Error Loading Form</h3>
+          <p>Failed to load form: ${error.message}</p>
+          <p style="font-size: 0.9em; margin-top: 10px;">Please try refreshing the page or contact support.</p>
+        </div>
+      `;
+
+      if (window.parent) {
+        window.parent.postMessage({
+          type: 'pw-form-event',
+          event: 'formError',
+          data: { error: error.message, formType },
+        }, '*');
+      }
+    }
+  };
+
+  // Main initialization logic
+  const initialize = () => {
+    // Check if user is authenticated
+    if (checkAuth()) {
+      // User is authenticated, load form directly
+      loadForm();
+    } else {
+      // User is not authenticated, show auth form first
+      loadAuthForm();
+    }
+  };
+
   // Initialize when DOM is ready
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadAuthForm);
+    document.addEventListener('DOMContentLoaded', initialize);
   } else {
-    loadAuthForm();
+    initialize();
   }
 })();
+
 

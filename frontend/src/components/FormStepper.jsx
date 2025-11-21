@@ -1,11 +1,33 @@
 import React from 'react';
 import { tokens } from '../design-system/tokens';
+import { useTheme } from '../design-system/ThemeProvider';
 
 const FormStepper = ({ currentStep, totalSteps, steps }) => {
+  const { colors } = useTheme();
+  
   if (!steps || steps.length === 0) return null;
 
   return (
     <div style={{ marginBottom: tokens.spacing.xl }}>
+      {/* Step indicator text */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: tokens.spacing.md,
+        }}
+      >
+        <span
+          style={{
+            fontSize: tokens.typography.fontSize.sm,
+            fontWeight: tokens.typography.fontWeight.medium,
+            color: colors.textSecondary || tokens.colors.gray[500],
+          }}
+        >
+          Step {currentStep}/{totalSteps}
+        </span>
+      </div>
       <div
         style={{
           display: 'flex',

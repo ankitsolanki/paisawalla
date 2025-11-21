@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 const isLibraryBuild = process.env.BUILD_MODE === 'library';
 const isOffersBuild = process.env.BUILD_MODE === 'offers';
 const isAuthBuild = process.env.BUILD_MODE === 'auth';
+const isFormWithAuthBuild = process.env.BUILD_MODE === 'formWithAuth';
 
 export default defineConfig({
   plugins: [react()],
@@ -70,6 +71,27 @@ export default defineConfig({
           output: {
             entryFileNames: 'injectOffers.js',
             assetFileNames: 'injectOffers.css',
+            // Note: manualChunks is not supported for IIFE format (inlineDynamicImports is auto-enabled)
+            // All code will be bundled into a single file for IIFE library builds
+          },
+        },
+        chunkSizeWarningLimit: 1000,
+      }
+    : isFormWithAuthBuild
+    ? {
+        // Form with Auth build configuration
+        lib: {
+          entry: 'src/embed/injectFormWithAuth.js',
+          name: 'PWFormWithAuth',
+          fileName: 'injectFormWithAuth',
+          formats: ['iife'],
+        },
+        outDir: 'dist',
+        emptyOutDir: false, // Don't empty so we can have both app and library
+        rollupOptions: {
+          output: {
+            entryFileNames: 'injectFormWithAuth.js',
+            assetFileNames: 'injectFormWithAuth.css',
             // Note: manualChunks is not supported for IIFE format (inlineDynamicImports is auto-enabled)
             // All code will be bundled into a single file for IIFE library builds
           },

@@ -1,9 +1,12 @@
 import React from 'react';
 import { useTheme } from '../design-system/ThemeProvider';
+import { useResponsive } from '../hooks/useResponsive';
 import Input from './ui/Input';
 import Select from './ui/Select';
 import CurrencyInput from './ui/CurrencyInput';
 import PincodeInput from './PincodeInput';
+import GenderField from './GenderField';
+import AddressFieldGroup from './AddressFieldGroup';
 import { tokens } from '../design-system/tokens';
 
 /**
@@ -20,6 +23,9 @@ const FieldRenderer = ({
   onPincodeLookup, // Optional callback for PIN code lookup
 }) => {
   const { colors } = useTheme();
+  const [isTextareaFocused, setIsTextareaFocused] = React.useState(false);
+  const { windowWidth } = useResponsive();
+  const isSmallScreen = windowWidth < 640;
 
   const commonProps = {
     name: field.name,
@@ -36,7 +42,102 @@ const FieldRenderer = ({
   };
 
   switch (field.type) {
+    case 'gender':
+      // Use GenderField component for gender selection
+      return (
+        <GenderField
+          name={field.name}
+          value={value}
+          onChange={onChange}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          required={field.required}
+          error={error}
+          disabled={disabled}
+          options={field.options || [
+            { value: 'male', label: 'Male' },
+            { value: 'female', label: 'Female' },
+            { value: 'other', label: 'Other' },
+          ]}
+          label={field.label || 'Gender'}
+        />
+      );
+
+    case 'addressGroup':
+      // Use AddressFieldGroup component for address fields
+      // Expects field.addressFields to contain address, city, state, pincode field names
+      const addressFields = field.addressFields || {
+        address: 'address',
+        city: 'city',
+        state: 'state',
+        pincode: 'pincode',
+      };
+      
+      // Get values from formData if provided via field.values, otherwise use individual values
+      const addressValue = field.values?.address || value?.address || '';
+      const cityValue = field.values?.city || value?.city || '';
+      const stateValue = field.values?.state || value?.state || '';
+      const pincodeValue = field.values?.pincode || value?.pincode || '';
+      
+      return (
+        <AddressFieldGroup
+          addressValue={addressValue}
+          cityValue={cityValue}
+          stateValue={stateValue}
+          pincodeValue={pincodeValue}
+          addressName={addressFields.address}
+          cityName={addressFields.city}
+          stateName={addressFields.state}
+          pincodeName={addressFields.pincode}
+          addressLabel={field.addressLabel || 'Street Address'}
+          cityLabel={field.cityLabel || 'City'}
+          stateLabel={field.stateLabel || 'State'}
+          pincodeLabel={field.pincodeLabel || 'PIN Code'}
+          onChange={onChange}
+          onBlur={onBlur}
+          onFocus={onFocus}
+          errors={field.errors || {}}
+          required={field.requiredFields || {
+            address: field.required !== false,
+            city: field.required !== false,
+            state: field.required !== false,
+            pincode: field.required !== false,
+          }}
+          disabled={disabled}
+          stateOptions={field.stateOptions || []}
+          onPincodeLookup={onPincodeLookup}
+          cityFieldName={addressFields.city}
+          stateFieldName={addressFields.state}
+          addressPlaceholder={field.addressPlaceholder || 'Enter your street address'}
+          cityPlaceholder={field.cityPlaceholder || 'Enter your city'}
+          statePlaceholder={field.statePlaceholder || 'Select state'}
+          pincodePlaceholder={field.pincodePlaceholder || 'Enter 6-digit PIN code'}
+          fullWidth={field.fullWidth !== false}
+        />
+      );
+
     case 'select':
+      // Check if this is a gender field - use GenderField component instead
+      if (field.name === 'gender' || field.label?.toLowerCase() === 'gender') {
+        return (
+          <GenderField
+            name={field.name}
+            value={value}
+            onChange={onChange}
+            onBlur={onBlur}
+            onFocus={onFocus}
+            required={field.required}
+            error={error}
+            disabled={disabled}
+            options={field.options || [
+              { value: 'male', label: 'Male' },
+              { value: 'female', label: 'Female' },
+              { value: 'other', label: 'Other' },
+            ]}
+            label={field.label || 'Gender'}
+          />
+        );
+      }
       return (
         <Select
           {...commonProps}
@@ -105,44 +206,53 @@ const FieldRenderer = ({
           <label
             htmlFor={field.name}
             style={{
-              display: 'block',
-              marginBottom: tokens.spacing.xs,
-              fontSize: tokens.typography.fontSize.sm,
-              fontWeight: tokens.typography.fontWeight.medium,
-              color: colors.text,
+              position: 'absolute',
+              width: '1px',
+              height: '1px',
+              padding: 0,
+              margin: '-1px',
+              overflow: 'hidden',
+              clip: 'rect(0, 0, 0, 0)',
+              whiteSpace: 'nowrap',
+              borderWidth: 0,
             }}
           >
             {field.label}
-            {field.required && (
-              <span style={{ color: tokens.colors.error[500], marginLeft: tokens.spacing.xs }}>
-                *
-              </span>
-            )}
+            {field.required && <span> *</span>}
           </label>
           <textarea
             id={field.name}
             name={field.name}
             value={value || ''}
             onChange={onChange}
-            onBlur={onBlur}
-            onFocus={onFocus}
+            onBlur={(e) => {
+              setIsTextareaFocused(false);
+              onBlur?.(e);
+            }}
+            onFocus={(e) => {
+              setIsTextareaFocused(true);
+              onFocus?.(e);
+            }}
             required={field.required}
             disabled={disabled}
             rows={field.rows || 3}
-            placeholder={field.placeholder}
+            placeholder={field.placeholder || field.label}
             style={{
               width: '100%',
-              padding: `${tokens.spacing.sm} ${tokens.spacing.md}`,
+              padding: '16px 20px', // py-4 px-5 from inspiration
               fontSize: tokens.typography.fontSize.base,
               lineHeight: tokens.typography.lineHeight.normal,
-              color: colors.text,
+              color: colors.text || '#000000',
               backgroundColor: colors.input.background,
-              border: `1px solid ${error ? tokens.colors.error[500] : colors.input.border}`,
-              borderRadius: tokens.borderRadius.md,
+              border: `1px solid ${error ? tokens.colors.error[500] : isTextareaFocused ? colors.input.focus : colors.input.border}`,
+              borderRadius: '12px', // rounded-[12px] from inspiration
               transition: `all ${tokens.transitions.normal} ease-in-out`,
               outline: 'none',
               fontFamily: tokens.typography.fontFamily.sans.join(', '),
               resize: 'vertical',
+              boxShadow: isTextareaFocused && !error 
+                ? `0 0 0 3px ${tokens.colors.primary[50]}` 
+                : 'none',
             }}
           />
           {error && (
@@ -160,56 +270,105 @@ const FieldRenderer = ({
       );
 
     case 'radio':
+      // Check if this is a gender field by name or label
+      if (field.name === 'gender' || field.label?.toLowerCase() === 'gender') {
+        return (
+          <GenderField
+            name={field.name}
+            value={value}
+            onChange={onChange}
+            onBlur={onBlur}
+            onFocus={onFocus}
+            required={field.required}
+            error={error}
+            disabled={disabled}
+            options={field.options || [
+              { value: 'male', label: 'Male' },
+              { value: 'female', label: 'Female' },
+              { value: 'other', label: 'Other' },
+            ]}
+            label={field.label || 'Gender'}
+          />
+        );
+      }
+      
+      // Generic radio button group for other cases
       return (
         <div style={{ marginBottom: tokens.spacing.md }}>
-          <label
-            style={{
-              display: 'block',
-              marginBottom: tokens.spacing.xs,
-              fontSize: tokens.typography.fontSize.sm,
-              fontWeight: tokens.typography.fontWeight.medium,
-              color: colors.text,
-            }}
-          >
-            {field.label}
-            {field.required && (
-              <span style={{ color: tokens.colors.error[500], marginLeft: tokens.spacing.xs }}>
-                *
-              </span>
-            )}
-          </label>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: tokens.spacing.sm }}>
-            {field.options?.map((option) => (
-              <label
-                key={option.value}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  cursor: disabled ? 'not-allowed' : 'pointer',
-                  opacity: disabled ? 0.6 : 1,
-                }}
-              >
-                <input
-                  type="radio"
-                  name={field.name}
-                  value={option.value}
-                  checked={value === option.value}
-                  onChange={onChange}
-                  onBlur={onBlur}
-                  onFocus={onFocus}
-                  disabled={disabled}
-                  required={field.required}
-                  style={{
-                    marginRight: tokens.spacing.sm,
-                    cursor: disabled ? 'not-allowed' : 'pointer',
-                  }}
-                />
-                <span style={{ fontSize: tokens.typography.fontSize.sm, color: colors.text }}>
-                  {option.label}
+          <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
+            <legend
+              style={{
+                fontSize: tokens.typography.fontSize.base,
+                fontWeight: tokens.typography.fontWeight.medium,
+                color: colors.textSecondary || tokens.colors.gray[600],
+                marginBottom: '12px', // mb-3
+                display: 'block',
+              }}
+            >
+              {field.label}
+              {field.required && (
+                <span style={{ color: tokens.colors.error[500], marginLeft: tokens.spacing.xs }}>
+                  *
                 </span>
-              </label>
-            ))}
-          </div>
+              )}
+            </legend>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: isSmallScreen ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
+                gap: '16px', // gap-4
+              }}
+            >
+              {field.options?.map((option) => {
+                const isChecked = value === option.value;
+                return (
+                  <label
+                    key={option.value}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      padding: '16px', // p-4
+                      border: `1px solid ${isChecked ? tokens.colors.primary[500] : colors.input.border}`,
+                      borderRadius: '12px', // rounded-[12px]
+                      backgroundColor: colors.input.background,
+                      cursor: disabled ? 'not-allowed' : 'pointer',
+                      opacity: disabled ? 0.6 : 1,
+                      boxShadow: isChecked ? `0 0 0 2px ${tokens.colors.primary[500]}` : 'none', // ring-2 ring-primary
+                      transition: `all ${tokens.transitions.normal} ease-in-out`,
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name={field.name}
+                      value={option.value}
+                      checked={isChecked}
+                      onChange={onChange}
+                      onBlur={onBlur}
+                      onFocus={onFocus}
+                      disabled={disabled}
+                      required={field.required}
+                      style={{
+                        width: '20px', // h-5 w-5
+                        height: '20px',
+                        marginRight: '12px', // ml-3
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        accentColor: tokens.colors.primary[500],
+                      }}
+                    />
+                    <span
+                      style={{
+                        fontSize: tokens.typography.fontSize.sm,
+                        fontWeight: isChecked ? tokens.typography.fontWeight.medium : tokens.typography.fontWeight.normal,
+                        color: colors.text,
+                      }}
+                    >
+                      {option.label}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
           {error && (
             <p
               style={{

@@ -29,22 +29,20 @@ const Input = ({
 
   const inputStyles = {
     width: fullWidth ? '100%' : 'auto',
-    padding: isMobile 
-      ? `${tokens.spacing.md} ${tokens.spacing.md}` // Larger padding on mobile for touch
-      : `${tokens.spacing.sm} ${tokens.spacing.md}`,
-    fontSize: tokens.typography.fontSize.base, // Paisawaala: 1rem
-    lineHeight: tokens.typography.lineHeight.textRegular, // Paisawaala: 24px
-    color: colors.textSecondary || tokens.colors.gray[500], // Paisawaala: #656c77
+    padding: '16px 20px', // py-4 px-5 from inspiration (16px vertical, 20px horizontal)
+    fontSize: tokens.typography.fontSize.base, // 1rem
+    lineHeight: tokens.typography.lineHeight.textRegular, // 24px
+    color: colors.text || '#000000', // Text color
     backgroundColor: colors.input.background,
     border: `1px solid ${error ? tokens.colors.error[500] : isFocused ? colors.input.focus : colors.input.border}`,
-    borderRadius: tokens.borderRadius.lg, // Larger radius for modern look
+    borderRadius: '12px', // rounded-[12px] from inspiration
     transition: `all ${tokens.transitions.normal} ease-in-out`,
     outline: 'none',
     fontFamily: tokens.typography.fontFamily.sans.join(', '),
     minHeight: isMobile ? '48px' : 'auto', // Minimum touch target on mobile
     boxShadow: isFocused && !error 
       ? `0 0 0 3px ${tokens.colors.primary[50]}` 
-      : 'none', // Light blue focus ring
+      : 'none', // Focus ring
     opacity: disabled ? 0.6 : 1,
     cursor: disabled ? 'not-allowed' : 'text',
   };
@@ -55,20 +53,19 @@ const Input = ({
         <label
           htmlFor={name}
           style={{
-            display: 'block',
-            marginBottom: tokens.spacing.xs,
-            fontSize: tokens.typography.fontSize.sm, // Paisawaala: 0.875rem
-            fontWeight: tokens.typography.fontWeight.medium,
-            color: colors.textSecondary || tokens.colors.gray[500], // Paisawaala: #656c77
-            fontFamily: tokens.typography.fontFamily.sans.join(', '),
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            borderWidth: 0,
           }}
         >
           {label}
-          {required && (
-            <span style={{ color: tokens.colors.error[500], marginLeft: tokens.spacing.xs }}>
-              *
-            </span>
-          )}
+          {required && <span> *</span>}
         </label>
       )}
       <input
@@ -85,7 +82,7 @@ const Input = ({
           setIsFocused(true);
           onFocus?.(e);
         }}
-        placeholder={placeholder}
+        placeholder={placeholder || label}
         required={required}
         disabled={disabled}
         style={{

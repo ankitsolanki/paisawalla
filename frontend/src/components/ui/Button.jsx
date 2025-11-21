@@ -23,15 +23,14 @@ const Button = ({
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontWeight: tokens.typography.fontWeight.semibold,
-    borderRadius: tokens.borderRadius.full, // Paisawaala: 1000px (fully rounded)
+    fontWeight: tokens.typography.fontWeight.semibold, // font-semibold
+    borderRadius: tokens.borderRadius.full, // Fully rounded
     transition: `all ${tokens.transitions.normal} ease-in-out`,
     cursor: disabled || loading ? 'not-allowed' : 'pointer',
     opacity: disabled || loading ? 0.6 : 1,
     width: fullWidth ? '100%' : 'auto',
-    height: tokens.spacing.buttonHeight, // Paisawaala: 48px
-    padding: tokens.spacing.buttonPadding, // Paisawaala: 0.75rem 1.5rem
-    fontSize: tokens.typography.fontSize.base, // Paisawaala: 1rem
+    padding: '12px 32px', // py-3 px-8 from inspiration
+    fontSize: tokens.typography.fontSize.base, // 1rem
     fontFamily: tokens.typography.fontFamily.sans.join(', '),
   };
 
@@ -71,15 +70,15 @@ const Button = ({
 
   const sizeStyles = {
     sm: {
-      padding: `${tokens.spacing.sm} ${tokens.spacing.md}`,
+      padding: '8px 16px',
       fontSize: tokens.typography.fontSize.sm,
     },
     md: {
-      padding: `${tokens.spacing.md} ${tokens.spacing.lg}`,
+      padding: '12px 32px', // py-3 px-8 from inspiration
       fontSize: tokens.typography.fontSize.base,
     },
     lg: {
-      padding: `${tokens.spacing.lg} ${tokens.spacing.xl}`,
+      padding: '16px 40px',
       fontSize: tokens.typography.fontSize.lg,
     },
   };
@@ -93,7 +92,7 @@ const Button = ({
   // Handle hover state for primary buttons
   const handleMouseEnter = (e) => {
     if (variant === 'primary' && !disabled && !loading) {
-      e.currentTarget.style.backgroundColor = tokens.colors.cta.hover;
+      e.currentTarget.style.backgroundColor = 'rgba(67, 56, 202, 0.9)'; // hover:bg-opacity-90
     }
   };
 
@@ -103,13 +102,34 @@ const Button = ({
     }
   };
 
+  // Handle focus state
+  const handleFocus = (e) => {
+    if (variant === 'primary' && !disabled && !loading) {
+      e.currentTarget.style.outline = 'none';
+      e.currentTarget.style.boxShadow = `0 0 0 2px ${tokens.colors.primary[500]}, 0 0 0 4px ${tokens.colors.primary[50]}`;
+    }
+  };
+
+  const handleBlur = (e) => {
+    e.currentTarget.style.boxShadow = 'none';
+  };
+
+  const handleClick = (e) => {
+    console.log('Button clicked', { onClick, disabled, loading, type });
+    if (onClick && !disabled && !loading) {
+      onClick(e);
+    }
+  };
+
   return (
     <button
       type={type}
       disabled={disabled || loading}
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
       style={style}
       className={className}
       {...props}

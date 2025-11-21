@@ -500,21 +500,33 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
       <ThemeProvider theme={theme}>
         <div
           style={{
-            maxWidth: '48rem',
+            maxWidth: '672px', // max-w-2xl
             margin: '0 auto',
-            padding: tokens.spacing.lg,
+            padding: tokens.spacing.xl,
           }}
         >
-          <h2
-            style={{
-              fontSize: tokens.typography.fontSize['2xl'], // 1.5rem
-              fontWeight: tokens.typography.fontWeight.bold,
-              marginBottom: tokens.spacing.lg,
-              color: tokens.colors.gray[900],
-            }}
-          >
-            {schema.title}
-          </h2>
+          <div style={{ marginBottom: '32px' }}> {/* space-y-8 */}
+            <h1
+              style={{
+                fontSize: '2.25rem', // text-4xl (36px)
+                fontWeight: tokens.typography.fontWeight.bold,
+                marginBottom: tokens.spacing.sm,
+                color: tokens.colors.gray[900],
+              }}
+            >
+              {schema.title}
+            </h1>
+            {schema.description && (
+              <p
+                style={{
+                  fontSize: tokens.typography.fontSize.base,
+                  color: tokens.colors.gray[500],
+                }}
+              >
+                {schema.description}
+              </p>
+            )}
+          </div>
 
           {schema.steps > 1 && stepLabels.length > 0 && (
             <>
@@ -527,14 +539,13 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
             </>
           )}
 
-          <form onSubmit={(e) => e.preventDefault()}>
+          <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}> {/* space-y-6 */}
             {/* Tablet: 2-column grid */}
             <div
               style={{
                 display: 'grid',
                 gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: tokens.spacing.md,
-                marginBottom: tokens.spacing.lg,
+                gap: '24px', // gap-6
               }}
             >
               {currentFields.map((field) => (
@@ -597,9 +608,9 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
             <div
               style={{
                 display: 'flex',
-                justifyContent: schema.steps > 1 ? 'space-between' : 'flex-end',
-                marginTop: tokens.spacing.xl,
-                gap: tokens.spacing.md,
+                justifyContent: 'flex-end',
+                paddingTop: '16px', // pt-4
+                gap: tokens.spacing.lg,
               }}
             >
               {schema.steps > 1 && currentStep > 1 && (

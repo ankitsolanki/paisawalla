@@ -23,25 +23,24 @@ const Select = ({
 }) => {
   const { tokens, colors } = useTheme();
 
+  const [isFocused, setIsFocused] = React.useState(false);
+
   const selectStyles = {
     width: fullWidth ? '100%' : 'auto',
-    padding: `${tokens.spacing.sm} ${tokens.spacing.md}`,
+    padding: '16px 20px', // py-4 px-5 from inspiration
     fontSize: tokens.typography.fontSize.base,
     lineHeight: tokens.typography.lineHeight.normal,
-    color: colors.text,
+    color: colors.text || '#000000',
     backgroundColor: colors.input.background,
-    border: `1px solid ${error ? tokens.colors.error[500] : colors.input.border}`,
-    borderRadius: tokens.borderRadius.md,
+    border: `1px solid ${error ? tokens.colors.error[500] : isFocused ? colors.input.focus : colors.input.border}`,
+    borderRadius: '12px', // rounded-[12px] from inspiration
     transition: `all ${tokens.transitions.normal} ease-in-out`,
     outline: 'none',
     cursor: disabled ? 'not-allowed' : 'pointer',
-    '&:focus': {
-      borderColor: colors.input.focus,
-      boxShadow: `0 0 0 3px ${tokens.colors.primary[100]}`,
-    },
-    '&:disabled': {
-      opacity: 0.6,
-    },
+    boxShadow: isFocused && !error 
+      ? `0 0 0 3px ${tokens.colors.primary[50]}` 
+      : 'none',
+    opacity: disabled ? 0.6 : 1,
   };
 
   return (
@@ -50,19 +49,19 @@ const Select = ({
         <label
           htmlFor={name}
           style={{
-            display: 'block',
-            marginBottom: tokens.spacing.xs,
-            fontSize: tokens.typography.fontSize.sm,
-            fontWeight: tokens.typography.fontWeight.medium,
-            color: colors.text,
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            borderWidth: 0,
           }}
         >
           {label}
-          {required && (
-            <span style={{ color: tokens.colors.error[500], marginLeft: tokens.spacing.xs }}>
-              *
-            </span>
-          )}
+          {required && <span> *</span>}
         </label>
       )}
       <select
@@ -70,15 +69,21 @@ const Select = ({
         name={name}
         value={value || ''}
         onChange={onChange}
-        onBlur={onBlur}
-        onFocus={onFocus}
+        onBlur={(e) => {
+          setIsFocused(false);
+          onBlur?.(e);
+        }}
+        onFocus={(e) => {
+          setIsFocused(true);
+          onFocus?.(e);
+        }}
         required={required}
         disabled={disabled}
         style={selectStyles}
         className={className}
         {...props}
       >
-        <option value="">{placeholder}</option>
+        <option value="">{placeholder || label}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}

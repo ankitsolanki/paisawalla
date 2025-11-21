@@ -20,6 +20,16 @@ const getCorsOrigin = () => {
     .map(o => normalizeOrigin(o))
     .filter(o => o && o.length > 0);
   
+  // If no origins specified, allow all origins
+  if (origins.length === 0) {
+    return true;
+  }
+  
+  // Single origin - return it directly
+  if (origins.length === 1) {
+    return origins[0];
+  }
+  
   // Multiple origins - use callback function
   return (origin, callback) => {
     // Allow requests with no origin (like mobile apps, Postman, or same-origin requests)
@@ -29,12 +39,13 @@ const getCorsOrigin = () => {
     const normalizedRequestOrigin = normalizeOrigin(origin);
     // Check if the normalized origin matches any allowed origin
     if (normalizedRequestOrigin && origins.includes(normalizedRequestOrigin)) {
-      // Return true to allow this origin (CORS library will use the requested origin)
-      callback(null, true);
+      // Return the actual origin (as sent by browser) to set in Access-Control-Allow-Origin
+      callback(null, origin);
     } else {
       // Also check exact match (in case origin doesn't have trailing slash)
-      if (origins.includes(origin)) {
-        callback(null, true);
+      const originalOrigins = corsOrigin.split(',').map(o => o.trim().replace(/\/+$/, ''));
+      if (originalOrigins.includes(origin)) {
+        callback(null, origin);
       } else {
         callback(new Error('Not allowed by CORS'));
       }
@@ -56,7 +67,6 @@ export const securityConfig = {
       'Origin',
       'Access-Control-Request-Method',
       'Access-Control-Request-Headers',
-      "Access-Control-Allow-Origin"
     ],
     exposedHeaders: [
       'Content-Length',

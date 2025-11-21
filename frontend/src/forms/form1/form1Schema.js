@@ -121,7 +121,7 @@ export default {
   },
   gender: {
     label: 'Gender',
-    type: 'select',
+    type: 'radio', // Changed to radio to use GenderField component
     required: true,
     rules: ['required'],
     placeholder: 'Select gender',
@@ -129,7 +129,7 @@ export default {
     options: [
       { value: 'male', label: 'Male' },
       { value: 'female', label: 'Female' },
-      { value: 'others', label: 'Others' },
+      { value: 'other', label: 'Other' }, // Changed 'others' to 'other' to match inspiration
     ],
   },
   panNumber: {

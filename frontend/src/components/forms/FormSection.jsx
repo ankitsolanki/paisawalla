@@ -34,10 +34,10 @@ const FormSection = ({
   return (
     <section
       style={{
-        backgroundColor: '#ffffff',
+        backgroundColor: 'transparent',
         borderRadius: isCompact ? tokens.borderRadius.lg : tokens.borderRadius.xl,
-        border: `1px solid ${tokens.colors.gray[200]}`,
-        boxShadow: isCompact ? 'none' : '0 8px 24px rgba(22, 14, 122, 0.05)',
+        border: 'none',
+        boxShadow: 'none',
         padding: isCompact ? tokens.spacing.md : tokens.spacing.lg,
         display: 'flex',
         flexDirection: 'column',

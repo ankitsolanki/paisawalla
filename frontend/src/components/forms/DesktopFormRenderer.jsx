@@ -587,21 +587,33 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
       <ThemeProvider theme={theme}>
         <div
           style={{
-            maxWidth: schema.steps > 1 ? '56rem' : '42rem',
+            maxWidth: '672px', // max-w-2xl (672px)
             margin: '0 auto',
             padding: tokens.spacing.xl,
           }}
         >
-          <h2
-            style={{
-              fontSize: tokens.typography.fontSize['3xl'], // 2rem - larger on desktop
-              fontWeight: tokens.typography.fontWeight.bold,
-              marginBottom: tokens.spacing.xl,
-              color: tokens.colors.gray[900],
-            }}
-          >
-            {schema.title}
-          </h2>
+          <div style={{ marginBottom: '32px' }}> {/* space-y-8 */}
+            <h1
+              style={{
+                fontSize: '2.25rem', // text-4xl (36px)
+                fontWeight: tokens.typography.fontWeight.bold,
+                marginBottom: tokens.spacing.sm,
+                color: tokens.colors.gray[900],
+              }}
+            >
+              {schema.title}
+            </h1>
+            {schema.description && (
+              <p
+                style={{
+                  fontSize: tokens.typography.fontSize.base,
+                  color: tokens.colors.gray[500],
+                }}
+              >
+                {schema.description}
+              </p>
+            )}
+          </div>
 
           {schema.steps > 1 && stepLabels.length > 0 && (
             <>
@@ -614,14 +626,13 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
             </>
           )}
 
-          <form onSubmit={(e) => e.preventDefault()}>
-            {/* Desktop: Multi-column grid (3+ columns) */}
+          <form onSubmit={(e) => e.preventDefault()} style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}> {/* space-y-6 */}
+            {/* Desktop: Two-column grid for form fields */}
             <div
               style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-                gap: tokens.spacing.lg,
-                marginBottom: tokens.spacing.xl,
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: '24px', // gap-6
               }}
             >
               {currentFields.map((field) => (
@@ -684,8 +695,8 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
             <div
               style={{
                 display: 'flex',
-                justifyContent: schema.steps > 1 ? 'space-between' : 'flex-end',
-                marginTop: tokens.spacing['2xl'],
+                justifyContent: 'flex-end',
+                paddingTop: '16px', // pt-4
                 gap: tokens.spacing.lg,
               }}
             >
