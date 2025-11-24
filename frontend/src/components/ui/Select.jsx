@@ -81,6 +81,7 @@ const Select = ({
         width: fullWidth ? '100%' : 'auto',
         maxWidth: '100%', // Prevent container overflow
         position: 'relative',
+        paddingBottom: error ? '24px' : '0px', // Reserve space for error message
       }}
     >
       <select
@@ -155,9 +156,13 @@ const Select = ({
       {error && (
         <p
           style={{
-            marginTop: tokens.spacing.xs,
+            position: 'absolute',
+            bottom: '-24px',
+            left: '0px',
             fontSize: tokens.typography.fontSize.sm,
             color: tokens.colors.error[600],
+            margin: '0px',
+            whiteSpace: 'nowrap',
           }}
         >
           {error}

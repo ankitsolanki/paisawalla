@@ -680,8 +680,22 @@ const Form1 = ({ theme = 'light' }) => {
     setIsSubmitting(true);
 
     try {
+      // Transform form data to match backend schema
+      const transformedData = { ...formData };
+      
+      // Transform the address field from string to object if provided
+      if (transformedData.address && typeof transformedData.address === 'string') {
+        transformedData.address = {
+          street: transformedData.address,
+          city: formData.city || '',
+          state: formData.state || '',
+          zipCode: formData.pinCode || '',
+          country: 'India',
+        };
+      }
+      
       const response = await apiClient.post('/api/leads', {
-        ...formData,
+        ...transformedData,
         formType: 'form1',
         ...(recaptchaToken && { recaptchaToken }),
       });
@@ -1171,7 +1185,7 @@ const Form1 = ({ theme = 'light' }) => {
         >
           <h2
             style={{
-              fontSize: isMobile ? '1.25rem' : '1.5rem',
+              fontSize: isMobile ? '1.25rem' : '1.5rem', // h2: 1.25rem mobile, 1.5rem desktop (20px/24px) - smaller than h1
               fontWeight: 700,
               marginBottom: isMobile ? '1rem' : '1.5rem',
               textAlign: isMobile ? 'center' : 'left',

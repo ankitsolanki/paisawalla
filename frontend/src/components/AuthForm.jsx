@@ -226,11 +226,11 @@ const AuthForm = ({
           >
             {/* Header Section */}
             <div style={{ textAlign: 'left' }}>
-          {stage === 'phone' && (
+            {stage === 'phone' && (
             <>
                   <h1
                 style={{
-                      fontSize: isMobile ? '2.25rem' : '3rem', // text-4xl md:text-5xl
+                      fontSize: isMobile ? '1.5rem' : '2rem', // h1: 1.5rem mobile, 2rem desktop (24px/32px)
                       fontWeight: tokens.typography.fontWeight.extrabold || 800, // font-extrabold
                       color: tokens.colors.gray[900],
                       lineHeight: '1.2', // leading-tight
@@ -241,8 +241,8 @@ const AuthForm = ({
                   </h1>
               <p
                 style={{
-                      marginTop: '1rem', // mt-4
-                      fontSize: '1.125rem', // text-lg
+                      marginTop: '0.75rem', // mt-3
+                      fontSize: isMobile ? '0.875rem' : '1rem', // 0.875rem mobile, 1rem desktop (14px/16px)
                       color: tokens.colors.gray[600],
                       margin: 0,
                     }}
@@ -256,7 +256,7 @@ const AuthForm = ({
             <>
                   <h1
                 style={{
-                      fontSize: isMobile ? '2.25rem' : '3rem',
+                      fontSize: isMobile ? '1.5rem' : '2rem', // h1: 1.5rem mobile, 2rem desktop (24px/32px)
                       fontWeight: tokens.typography.fontWeight.extrabold || 800,
                       color: tokens.colors.gray[900],
                       lineHeight: '1.2',
@@ -267,8 +267,8 @@ const AuthForm = ({
                   </h1>
               <p
                 style={{
-                      marginTop: '1rem',
-                      fontSize: '1.125rem',
+                      marginTop: '0.75rem',
+                      fontSize: isMobile ? '0.875rem' : '1rem', // 0.875rem mobile, 1rem desktop (14px/16px)
                       color: tokens.colors.gray[600],
                       margin: 0,
                 }}
