@@ -412,7 +412,7 @@ const AuthForm = ({
                               textDecoration: 'underline',
                             }}
                           >
-                            Privacy Policy
+                            Privacy Policyssss
                           </a>
                         </label>
                       </div>
