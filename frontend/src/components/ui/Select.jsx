@@ -103,7 +103,7 @@ const Select = ({
         className={className}
         {...props}
       >
-        <option value="" disabled hidden>{shouldFloatLabel ? '' : (placeholder || label)}</option>
+        <option value="" disabled>{!hasValue && !shouldFloatLabel ? (placeholder || label) : ''}</option>
         {options.map((option) => (
           <option 
             key={option.value} 

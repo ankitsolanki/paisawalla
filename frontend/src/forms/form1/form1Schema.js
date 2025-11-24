@@ -202,11 +202,10 @@ export default {
     label: 'Annual Income',
     type: 'currency',
     required: false, // Will be conditionally required
-    rules: ['numeric', { type: 'min', params: [100000] }, { type: 'max', params: [100000000] }],
+    rules: ['numeric', { type: 'min', params: [1] }],
     placeholder: 'Enter annual income',
-    errorMessage: 'Please enter a valid annual income (min ₹1,00,000, max ₹10,00,00,000)',
-    min: 100000,
-    max: 100000000,
+    errorMessage: 'Please enter a valid annual income (greater than 0)',
+    min: 1,
   },
   organizationName: {
     label: 'Organization Name',
@@ -228,11 +227,10 @@ export default {
     label: 'Annual Turnover',
     type: 'currency',
     required: false, // Will be conditionally required
-    rules: ['numeric', { type: 'min', params: [100000] }, { type: 'max', params: [1000000000] }],
+    rules: ['numeric', { type: 'min', params: [1] }],
     placeholder: 'Enter annual turnover',
-    errorMessage: 'Please enter a valid annual turnover (min ₹1,00,000, max ₹100,00,00,000)',
-    min: 100000,
-    max: 1000000000,
+    errorMessage: 'Please enter a valid annual turnover (greater than 0)',
+    min: 1,
   },
   companyEmail: {
     label: 'Company Email Address',

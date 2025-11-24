@@ -453,6 +453,11 @@ const Form1 = ({ theme = 'light' }) => {
             }
           }
           
+          // Handle address field - if it's an object, extract the street value
+          if (field === 'address' && typeof value === 'object' && value !== null) {
+            value = value.street || '';
+          }
+          
           // Store the value
           updated[field] = value;
         }
