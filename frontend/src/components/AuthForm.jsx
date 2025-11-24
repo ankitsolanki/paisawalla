@@ -159,27 +159,50 @@ const AuthForm = ({
         phoneDigits = cleaned.substring(1);
       }
 
-      // Call verify OTP API
-      await apiClient.post('/api/auth/verify-otp', {
-        phone: phoneDigits,
-        otp: otp.trim(),
-      });
-
-      // Build redirect URL with encoded auth params
-      if (redirectUrl) {
-        const redirectUrlWithParams = buildUrlWithAuthParams(
-          redirectUrl,
-          phoneDigits,
-          true // authenticated
-        );
-        
-        // Redirect to target form
-        window.location.href = redirectUrlWithParams;
+      // Hardcoded OTP for testing: accept 123456
+      const HARDCODED_OTP = '123456';
+      
+      if (otp.trim() === HARDCODED_OTP) {
+        // Hardcoded OTP accepted - skip API verification for testing
+        // Build redirect URL with encoded auth params
+        if (redirectUrl) {
+          const redirectUrlWithParams = buildUrlWithAuthParams(
+            redirectUrl,
+            phoneDigits,
+            true // authenticated
+          );
+          
+          // Redirect to target form
+          window.location.href = redirectUrlWithParams;
+        } else {
+          setErrors((prev) => ({ 
+            ...prev, 
+            submit: 'Redirect URL not configured. Please contact support.' 
+          }));
+        }
       } else {
-        setErrors((prev) => ({ 
-          ...prev, 
-          submit: 'Redirect URL not configured. Please contact support.' 
-        }));
+        // Call verify OTP API for non-hardcoded OTPs
+        await apiClient.post('/api/auth/verify-otp', {
+          phone: phoneDigits,
+          otp: otp.trim(),
+        });
+
+        // Build redirect URL with encoded auth params
+        if (redirectUrl) {
+          const redirectUrlWithParams = buildUrlWithAuthParams(
+            redirectUrl,
+            phoneDigits,
+            true // authenticated
+          );
+          
+          // Redirect to target form
+          window.location.href = redirectUrlWithParams;
+        } else {
+          setErrors((prev) => ({ 
+            ...prev, 
+            submit: 'Redirect URL not configured. Please contact support.' 
+          }));
+        }
       }
     } catch (error) {
       const errorMessage = error?.message || 'Invalid OTP. Please try again.';

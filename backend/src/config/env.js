@@ -4,7 +4,7 @@ export const env = {
   mongoURI: process.env.MONGODB_URI,
   recaptchaSecret: process.env.RECAPTCHA_SECRET_KEY,
   recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
-  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+  corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174',
   breApiUrl: process.env.BRE_API_URL,
   breApiKey: process.env.BRE_API_KEY,
   bureauApiUrl: process.env.BUREAU_API_URL,

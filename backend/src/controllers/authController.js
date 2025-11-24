@@ -124,6 +124,22 @@ export const verifyOtp = async (req, res, next) => {
       );
     }
 
+    // Hardcoded OTP for testing: accept 123456
+    const HARDCODED_OTP = '123456';
+    
+    if (otp === HARDCODED_OTP) {
+      // Hardcoded OTP accepted - skip storage verification for testing
+      logger.info('OTP verified successfully (hardcoded OTP)', { phone });
+      
+      res.status(200).json(
+        buildResponse({
+          message: 'OTP verified successfully',
+          verified: true,
+        })
+      );
+      return;
+    }
+
     // Get stored OTP
     const storedOtpData = otpStore.get(phone);
 
