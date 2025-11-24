@@ -206,8 +206,6 @@ const AuthForm = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: '100vh',
-            padding: '1rem',
             backgroundColor: tokens.colors.background.light,
           }}
         >

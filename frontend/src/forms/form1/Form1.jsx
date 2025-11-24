@@ -458,6 +458,21 @@ const Form1 = ({ theme = 'light' }) => {
             value = value.street || '';
           }
           
+          // Handle currentAddress field - if it's an object, extract the string value
+          if (field === 'currentAddress' && typeof value === 'object' && value !== null) {
+            // Try to get a string representation or use the entire object as string if empty
+            if (typeof value === 'object' && value.value !== undefined) {
+              value = value.value;
+            } else if (typeof value === 'object' && value.locality !== undefined) {
+              value = value.locality;
+            } else if (typeof value === 'object' && Object.keys(value).length > 0) {
+              // If it's an object with properties, try to extract a meaningful value
+              value = value.locality || value.area || value.landmark || '';
+            } else {
+              value = '';
+            }
+          }
+          
           // Store the value
           updated[field] = value;
         }
@@ -581,6 +596,7 @@ const Form1 = ({ theme = 'light' }) => {
       let shouldValidate = false;
       let rulesToValidate = fieldSchema.rules || [];
 
+      // Special handling for conditionally required fields based on employment type
       // companyEmail is required for all employment types except Student
       if (fieldName === 'companyEmail') {
         if (employmentType && employmentType !== 'Student') {
@@ -591,31 +607,30 @@ const Form1 = ({ theme = 'light' }) => {
         }
         // If Student or no employment type, skip validation
       }
-      // Check if field is required based on conditional visibility
-      else if (employmentType === 'Salaried') {
-        if (['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(fieldName)) {
-          shouldValidate = true;
-          // Add required rule if not already present
-          if (!rulesToValidate.includes('required')) {
-            rulesToValidate = ['required', ...rulesToValidate];
-          }
+      // Check if field is required based on conditional visibility for Salaried employment
+      else if (employmentType === 'Salaried' && ['netMonthlyIncome', 'companyName', 'modeOfSalary'].includes(fieldName)) {
+        shouldValidate = true;
+        // Add required rule if not already present
+        if (!rulesToValidate.includes('required')) {
+          rulesToValidate = ['required', ...rulesToValidate];
         }
-      } else if (employmentType === 'Self-employed professional') {
-        if (['annualIncome', 'organizationName', 'profession'].includes(fieldName)) {
-          shouldValidate = true;
-          if (!rulesToValidate.includes('required')) {
-            rulesToValidate = ['required', ...rulesToValidate];
-          }
+      }
+      // Check if field is required based on conditional visibility for Self-employed professional
+      else if (employmentType === 'Self-employed professional' && ['annualIncome', 'organizationName', 'profession'].includes(fieldName)) {
+        shouldValidate = true;
+        if (!rulesToValidate.includes('required')) {
+          rulesToValidate = ['required', ...rulesToValidate];
         }
-      } else if (employmentType === 'Self-employed business') {
-        if (['annualTurnover', 'annualIncome'].includes(fieldName)) {
-          shouldValidate = true;
-          if (!rulesToValidate.includes('required')) {
-            rulesToValidate = ['required', ...rulesToValidate];
-          }
+      }
+      // Check if field is required based on conditional visibility for Self-employed business
+      else if (employmentType === 'Self-employed business' && ['annualTurnover', 'annualIncome'].includes(fieldName)) {
+        shouldValidate = true;
+        if (!rulesToValidate.includes('required')) {
+          rulesToValidate = ['required', ...rulesToValidate];
         }
-      } else if (fieldSchema.required) {
-        // For other fields, validate if they're marked as required in schema
+      }
+      // For all other fields, validate if they're marked as required in schema
+      else if (fieldSchema.required) {
         shouldValidate = true;
       }
 

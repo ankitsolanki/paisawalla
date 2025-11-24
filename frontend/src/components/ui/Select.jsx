@@ -81,7 +81,6 @@ const Select = ({
         width: fullWidth ? '100%' : 'auto',
         maxWidth: '100%', // Prevent container overflow
         position: 'relative',
-        paddingBottom: error ? '24px' : '0px', // Reserve space for error message
       }}
     >
       <select
@@ -103,7 +102,7 @@ const Select = ({
         className={className}
         {...props}
       >
-        <option value="" disabled>{!hasValue && !shouldFloatLabel ? (placeholder || label) : ''}</option>
+        <option value="" disabled></option>
         {options.map((option) => (
           <option 
             key={option.value} 
@@ -153,21 +152,43 @@ const Select = ({
           {required && <span style={{ color: tokens.colors.error[500] }}> *</span>}
         </label>
       )}
-      {error && (
-        <p
-          style={{
-            position: 'absolute',
-            bottom: '-24px',
-            left: '0px',
-            fontSize: tokens.typography.fontSize.sm,
-            color: tokens.colors.error[600],
-            margin: '0px',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {error}
-        </p>
-      )}
+      
+      {/* Error message container - always reserved space to prevent layout shift */}
+      <div
+        style={{
+          minHeight: '16px', // Fixed height to reserve space
+          marginTop: '0.375rem',
+          overflow: 'hidden',
+        }}
+      >
+        {error && (
+          <p
+            style={{
+              fontSize: tokens.typography.fontSize.sm,
+              color: tokens.colors.error[600],
+              margin: '0',
+              animation: 'slideDown 0.2s ease-out',
+              opacity: 1,
+            }}
+          >
+            {error}
+          </p>
+        )}
+      </div>
+
+      {/* Add keyframe animation for smooth error appearance */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };

@@ -209,7 +209,6 @@ const CurrencyInput = ({
         width: fullWidth ? '100%' : 'auto',
         position: 'relative',
         marginBottom: tokens.spacing.md,
-        paddingBottom: error ? '24px' : '0px', // Reserve space for error message
       }}
       className="floating-label-group"
     >
@@ -240,21 +239,42 @@ const CurrencyInput = ({
         </label>
       )}
       
-      {error && (
-        <p
-          style={{
-            position: 'absolute',
-            bottom: '-24px',
-            left: '0px',
-            fontSize: tokens.typography.fontSize.sm,
-            color: tokens.colors.error[600],
-            margin: '0px',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {error}
-        </p>
-      )}
+      {/* Error message container - always reserved space to prevent layout shift */}
+      <div
+        style={{
+          minHeight: '16px', // Fixed height to reserve space
+          marginTop: '0.375rem',
+          overflow: 'hidden',
+        }}
+      >
+        {error && (
+          <p
+            style={{
+              fontSize: tokens.typography.fontSize.sm,
+              color: tokens.colors.error[600],
+              margin: '0',
+              animation: 'slideDown 0.2s ease-out',
+              opacity: 1,
+            }}
+          >
+            {error}
+          </p>
+        )}
+      </div>
+
+      {/* Add keyframe animation for smooth error appearance */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-4px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 };
