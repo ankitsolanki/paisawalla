@@ -456,26 +456,16 @@ const Form2 = ({
     const sections = STEP_SECTIONS[stepNumber];
     if (!sections) return null;
 
-    return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: isCompactLayout ? tokens.spacing.xl : tokens.spacing['2xl'],
-        }}
-      >
-        {sections.map((section) => (
-          <FormSection
-            key={section.id}
-            title={section.title}
-            subtitle={section.subtitle}
-            rows={section.rows}
-            renderField={renderField}
-            isCompact={isCompactLayout}
-          />
-        ))}
-      </div>
-    );
+    return sections.map((section) => (
+      <FormSection
+        key={section.id}
+        title={section.title}
+        subtitle={section.subtitle}
+        rows={section.rows}
+        renderField={renderField}
+        isCompact={isCompactLayout}
+      />
+    ));
   }, [renderField, isCompactLayout]);
 
   if (isSubmitted) {
