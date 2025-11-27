@@ -10,19 +10,24 @@ import CurrencyInput from '../../components/ui/CurrencyInput';
 import PincodeInput from '../../components/PincodeInput';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import FormSection from '../../components/forms/FormSection';
-import { validateForm, validateField } from '../../utils/validationRules';
+import { validateField, validateForm } from '../../utils/validationRules';
 import { tokens } from '../../design-system/tokens';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
 import { getAuthParamsFromUrl } from '../../utils/queryEncoder';
 import form2Schema from './form2Schema';
 
+const FORM_FIELD_KEYS = Object.keys(form2Schema).filter((key) => key !== 'steps');
+
 // Get reCAPTCHA site key from environment or window (for embedded forms)
+// Only use if it's a valid key (not empty and has reasonable length)
 const getRecaptchaKey = () => {
   const windowKey = typeof window !== 'undefined' ? window.VITE_RECAPTCHA_SITE_KEY : undefined;
   const envKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
   const key = windowKey || envKey || '';
   
+  // Validate key - reCAPTCHA keys are typically 40 characters, minimum 20
+  // Also check that it's not a placeholder or invalid value
   const isValid = key && 
       typeof key === 'string' &&
       key.trim() !== '' && 
@@ -32,12 +37,14 @@ const getRecaptchaKey = () => {
       key.trim() !== 'undefined' &&
       key.trim() !== 'null';
   
-  return isValid ? key.trim() : '';
+  if (isValid) {
+    return key.trim();
+  }
+  
+  return '';
 };
 
 const RECAPTCHA_SITE_KEY = getRecaptchaKey();
-
-const FORM_FIELD_KEYS = Object.keys(form2Schema).filter((key) => key !== 'steps');
 
 const STEP_SECTIONS = {
   1: [
@@ -96,6 +103,7 @@ const Form2 = ({
   const [autoPopulatedFields, setAutoPopulatedFields] = useState(new Set());
   const [prefillStatus, setPrefillStatus] = useState('idle'); // idle | loading | success | error | not_found
   const [prefillMessage, setPrefillMessage] = useState('');
+  const [pincodeLoading, setPincodeLoading] = useState(false);
   const { windowWidth } = useResponsive();
   const isMobile = windowWidth < 640;
   const isTablet = windowWidth >= 640 && windowWidth < 1024;
@@ -144,6 +152,15 @@ const Form2 = ({
 
       return updated;
     });
+
+    // Mark auto-populated fields
+    const autoPopulated = new Set();
+    FORM_FIELD_KEYS.forEach((field) => {
+      if (payload[field] !== null && payload[field] !== undefined) {
+        autoPopulated.add(field);
+      }
+    });
+    setAutoPopulatedFields(autoPopulated);
   }, []);
 
   // Check for encoded auth params on mount and prefill if user exists
@@ -248,114 +265,44 @@ const Form2 = ({
     trackFieldInteraction(name, 'focus', value);
   }, [trackFieldInteraction]);
 
-  // Handle PIN code lookup and auto-populate city/state
-  const handlePincodeLookup = useCallback((details) => {
-    if (!details) return;
-
-    const { city, state, cityFieldName, stateFieldName } = details;
-
-    setFormData((prev) => {
-      const updated = { ...prev };
-      
-      if (cityFieldName && city) {
-        updated[cityFieldName] = city;
-        trackFieldInteraction(cityFieldName, 'auto-populated', city);
-        setAutoPopulatedFields((prevSet) => new Set(prevSet).add(cityFieldName));
-      }
-      
-      if (stateFieldName && state) {
-        const stateSchema = form2Schema[stateFieldName];
-        if (stateSchema && stateSchema.options) {
-          const exactMatch = stateSchema.options.find(
-            (opt) => opt.label.toLowerCase() === state.toLowerCase()
-          );
-          
-          if (exactMatch) {
-            updated[stateFieldName] = exactMatch.value;
-            trackFieldInteraction(stateFieldName, 'auto-populated', exactMatch.value);
-            setAutoPopulatedFields((prevSet) => new Set(prevSet).add(stateFieldName));
-          } else {
-            const partialMatch = stateSchema.options.find(
-              (opt) => opt.label.toLowerCase().includes(state.toLowerCase()) ||
-                       state.toLowerCase().includes(opt.label.toLowerCase())
-            );
-            
-            if (partialMatch) {
-              updated[stateFieldName] = partialMatch.value;
-              trackFieldInteraction(stateFieldName, 'auto-populated', partialMatch.value);
-              setAutoPopulatedFields((prevSet) => new Set(prevSet).add(stateFieldName));
-            }
-          }
-        }
-      }
-      
-      return updated;
-    });
-  }, [trackFieldInteraction]);
-
-  // Clear auto-populated state when PIN code is cleared
   const handlePincodeChange = useCallback((e) => {
-    const { value } = e.target;
     handleChange(e);
-    
-    if (!value || value.length === 0) {
-      setAutoPopulatedFields((prevSet) => {
-        const newSet = new Set(prevSet);
-        newSet.delete('city');
-        newSet.delete('state');
-        return newSet;
-      });
-    }
   }, [handleChange]);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
+  const handlePincodeLookup = useCallback(async (pincode, cityFieldName, stateFieldName) => {
+    if (!pincode || pincode.length !== 6) return;
 
-    const validation = validateForm(formData, form2Schema);
-    if (!validation.isValid) {
-      setErrors(validation.errors);
-      return;
-    }
-
-    // Only require reCAPTCHA if site key is configured AND reCAPTCHA hasn't errored
-    if (RECAPTCHA_SITE_KEY && !recaptchaError && !recaptchaToken) {
-      setErrors((prev) => ({
-        ...prev,
-        recaptcha: 'Please complete the reCAPTCHA verification',
-      }));
-      return;
-    }
-
-    trackSubmitStart();
-    setIsSubmitting(true);
-
+    setPincodeLoading(true);
     try {
-      const response = await apiClient.post('/api/leads', {
-        ...formData,
-        formType: 'form2',
-        ...(recaptchaToken && { recaptchaToken }),
+      const response = await apiClient.get('/api/pincode/lookup', {
+        params: { pincode }
       });
 
-      setIsSubmitted(true);
-      trackSubmitSuccess(response.data._id);
-      webflowBridge.postMessage('formSubmitted', {
-        success: true,
-        leadId: response.data._id,
-      });
+      const data = response?.data || response;
+      if (data && data.city && data.state) {
+        setFormData((prev) => ({
+          ...prev,
+          [cityFieldName]: data.city,
+          [stateFieldName]: data.state,
+        }));
+
+        // Mark these fields as auto-populated
+        setAutoPopulatedFields((prev) => new Set([...prev, cityFieldName, stateFieldName]));
+
+        // Clear any existing errors for these fields
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[cityFieldName];
+          delete newErrors[stateFieldName];
+          return newErrors;
+        });
+      }
     } catch (error) {
-      setErrors((prev) => ({
-        ...prev,
-        submit: error.message || 'Failed to submit form. Please try again.',
-      }));
-      trackSubmitError(error);
-      webflowBridge.postMessage('formSubmitted', {
-        success: false,
-        error: error.message,
-      });
+      console.warn('Pincode lookup failed:', error);
     } finally {
-      setIsSubmitting(false);
+      setPincodeLoading(false);
     }
-  }, [formData, recaptchaToken, recaptchaError, trackSubmitStart, trackSubmitSuccess, trackSubmitError]);
+  }, []);
 
   const handleRecaptchaChange = useCallback((token) => {
     setRecaptchaToken(token);
@@ -371,6 +318,7 @@ const Form2 = ({
   const handleRecaptchaError = useCallback(() => {
     setRecaptchaError(true);
     setRecaptchaToken(null);
+    setErrors((prev) => ({ ...prev, recaptcha: 'Please complete the reCAPTCHA verification.' }));
   }, []);
 
   const renderField = useCallback((fieldName) => {
@@ -451,11 +399,10 @@ const Form2 = ({
     );
   }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeChange, handlePincodeLookup, autoPopulatedFields]);
 
-  // Render step fields using FormSection
+  // Render step fields using FormSection (Form1 pattern)
   const renderStepFields = useCallback((stepNumber) => {
-    const sections = STEP_SECTIONS[stepNumber];
-    if (!sections) return null;
-
+    const sections = STEP_SECTIONS[stepNumber] || [];
+    
     return sections.map((section) => (
       <FormSection
         key={section.id}
@@ -467,6 +414,56 @@ const Form2 = ({
       />
     ));
   }, [renderField, isCompactLayout]);
+
+  const handleSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    
+    // Validate form
+    const validationErrors = validateForm(formData, form2Schema);
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    // Check reCAPTCHA if required
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken && !recaptchaError) {
+      setErrors((prev) => ({ ...prev, recaptcha: 'Please complete the reCAPTCHA verification.' }));
+      return;
+    }
+
+    setIsSubmitting(true);
+    setErrors({});
+    
+    trackSubmitStart();
+
+    try {
+      const payload = {
+        ...formData,
+        formType: 'form2',
+        recaptchaToken: recaptchaToken,
+      };
+
+      const response = await apiClient.post('/api/leads', payload);
+      
+      trackSubmitSuccess();
+      setIsSubmitted(true);
+      
+      // Notify parent/webflow
+      if (typeof window !== 'undefined' && window.parent) {
+        webflowBridge.notifyFormSubmission('form2', {
+          success: true,
+          leadId: response?.data?.id || response?.id,
+          formData: payload,
+        });
+      }
+    } catch (error) {
+      const errorMessage = error?.message || 'Failed to submit form. Please try again.';
+      setErrors((prev) => ({ ...prev, submit: errorMessage }));
+      trackSubmitError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [formData, recaptchaToken, recaptchaError, trackSubmitStart, trackSubmitSuccess, trackSubmitError]);
 
   if (isSubmitted) {
     return (
