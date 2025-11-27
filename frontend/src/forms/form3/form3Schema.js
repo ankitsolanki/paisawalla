@@ -1,44 +1,52 @@
-// Form 3 Schema - Quick eligibility form (post-auth)
+// Form 3 Schema - Updated to match CSV requirements exactly
 // Note: Phone number is already authenticated via AuthForm
 export default {
-  firstName: {
-    label: 'First Name',
+  // Single Step: All fields as per CSV
+  fullName: {
+    label: 'Full Name (As per Pan card)',
     type: 'text',
     required: true,
-    rules: ['required', 'firstName'],
-    placeholder: 'Enter your first name',
-    errorMessage: 'Please enter a valid first name',
+    rules: ['required', 'firstName'], // Reuse firstName validator for alphabets and space validation
+    placeholder: 'Enter your full name as per PAN card',
+    errorMessage: 'Please enter a valid full name',
     maxLength: 26,
   },
-  lastName: {
-    label: 'Last Name',
+  panNumber: {
+    label: 'PAN Number',
     type: 'text',
-    required: false,
-    rules: [],
-    placeholder: 'Enter your last name',
-  },
-  email: {
-    label: 'Email Address',
-    type: 'email',
     required: true,
-    rules: ['required', 'email'],
-    placeholder: 'you@example.com',
-    errorMessage: 'Please enter a valid Email',
+    rules: ['required', 'pan'], // Reuse Form1 PAN validation
+    placeholder: 'Enter PAN number (e.g., ABCDE1234F)',
+    errorMessage: 'Please Enter a Valid Pan',
+    maxLength: 10,
   },
   dateOfBirth: {
     label: 'Date of Birth (DOB)',
     type: 'date',
     required: true,
-    rules: ['required', 'dobDate'],
+    rules: ['required', 'dobDate'], // Reuse Form1 DOB validation
+    placeholder: 'Select your date of birth',
     errorMessage: 'Please enter a valid Date of Birth',
+  },
+  pinCode: {
+    label: 'Pin code',
+    type: 'pincode',
+    required: true,
+    rules: ['required', 'zipCode'], // Reuse Form1 PIN code with API logic
+    placeholder: 'Enter 6-digit PIN code',
+    errorMessage: 'Please select a pin code',
+    maxLength: 6,
+    searchType: true,
+    cityFieldName: 'city',
+    stateFieldName: 'state',
   },
   loanAmount: {
     label: 'Desired Loan Amount',
     type: 'currency',
     required: true,
-    rules: ['required', 'numeric', { type: 'min', params: [10000] }, { type: 'max', params: [100000000] }],
+    rules: ['required', 'numeric', { type: 'min', params: [10000] }, { type: 'max', params: [100000000] }], // Reuse Form1 validation
     placeholder: 'Enter desired loan amount',
-    errorMessage: 'Please provide a desired loan amount (min ₹10,000, max ₹10,00,00,000)',
+    errorMessage: 'Please provide a desired loan amount',
     min: 10000,
     max: 100000000,
   },
@@ -46,7 +54,7 @@ export default {
     label: 'Employment Type',
     type: 'select',
     required: true,
-    rules: ['required'],
+    rules: ['required'], // Reuse Form1 employment type
     placeholder: 'Select employment type',
     errorMessage: 'Please enter a valid Employment type',
     options: [
@@ -56,18 +64,18 @@ export default {
       { value: 'Student', label: 'Student' },
     ],
   },
-  pinCode: {
-    label: 'PIN Code',
-    type: 'pincode',
+  netMonthlyIncome: {
+    label: 'Net Monthly Income',
+    type: 'currency',
     required: true,
-    rules: ['required', 'zipCode'],
-    placeholder: 'Enter 6-digit PIN code',
-    errorMessage: 'Please select a pin code',
-    maxLength: 6,
-    searchType: true,
-    cityFieldName: 'city',
-    stateFieldName: 'state',
+    rules: ['required', 'numeric', { type: 'min', params: [10000] }, { type: 'max', params: [10000000] }], // Reuse Form1 with 8-digit limit
+    placeholder: 'Enter monthly income',
+    errorMessage: 'This field is required(not more than 8 numeric digit)',
+    min: 10000,
+    max: 10000000,
   },
+  
+  // Auto-populated fields (still needed for pincode lookup)
   city: {
     label: 'City',
     type: 'text',
@@ -75,7 +83,7 @@ export default {
     rules: ['required', 'city'],
     placeholder: 'Select or enter city',
     errorMessage: 'Please select a city',
-    searchType: true,
+    searchType: true, // Auto Populated
   },
   state: {
     label: 'State',
@@ -84,7 +92,7 @@ export default {
     rules: ['required'],
     placeholder: 'Select state',
     errorMessage: 'Please select a state',
-    searchType: true,
+    searchType: true, // Auto Populated
     options: [
       { value: '1', label: 'Andhra Pradesh' },
       { value: '2', label: 'Arunachal Pradesh' },

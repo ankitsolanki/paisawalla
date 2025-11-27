@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { useFormTracking } from '../../hooks/useFormTracking';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -10,6 +10,7 @@ import CurrencyInput from '../../components/ui/CurrencyInput';
 import PincodeInput from '../../components/PincodeInput';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
+import FormSection from '../../components/forms/FormSection';
 import { validateForm, validateField } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
@@ -45,10 +46,30 @@ const getRecaptchaKey = () => {
 
 const RECAPTCHA_SITE_KEY = getRecaptchaKey();
 
+// Form3 organized as single step as per CSV
+const STEP_SECTIONS = {
+  1: [
+    {
+      id: 'quick-application',
+      title: 'Quick Application',
+      subtitle: 'Complete your loan application',
+      rows: [
+        { fields: ['fullName'] },
+        { fields: ['panNumber'] },
+        { fields: ['dateOfBirth'] },
+        { fields: ['pinCode'] },
+        { fields: ['loanAmount'] },
+        { fields: ['employmentType'] },
+        { fields: ['netMonthlyIncome'] },
+      ],
+    },
+  ],
+};
+
 const Form3 = ({ 
   theme = 'light',
   title = 'Complete Your Application',
-  description = 'Get matched offers from 35+ lenders. 100% digital process.'
+  description = undefined
 }) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
@@ -61,11 +82,14 @@ const Form3 = ({
   const [checkingEligibility, setCheckingEligibility] = useState(false);
   const [applicationId, setApplicationId] = useState(null);
   const [eligibilityError, setEligibilityError] = useState(null);
-  const [autoPopulatedFields, setAutoPopulatedFields] = useState(new Set());
   const [prefillStatus, setPrefillStatus] = useState('idle'); // idle | loading | success | error | not_found
   const [prefillMessage, setPrefillMessage] = useState('');
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [autoPopulatedFields, setAutoPopulatedFields] = useState(new Set()); // Track auto-populated fields
   const { windowWidth } = useResponsive();
   const isMobile = windowWidth < 640;
+  const isTablet = windowWidth >= 640 && windowWidth < 1024;
+  const isCompactLayout = isMobile || isTablet;
 
   // Helper to apply prefilled data
   const applyPrefillData = useCallback((payload) => {
@@ -214,6 +238,42 @@ const Form3 = ({
     trackFieldInteraction(name, 'focus', value);
   }, [trackFieldInteraction]);
 
+  // Handle PIN code loading state change
+  const handlePincodeLoadingChange = useCallback((isLoading) => {
+    setPincodeLoading(isLoading);
+  }, []);
+
+  // Clear auto-populated state when PIN code is cleared
+  const handlePincodeChange = useCallback((e) => {
+    const { value } = e.target;
+    handleChange(e);
+    
+    // If PIN code is cleared, clear auto-populated state for city and state
+    if (!value || value.length === 0) {
+      setAutoPopulatedFields((prevSet) => {
+        const newSet = new Set(prevSet);
+        newSet.delete('city');
+        newSet.delete('state');
+        return newSet;
+      });
+      
+      // Clear city and state values
+      setFormData((prev) => ({
+        ...prev,
+        city: '',
+        state: '',
+      }));
+      
+      // Clear any existing errors for these fields
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.city;
+        delete newErrors.state;
+        return newErrors;
+      });
+    }
+  }, [handleChange]);
+
   // Handle PIN code lookup and auto-populate city/state
   const handlePincodeLookup = useCallback((details) => {
     if (!details) return;
@@ -222,62 +282,85 @@ const Form3 = ({
 
     setFormData((prev) => {
       const updated = { ...prev };
-      
       if (cityFieldName && city) {
         updated[cityFieldName] = city;
-        trackFieldInteraction(cityFieldName, 'auto-populated', city);
-        setAutoPopulatedFields((prevSet) => new Set(prevSet).add(cityFieldName));
       }
-      
       if (stateFieldName && state) {
-        const stateSchema = form3Schema[stateFieldName];
-        if (stateSchema && stateSchema.options) {
-          const exactMatch = stateSchema.options.find(
-            (opt) => opt.label.toLowerCase() === state.toLowerCase()
-          );
-          
-          if (exactMatch) {
-            updated[stateFieldName] = exactMatch.value;
-            trackFieldInteraction(stateFieldName, 'auto-populated', exactMatch.value);
-            setAutoPopulatedFields((prevSet) => new Set(prevSet).add(stateFieldName));
-          } else {
-            const partialMatch = stateSchema.options.find(
-              (opt) => opt.label.toLowerCase().includes(state.toLowerCase()) ||
-                       state.toLowerCase().includes(opt.label.toLowerCase())
-            );
-            
-            if (partialMatch) {
-              updated[stateFieldName] = partialMatch.value;
-              trackFieldInteraction(stateFieldName, 'auto-populated', partialMatch.value);
-              setAutoPopulatedFields((prevSet) => new Set(prevSet).add(stateFieldName));
-            }
-          }
-        }
+        updated[stateFieldName] = state;
       }
-      
       return updated;
     });
+
+    // Mark these fields as auto-populated
+    const fieldsToMark = [];
+    if (cityFieldName && city) fieldsToMark.push(cityFieldName);
+    if (stateFieldName && state) fieldsToMark.push(stateFieldName);
+    
+    if (fieldsToMark.length > 0) {
+      setAutoPopulatedFields((prev) => new Set([...prev, ...fieldsToMark]));
+    }
+
+    // Clear any existing errors for these fields
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      if (cityFieldName) delete newErrors[cityFieldName];
+      if (stateFieldName) delete newErrors[stateFieldName];
+      return newErrors;
+    });
+
+    trackFieldInteraction(cityFieldName || 'city', 'auto_populate', city);
+    trackFieldInteraction(stateFieldName || 'state', 'auto_populate', state);
   }, [trackFieldInteraction]);
 
-  // Clear auto-populated state when PIN code is cleared
-  const handlePincodeChange = useCallback((e) => {
-    const { value } = e.target;
-    handleChange(e);
-    
-    if (!value || value.length === 0) {
-      setAutoPopulatedFields((prevSet) => {
-        const newSet = new Set(prevSet);
-        newSet.delete('city');
-        newSet.delete('state');
-        return newSet;
-      });
+  // Validate current step fields before allowing submission
+  const validateStep = useCallback((step) => {
+    // Get fields for this step from STEP_SECTIONS
+    const sections = STEP_SECTIONS[step] || [];
+    const sectionToShow = sections[0];
+    if (!sectionToShow) {
+      return true; // No fields to validate
     }
-  }, [handleChange]);
+
+    // Collect all field names from all rows in this section
+    const stepFields = [];
+    sectionToShow.rows.forEach((row) => {
+      if (row.fields && Array.isArray(row.fields)) {
+        stepFields.push(...row.fields);
+      }
+    });
+
+    const stepErrors = {};
+    let isValid = true;
+
+    stepFields.forEach((fieldName) => {
+      const fieldSchema = form3Schema[fieldName];
+      if (!fieldSchema) return;
+
+      // Only validate required fields for step validation
+      if (fieldSchema.required) {
+        const fieldValue = formData[fieldName] || '';
+        const error = validateField(fieldValue, fieldSchema.rules || []);
+        if (error) {
+          stepErrors[fieldName] = error;
+          isValid = false;
+        }
+      }
+    });
+
+    // Update errors state with step validation errors
+    setErrors((prev) => ({ ...prev, ...stepErrors }));
+    return isValid;
+  }, [formData]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
 
-    // Validate full form and submit lead
+    // First validate the current step
+    if (!validateStep(1)) {
+      return;
+    }
+
+    // Then validate the entire form to be sure
     const validation = validateForm(formData, form3Schema);
     if (!validation.isValid) {
       setErrors(validation.errors);
@@ -327,7 +410,7 @@ const Form3 = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, recaptchaToken, trackSubmitStart, trackSubmitSuccess, trackSubmitError]);
+  }, [formData, recaptchaToken, recaptchaError, validateStep, trackSubmitStart, trackSubmitSuccess, trackSubmitError]);
 
   const handleRecaptchaChange = useCallback((token) => {
     setRecaptchaToken(token);
@@ -455,10 +538,9 @@ const Form3 = ({
         maxLength={fieldSchema.maxLength}
       />
     );
-  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeChange, handlePincodeLookup, autoPopulatedFields]);
+  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeChange, handlePincodeLookup, handlePincodeLoadingChange, autoPopulatedFields]);
 
   // All hooks must be called before conditional returns
-  const fields = useMemo(() => Object.keys(form3Schema), []);
 
   // Show eligibility checking screen after form submission
   if (checkingEligibility && leadId) {
@@ -627,8 +709,19 @@ const Form3 = ({
           )}
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-              {fields.map(renderField)}
+            <div
+              style={{
+                marginBottom: isMobile ? '1rem' : '1.5rem',
+              }}
+            >
+              <FormSection
+                key="quick-application"
+                title="Quick Application"
+                subtitle="Complete your loan application"
+                rows={STEP_SECTIONS[1][0].rows}
+                renderField={renderField}
+                isCompact={isCompactLayout}
+              />
             </div>
 
             {errors.submit && (

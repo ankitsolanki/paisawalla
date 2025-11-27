@@ -1,18 +1,8 @@
-import React, { Suspense } from 'react';
-import DynamicForm from '../../components/DynamicForm';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import form2Schema from './form2.schema.json';
+import Form2 from './Form2';
 
 /**
- * Form 2 - Get Started (11 fields, single step)
+ * Form 2 - Quick Eligibility Check (using FormSection-based layout like Form1)
  */
-const Form2 = ({ theme = 'light', title, description }) => {
-  return (
-    <Suspense fallback={<LoadingSpinner fullScreen />}>
-      <DynamicForm schema={form2Schema} theme={theme} title={title} description={description} />
-    </Suspense>
-  );
-};
 
 export default Form2;
 

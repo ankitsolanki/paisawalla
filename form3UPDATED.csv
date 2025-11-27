@@ -1,0 +1,9 @@
+Form Fields,Validation_criteria,Error Messages,Requied fields error messages,Generic,TAB,Steps
+Full Name (As per Pan card),1) Allow only alphabets and space,Please enter a valid full name,This field is required,Required,Personal_information,Step_1
+,2) Length <= 26,,,,,
+PAN Number,refer to form1 PAN Number input field and reuse it. Retain all its validations as is.,Please Enter a Valid Pan,This field is required,Required,Personal_information,Step_1
+Date of Birth (DOB),refer to form1 Date of Birth input field and reuse it.,,This field is required,Required,Personal_information,Step_1
+Pin code,refer to form1 PIN code input field and reuse it. Retain the API logic as used in form1.,,,,,Step_1
+Desired Loan Amount,refer to form1 Desired Loan Amount input field and reuse it. Retain the validations.,Please provide a desired loan amount,This field is required,Required,Employment_details,Step_1
+Employment Type,refer to form1 Employment Type input field and reuse it.,Please enter a valid Employment type,This field is required,Required,Employment_details,Step_1
+Net Monthly Income,refer to form1 Net Monthly Income input field and reuse it.,This field is required(not more than 8 numeric digit),This field is required,Required,Employment_details,Step_1

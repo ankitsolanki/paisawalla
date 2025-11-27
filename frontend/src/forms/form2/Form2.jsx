@@ -8,6 +8,7 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import CurrencyInput from '../../components/ui/CurrencyInput';
 import PincodeInput from '../../components/PincodeInput';
+import ProgressBar from '../../components/ProgressBar';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import FormSection from '../../components/forms/FormSection';
 import { validateField, validateForm } from '../../utils/validationRules';
@@ -46,43 +47,33 @@ const getRecaptchaKey = () => {
 
 const RECAPTCHA_SITE_KEY = getRecaptchaKey();
 
+// Form2 organized by steps as per CSV requirements
 const STEP_SECTIONS = {
   1: [
     {
-      id: 'personal-info',
+      id: 'personal-information',
       title: 'Personal Information',
-      subtitle: 'Tell us about yourself',
+      subtitle: 'Complete details for verification',
       rows: [
-        { fields: ['firstName', 'lastName'], cols: [1, 1] },
-        { fields: ['dateOfBirth'] },
+        { fields: ['fullName'] },
         { fields: ['email'] },
+        { fields: ['dateOfBirth'] },
+        { fields: ['pinCode'] },
+        { fields: ['panNumber'] },
       ],
     },
+  ],
+  2: [
     {
-      id: 'loan-details',
-      title: 'Loan Requirements',
-      subtitle: 'What are you looking for?',
+      id: 'employment-details',
+      title: 'Employment Details',
+      subtitle: 'Tell us about your work',
       rows: [
         { fields: ['loanAmount'] },
-        { fields: ['loanPurpose'] },
-      ],
-    },
-    {
-      id: 'employment-info',
-      title: 'Employment Details',
-      subtitle: 'Help us understand your income',
-      rows: [
         { fields: ['employmentType'] },
         { fields: ['netMonthlyIncome'] },
-      ],
-    },
-    {
-      id: 'location-info',
-      title: 'Location Details',
-      subtitle: 'Where are you located?',
-      rows: [
-        { fields: ['pinCode'] },
-        { fields: ['city', 'state'], cols: [1, 1] },
+        { fields: ['companyName'] },
+        { fields: ['modeOfSalary'] },
       ],
     },
   ],
@@ -91,8 +82,9 @@ const STEP_SECTIONS = {
 const Form2 = ({ 
   theme = 'light',
   title = 'Quick Eligibility Check',
-  description = 'Tell us a bit about yourself to see your loan eligibility'
+  description = undefined
 }) => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,10 +92,10 @@ const Form2 = ({
   const [recaptchaToken, setRecaptchaToken] = useState(null);
   const [ReCAPTCHA, setReCAPTCHA] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState(false);
-  const [autoPopulatedFields, setAutoPopulatedFields] = useState(new Set());
   const [prefillStatus, setPrefillStatus] = useState('idle'); // idle | loading | success | error | not_found
   const [prefillMessage, setPrefillMessage] = useState('');
   const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [autoPopulatedFields, setAutoPopulatedFields] = useState(new Set()); // Track auto-populated fields
   const { windowWidth } = useResponsive();
   const isMobile = windowWidth < 640;
   const isTablet = windowWidth >= 640 && windowWidth < 1024;
@@ -121,6 +113,47 @@ const Form2 = ({
         });
     }
   }, [ReCAPTCHA]);
+
+  // Check for encoded auth params on mount
+  useEffect(() => {
+    const authParams = getAuthParamsFromUrl();
+    if (authParams && authParams.authenticated && authParams.phone) {
+      // User is already authenticated, skip auth and go directly to form
+      setFormData((prev) => ({ ...prev, phone: authParams.phone }));
+      
+      // Try to prefill data from existing lead
+      setPrefillStatus('loading');
+      apiClient.get('/api/leads/lookup', {
+        params: {
+          phone: authParams.phone,
+          formType: 'form2',
+        },
+      })
+        .then((response) => {
+          // Response structure: { success: true, data: leadData, ... }
+          // apiClient interceptor returns response.data, so response is already the JSON body
+          const leadData = response?.data || response;
+          if (leadData && typeof leadData === 'object') {
+            applyPrefillData(leadData);
+            setPrefillStatus('success');
+            setPrefillMessage('We found your previous details and filled them in. Please review and update if required.');
+          } else {
+            setPrefillStatus('not_found');
+          }
+        })
+        .catch((error) => {
+          const errorMessage = error?.message || 'Unable to fetch your existing details.';
+          if (errorMessage.toLowerCase().includes('not found')) {
+            setPrefillStatus('not_found');
+            setPrefillMessage('');
+          } else {
+            setPrefillStatus('error');
+            setPrefillMessage(errorMessage);
+          }
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const {
     trackFieldInteraction,
@@ -161,42 +194,6 @@ const Form2 = ({
       }
     });
     setAutoPopulatedFields(autoPopulated);
-  }, []);
-
-  // Check for encoded auth params on mount and prefill if user exists
-  useEffect(() => {
-    const authParams = getAuthParamsFromUrl();
-    if (authParams && authParams.authenticated && authParams.phone) {
-      // Try to prefill data from existing lead
-      setPrefillStatus('loading');
-      apiClient.get('/api/leads/lookup', {
-        params: {
-          phone: authParams.phone,
-          formType: 'form2',
-        },
-      })
-        .then((response) => {
-          const leadData = response?.data || response;
-          if (leadData && typeof leadData === 'object') {
-            applyPrefillData(leadData);
-            setPrefillStatus('success');
-            setPrefillMessage('We found your previous details and filled them in. Please review and update if required.');
-          } else {
-            setPrefillStatus('not_found');
-          }
-        })
-        .catch((error) => {
-          const errorMessage = error?.message || 'Unable to fetch your existing details.';
-          if (errorMessage.toLowerCase().includes('not found')) {
-            setPrefillStatus('not_found');
-            setPrefillMessage('');
-          } else {
-            setPrefillStatus('error');
-            setPrefillMessage(errorMessage);
-          }
-        });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = useCallback((e) => {
@@ -265,44 +262,79 @@ const Form2 = ({
     trackFieldInteraction(name, 'focus', value);
   }, [trackFieldInteraction]);
 
+  // Handle PIN code loading state change
+  const handlePincodeLoadingChange = useCallback((isLoading) => {
+    setPincodeLoading(isLoading);
+  }, []);
+
+  // Clear auto-populated state when PIN code is cleared
   const handlePincodeChange = useCallback((e) => {
+    const { value } = e.target;
     handleChange(e);
+    
+    // If PIN code is cleared, clear auto-populated state for city and state
+    if (!value || value.length === 0) {
+      setAutoPopulatedFields((prevSet) => {
+        const newSet = new Set(prevSet);
+        newSet.delete('city');
+        newSet.delete('state');
+        return newSet;
+      });
+      
+      // Clear city and state values
+      setFormData((prev) => ({
+        ...prev,
+        city: '',
+        state: '',
+      }));
+      
+      // Clear any existing errors for these fields
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors.city;
+        delete newErrors.state;
+        return newErrors;
+      });
+    }
   }, [handleChange]);
 
-  const handlePincodeLookup = useCallback(async (pincode, cityFieldName, stateFieldName) => {
-    if (!pincode || pincode.length !== 6) return;
+  // Handle PIN code lookup and auto-populate city/state
+  const handlePincodeLookup = useCallback((details) => {
+    if (!details) return;
 
-    setPincodeLoading(true);
-    try {
-      const response = await apiClient.get('/api/pincode/lookup', {
-        params: { pincode }
-      });
+    const { city, state, cityFieldName, stateFieldName } = details;
 
-      const data = response?.data || response;
-      if (data && data.city && data.state) {
-        setFormData((prev) => ({
-          ...prev,
-          [cityFieldName]: data.city,
-          [stateFieldName]: data.state,
-        }));
-
-        // Mark these fields as auto-populated
-        setAutoPopulatedFields((prev) => new Set([...prev, cityFieldName, stateFieldName]));
-
-        // Clear any existing errors for these fields
-        setErrors((prev) => {
-          const newErrors = { ...prev };
-          delete newErrors[cityFieldName];
-          delete newErrors[stateFieldName];
-          return newErrors;
-        });
+    setFormData((prev) => {
+      const updated = { ...prev };
+      if (cityFieldName && city) {
+        updated[cityFieldName] = city;
       }
-    } catch (error) {
-      console.warn('Pincode lookup failed:', error);
-    } finally {
-      setPincodeLoading(false);
+      if (stateFieldName && state) {
+        updated[stateFieldName] = state;
+      }
+      return updated;
+    });
+
+    // Mark these fields as auto-populated
+    const fieldsToMark = [];
+    if (cityFieldName && city) fieldsToMark.push(cityFieldName);
+    if (stateFieldName && state) fieldsToMark.push(stateFieldName);
+    
+    if (fieldsToMark.length > 0) {
+      setAutoPopulatedFields((prev) => new Set([...prev, ...fieldsToMark]));
     }
-  }, []);
+
+    // Clear any existing errors for these fields
+    setErrors((prev) => {
+      const newErrors = { ...prev };
+      if (cityFieldName) delete newErrors[cityFieldName];
+      if (stateFieldName) delete newErrors[stateFieldName];
+      return newErrors;
+    });
+
+    trackFieldInteraction(cityFieldName || 'city', 'auto_populate', city);
+    trackFieldInteraction(stateFieldName || 'state', 'auto_populate', state);
+  }, [trackFieldInteraction]);
 
   const handleRecaptchaChange = useCallback((token) => {
     setRecaptchaToken(token);
@@ -320,6 +352,70 @@ const Form2 = ({
     setRecaptchaToken(null);
     setErrors((prev) => ({ ...prev, recaptcha: 'Please complete the reCAPTCHA verification.' }));
   }, []);
+
+  // Step navigation
+  const steps = Object.keys(STEP_SECTIONS);
+  
+  // Validate current step fields before allowing navigation
+  const validateStep = useCallback((step) => {
+    // Get fields for this step from STEP_SECTIONS
+    const sections = STEP_SECTIONS[step] || [];
+    const sectionToShow = sections[0];
+    if (!sectionToShow) {
+      return true; // No fields to validate
+    }
+
+    // Collect all field names from all rows in this section
+    const stepFields = [];
+    sectionToShow.rows.forEach((row) => {
+      if (row.fields && Array.isArray(row.fields)) {
+        stepFields.push(...row.fields);
+      }
+    });
+
+    const stepErrors = {};
+    let isValid = true;
+
+    stepFields.forEach((fieldName) => {
+      const fieldSchema = form2Schema[fieldName];
+      if (!fieldSchema) return;
+
+      // Only validate required fields for step navigation
+      if (fieldSchema.required) {
+        const fieldValue = formData[fieldName] || '';
+        const error = validateField(fieldValue, fieldSchema.rules || []);
+        if (error) {
+          stepErrors[fieldName] = error;
+          isValid = false;
+        }
+      }
+    });
+
+    // Update errors state with step validation errors
+    setErrors((prev) => ({ ...prev, ...stepErrors }));
+    return isValid;
+  }, [formData]);
+
+  const handleNext = useCallback((e) => {
+    // Prevent form submission if button is inside a form
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    // Validate current step before moving to next
+    const isValid = validateStep(currentStep);
+    
+    if (isValid && currentStep < steps.length) {
+      setCurrentStep(currentStep + 1);
+    }
+  }, [currentStep, steps.length, validateStep]);
+
+  const handlePrevious = useCallback(() => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  }, [currentStep]);
 
   const renderField = useCallback((fieldName) => {
     const fieldSchema = form2Schema[fieldName];
@@ -367,6 +463,7 @@ const Form2 = ({
           {...commonProps}
           onChange={handlePincodeChange}
           onPincodeLookup={handlePincodeLookup}
+          onLoadingChange={handlePincodeLoadingChange}
           cityFieldName={fieldSchema.cityFieldName}
           stateFieldName={fieldSchema.stateFieldName}
         />
@@ -397,28 +494,43 @@ const Form2 = ({
         maxLength={fieldSchema.maxLength}
       />
     );
-  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeChange, handlePincodeLookup, autoPopulatedFields]);
+  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeChange, handlePincodeLookup, handlePincodeLoadingChange, autoPopulatedFields]);
 
-  // Render step fields using FormSection (Form1 pattern)
-  const renderStepFields = useCallback((stepNumber) => {
-    const sections = STEP_SECTIONS[stepNumber] || [];
-    
-    return sections.map((section) => (
-      <FormSection
-        key={section.id}
-        title={section.title}
-        subtitle={section.subtitle}
-        rows={section.rows}
-        renderField={renderField}
-        isCompact={isCompactLayout}
-      />
-    ));
-  }, [renderField, isCompactLayout]);
+  const renderStepFields = useCallback(
+    (stepNumber) => {
+      const sections = STEP_SECTIONS[stepNumber] || [];
+      // Since each step now has only one section, always show the first (and only) section
+      const sectionToShow = sections[0];
+
+      // If no section exists, return null
+      if (!sectionToShow) {
+        return null;
+      }
+
+      // Show the section
+      return (
+        <FormSection
+          key={sectionToShow.id}
+          title={sectionToShow.title}
+          subtitle={sectionToShow.subtitle}
+          rows={sectionToShow.rows}
+          renderField={renderField}
+          isCompact={isCompactLayout}
+        />
+      );
+    },
+    [renderField, isCompactLayout]
+  );
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     
-    // Validate form
+    // First validate the current step
+    if (!validateStep(currentStep)) {
+      return;
+    }
+    
+    // Then validate the entire form to be sure
     const validationErrors = validateForm(formData, form2Schema);
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
@@ -463,7 +575,7 @@ const Form2 = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [formData, recaptchaToken, recaptchaError, trackSubmitStart, trackSubmitSuccess, trackSubmitError]);
+  }, [formData, recaptchaToken, recaptchaError, validateStep, currentStep, trackSubmitStart, trackSubmitSuccess, trackSubmitError]);
 
   if (isSubmitted) {
     return (
@@ -490,7 +602,7 @@ const Form2 = ({
         >
           <h2
             style={{
-              fontSize: isMobile ? '1.25rem' : '1.5rem',
+              fontSize: isMobile ? '1.25rem' : '1.5rem', // h2: 1.25rem mobile, 1.5rem desktop (20px/24px) - smaller than h1
               fontWeight: 700,
               marginBottom: description ? (isMobile ? '0.5rem' : '0.75rem') : (isMobile ? '1rem' : '1.5rem'),
               textAlign: isMobile ? 'center' : 'left',
@@ -565,14 +677,16 @@ const Form2 = ({
               </span>
             </div>
           )}
+          
+          <ProgressBar current={currentStep} total={steps.length} />
 
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={(e) => e.preventDefault()}>
             <div
               style={{
                 marginBottom: isMobile ? '1rem' : '1.5rem',
               }}
             >
-              {renderStepFields(1)}
+              {renderStepFields(currentStep)}
             </div>
 
             {errors.submit && (
@@ -606,18 +720,45 @@ const Form2 = ({
 
             <div
               style={{
+                display: 'flex',
+                flexDirection: isMobile ? 'column-reverse' : 'row',
+                justifyContent: isMobile ? 'flex-start' : 'space-between',
+                alignItems: isMobile ? 'stretch' : 'center',
                 marginTop: isMobile ? '1.25rem' : '2rem',
+                gap: isMobile ? '0.75rem' : '1rem',
               }}
             >
               <Button
-                type="submit"
-                variant="primary"
-                fullWidth
-                disabled={isSubmitting}
-                loading={isSubmitting}
+                type="button"
+                variant="outline"
+                onClick={handlePrevious}
+                disabled={currentStep === 1}
+                fullWidth={isMobile}
               >
-                {isSubmitting ? 'Submitting...' : 'Check Eligibility'}
+                Previous
               </Button>
+              
+              {currentStep < steps.length ? (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleNext}
+                  fullWidth={isMobile}
+                >
+                  Next
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                  loading={isSubmitting}
+                  fullWidth={isMobile}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Check Eligibility'}
+                </Button>
+              )}
             </div>
           </form>
         </div>

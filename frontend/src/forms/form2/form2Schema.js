@@ -1,62 +1,64 @@
-// Form 2 Schema - Simplified form for quick loan eligibility check
+// Form 2 Schema - Updated to match CSV requirements exactly
 // Note: Phone number and consent are handled in AuthForm component during authentication
 export default {
-  firstName: {
-    label: 'First Name',
+  // Step 1: Personal Information
+  fullName: {
+    label: 'Full Name',
     type: 'text',
     required: true,
-    rules: ['required', 'firstName'],
-    placeholder: 'Enter your first name',
-    errorMessage: 'Please enter a valid first name',
+    rules: ['required', 'firstName'], // Reuse firstName validator for alphabets and space validation
+    placeholder: 'Enter your full name as per PAN card',
+    errorMessage: 'Please enter a valid full name',
     maxLength: 26,
   },
-  lastName: {
-    label: 'Last Name',
-    type: 'text',
-    required: false,
-    rules: [],
-    placeholder: 'Enter your last name',
-  },
-  dateOfBirth: {
-    label: 'Date of Birth',
-    type: 'date',
-    required: true,
-    rules: ['required', 'dobDate'],
-    placeholder: 'Select your date of birth',
-    errorMessage: 'Please enter a valid date of birth (age 21-55)',
-  },
   email: {
-    label: 'Email Address',
+    label: 'Email',
     type: 'email',
     required: true,
     rules: ['required', 'email'],
     placeholder: 'you@example.com',
     errorMessage: 'Please enter a valid Email',
   },
+  dateOfBirth: {
+    label: 'Date of Birth (DOB)',
+    type: 'date',
+    required: true,
+    rules: ['required', 'dobDate'],
+    placeholder: 'Select your date of birth (dd-mm-yyyy)',
+    errorMessage: 'Please enter a valid Date of Birth',
+  },
+  pinCode: {
+    label: 'Pin code',
+    type: 'pincode',
+    required: true,
+    rules: ['required', 'zipCode'],
+    placeholder: 'Enter 6-digit PIN code',
+    errorMessage: 'Please select a pin code',
+    maxLength: 6,
+    searchType: true,
+    cityFieldName: 'city',
+    stateFieldName: 'state',
+  },
+  panNumber: {
+    label: 'PAN Number',
+    type: 'text',
+    required: true,
+    rules: ['required', 'pan'],
+    placeholder: 'Enter PAN number (e.g., ABCDE1234F)',
+    errorMessage: 'Please Enter a Valid Pan',
+    maxLength: 10,
+  },
+  
+  // Step 2: Employment Details
   loanAmount: {
     label: 'Desired Loan Amount',
     type: 'currency',
     required: true,
     rules: ['required', 'numeric', { type: 'min', params: [10000] }, { type: 'max', params: [100000000] }],
     placeholder: 'Enter desired loan amount',
-    errorMessage: 'Please provide a desired loan amount (min ₹10,000, max ₹10,00,00,000)',
+    errorMessage: 'Please provide a desired loan amount',
     min: 10000,
     max: 100000000,
-  },
-  loanPurpose: {
-    label: 'Loan Purpose',
-    type: 'select',
-    required: false,
-    rules: [],
-    placeholder: 'Select loan purpose',
-    options: [
-      { value: 'Medical Emergency', label: 'Medical Emergency' },
-      { value: 'Home Renovation', label: 'Home Renovation' },
-      { value: 'Wedding /Marriage', label: 'Wedding /Marriage' },
-      { value: 'Travel / Vacation', label: 'Travel / Vacation' },
-      { value: 'Debt Consolidation', label: 'Debt Consolidation' },
-      { value: 'Others', label: 'Others' },
-    ],
   },
   employmentType: {
     label: 'Employment Type',
@@ -75,25 +77,36 @@ export default {
   netMonthlyIncome: {
     label: 'Net Monthly Income',
     type: 'currency',
-    required: false, // Will be conditionally required
-    rules: ['numeric', { type: 'min', params: [10000] }, { type: 'max', params: [10000000] }],
+    required: true, // Now required as per CSV
+    rules: ['required', 'numeric', { type: 'min', params: [10000] }, { type: 'max', params: [10000000] }],
     placeholder: 'Enter monthly income',
-    errorMessage: 'Please enter a Net monthly income (min ₹10,000, max ₹1,00,00,000)',
+    errorMessage: 'This field is required(not more than 8 numeric digit)',
     min: 10000,
     max: 10000000,
   },
-  pinCode: {
-    label: 'PIN Code',
-    type: 'pincode',
+  companyName: {
+    label: 'Company Name',
+    type: 'text',
     required: true,
-    rules: ['required', 'zipCode'],
-    placeholder: 'Enter 6-digit PIN code',
-    errorMessage: 'Please select a pin code',
-    maxLength: 6,
-    searchType: true,
-    cityFieldName: 'city',
-    stateFieldName: 'state',
+    rules: ['required'],
+    placeholder: 'Enter your company name',
+    errorMessage: 'Please enter a valid company name',
   },
+  modeOfSalary: {
+    label: 'Mode of Salary',
+    type: 'select',
+    required: true,
+    rules: ['required'],
+    placeholder: 'Select mode of salary',
+    errorMessage: 'Please select a mode of salary',
+    options: [
+      { value: 'bank_account', label: 'Bank Account' },
+      { value: 'cash', label: 'Cash' },
+      { value: 'cheque', label: 'Cheque' },
+    ],
+  },
+  
+  // Auto-populated fields (still needed for pincode lookup)
   city: {
     label: 'City',
     type: 'text',

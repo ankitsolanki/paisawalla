@@ -1,0 +1,17 @@
+Form Fields,Validation_criteria,Error Messages,Requied fields error messages,Generic,TAB,Steps
+Full Name* As per Pan card,1) Allow only alphabets and space,Please enter a valid full name,This field is required,Required,Personal_information,Step_1
+,2) Length <= 26,,,,,
+Email*,"Proper Email format ex.  Abc@test.in, abc@test.com, abc@test.co.in",Please enter a valid Email,This field is required,Required,Personal_information,Step_1
+Date of Birth (DOB)*,more than 21 years and less than 55 years,,This field is required,Required,Personal_information,Step_1
+,format is dd-mm-yyyy,Please enter a valid Date of Birth,,,,
+Pin code*,max 6 digits,,,,seach type,
+,Provide Address Pin Code of Consumer - if allowInput is 1,Please select a pin code,This field is required,Required,Personal_information,Step_1
+Desired Loan Amount*,"numeric field, Minimum and maximum amount validation required (minimum 10000 maximum 100000000)",Please provide a desired loan amount,This field is required,Required,Employment_details,step2
+PAN Number*,1.) Alphanumeric and first 5 and 10th character  upper case. 6 -9 numbers.5th char last name first letter.,Please Enter a Valid Pan,This field is required,Required,Personal_information,Step_1
+,2) If present it must be a minimum of 10 characters,,,,,
+,"3) The first five characters must be letters, followed by four numbers, followed by a character.",,,,,
+,"4) The fourth letter must be either P, F, C, A, H, B, L, J or R ,Y (If Mobile No., Pan No., Telephone No., Passport No. is not Specified else N)",,,,,
+Employment Type*,dropdown with values as used in form1,Please enter a valid Employment type,This field is required,Required,Employment_details,step2
+Net Monthly Income*,"numeric input, Minimum and maximum amount validation required (minimum 10000 maximum 10000000)",This field is required(not more than 8 numeric digit),This field is required,Required,Employment_details,step2
+Company Name*,,Please enter a valid company name,This field is required,Required,Employment_details,step2
+Mode of Salary*,dropdown with values bank account/cash/cheque,Please select a mode of salary,This field is required,Required,Employment_details,step2

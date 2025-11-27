@@ -3,46 +3,62 @@
   "title": "Quick Eligibility Check",
   "description": "Tell us a bit about yourself to see your loan eligibility",
   "submitEndpoint": "/api/leads",
-  "steps": 1,
+  "steps": 2,
   "fields": [
     {
-      "name": "firstName",
-      "label": "First Name",
+      "name": "fullName",
+      "label": "Full Name",
       "type": "text",
-      "placeholder": "Enter your first name",
+      "placeholder": "Enter your full name as per PAN card",
       "required": true,
       "rules": ["required", "firstName"],
-      "errorMessage": "Please enter a valid first name",
+      "errorMessage": "Please enter a valid full name",
       "maxLength": 26,
       "step": 1
     },
     {
-      "name": "lastName",
-      "label": "Last Name",
-      "type": "text",
-      "placeholder": "Enter your last name",
-      "required": false,
-      "rules": [],
-      "step": 1
-    },
-    {
-      "name": "dateOfBirth",
-      "label": "Date of Birth",
-      "type": "date",
-      "placeholder": "Select your date of birth",
-      "required": true,
-      "rules": ["required", "dobDate"],
-      "errorMessage": "Please enter a valid date of birth (age 21-55)",
-      "step": 1
-    },
-    {
       "name": "email",
-      "label": "Email Address",
+      "label": "Email",
       "type": "email",
       "placeholder": "you@example.com",
       "required": true,
       "rules": ["required", "email"],
       "errorMessage": "Please enter a valid Email",
+      "step": 1
+    },
+    {
+      "name": "dateOfBirth",
+      "label": "Date of Birth (DOB)",
+      "type": "date",
+      "placeholder": "Select your date of birth (dd-mm-yyyy)",
+      "required": true,
+      "rules": ["required", "dobDate"],
+      "errorMessage": "Please enter a valid Date of Birth",
+      "step": 1
+    },
+    {
+      "name": "pinCode",
+      "label": "Pin code",
+      "type": "pincode",
+      "placeholder": "Enter 6-digit PIN code",
+      "required": true,
+      "rules": ["required", "zipCode"],
+      "errorMessage": "Please select a pin code",
+      "maxLength": 6,
+      "searchType": true,
+      "cityFieldName": "city",
+      "stateFieldName": "state",
+      "step": 1
+    },
+    {
+      "name": "panNumber",
+      "label": "PAN Number",
+      "type": "text",
+      "placeholder": "Enter PAN number (e.g., ABCDE1234F)",
+      "required": true,
+      "rules": ["required", "pan"],
+      "errorMessage": "Please Enter a Valid Pan",
+      "maxLength": 10,
       "step": 1
     },
     {
@@ -52,27 +68,10 @@
       "placeholder": "Enter desired loan amount",
       "required": true,
       "rules": ["required", "numeric", { "type": "min", "params": [10000] }, { "type": "max", "params": [100000000] }],
-      "errorMessage": "Please provide a desired loan amount (min ₹10,000, max ₹10,00,00,000)",
+      "errorMessage": "Please provide a desired loan amount",
       "min": 10000,
       "max": 100000000,
-      "step": 1
-    },
-    {
-      "name": "loanPurpose",
-      "label": "Loan Purpose",
-      "type": "select",
-      "placeholder": "Select loan purpose",
-      "required": false,
-      "rules": [],
-      "options": [
-        { "value": "Medical Emergency", "label": "Medical Emergency" },
-        { "value": "Home Renovation", "label": "Home Renovation" },
-        { "value": "Wedding /Marriage", "label": "Wedding /Marriage" },
-        { "value": "Travel / Vacation", "label": "Travel / Vacation" },
-        { "value": "Debt Consolidation", "label": "Debt Consolidation" },
-        { "value": "Others", "label": "Others" }
-      ],
-      "step": 1
+      "step": 2
     },
     {
       "name": "employmentType",
@@ -88,33 +87,44 @@
         { "value": "Self-employed business", "label": "Self-employed business" },
         { "value": "Student", "label": "Student" }
       ],
-      "step": 1
+      "step": 2
     },
     {
       "name": "netMonthlyIncome",
       "label": "Net Monthly Income",
       "type": "currency",
       "placeholder": "Enter monthly income",
-      "required": false,
-      "rules": ["numeric", { "type": "min", "params": [10000] }, { "type": "max", "params": [10000000] }],
-      "errorMessage": "Please enter a Net monthly income (min ₹10,000, max ₹1,00,00,000)",
+      "required": true,
+      "rules": ["required", "numeric", { "type": "min", "params": [10000] }, { "type": "max", "params": [10000000] }],
+      "errorMessage": "This field is required(not more than 8 numeric digit)",
       "min": 10000,
       "max": 10000000,
-      "step": 1
+      "step": 2
     },
     {
-      "name": "pinCode",
-      "label": "PIN Code",
-      "type": "pincode",
-      "placeholder": "Enter 6-digit PIN code",
+      "name": "companyName",
+      "label": "Company Name",
+      "type": "text",
+      "placeholder": "Enter your company name",
       "required": true,
-      "rules": ["required", "zipCode"],
-      "errorMessage": "Please select a pin code",
-      "maxLength": 6,
-      "searchType": true,
-      "cityFieldName": "city",
-      "stateFieldName": "state",
-      "step": 1
+      "rules": ["required"],
+      "errorMessage": "Please enter a valid company name",
+      "step": 2
+    },
+    {
+      "name": "modeOfSalary",
+      "label": "Mode of Salary",
+      "type": "select",
+      "placeholder": "Select mode of salary",
+      "required": true,
+      "rules": ["required"],
+      "errorMessage": "Please select a mode of salary",
+      "options": [
+        { "value": "bank_account", "label": "Bank Account" },
+        { "value": "cash", "label": "Cash" },
+        { "value": "cheque", "label": "Cheque" }
+      ],
+      "step": 2
     },
     {
       "name": "city",
