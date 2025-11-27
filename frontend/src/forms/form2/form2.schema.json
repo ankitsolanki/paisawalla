@@ -1,6 +1,7 @@
 {
   "formId": "form2",
-  "title": "Get Started",
+  "title": "Quick Eligibility Check",
+  "description": "Tell us a bit about yourself to see your loan eligibility",
   "submitEndpoint": "/api/leads",
   "steps": 1,
   "fields": [
@@ -10,10 +11,9 @@
       "type": "text",
       "placeholder": "Enter your first name",
       "required": true,
-      "validation": {
-        "minLength": 2,
-        "maxLength": 50
-      },
+      "rules": ["required", "firstName"],
+      "errorMessage": "Please enter a valid first name",
+      "maxLength": 26,
       "step": 1
     },
     {
@@ -21,11 +21,8 @@
       "label": "Last Name",
       "type": "text",
       "placeholder": "Enter your last name",
-      "required": true,
-      "validation": {
-        "minLength": 2,
-        "maxLength": 50
-      },
+      "required": false,
+      "rules": [],
       "step": 1
     },
     {
@@ -34,107 +31,134 @@
       "type": "email",
       "placeholder": "you@example.com",
       "required": true,
-      "validation": {
-        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
-      },
-      "step": 1
-    },
-    {
-      "name": "phone",
-      "label": "Mobile Number",
-      "type": "tel",
-      "placeholder": "10-digit mobile number",
-      "required": true,
-      "validation": {
-        "regex": "^[6-9][0-9]{9}$",
-        "minLength": 10,
-        "maxLength": 10
-      },
+      "rules": ["required", "email"],
+      "errorMessage": "Please enter a valid Email",
       "step": 1
     },
     {
       "name": "loanAmount",
-      "label": "Desired Loan Amount (INR)",
-      "type": "number",
-      "placeholder": "e.g. 500000",
+      "label": "Desired Loan Amount",
+      "type": "currency",
+      "placeholder": "Enter desired loan amount",
       "required": true,
-      "validation": {
-        "min": 10000,
-        "max": 50000000
-      },
+      "rules": ["required", "numeric", { "type": "min", "params": [10000] }, { "type": "max", "params": [100000000] }],
+      "errorMessage": "Please provide a desired loan amount (min ₹10,000, max ₹10,00,00,000)",
+      "min": 10000,
+      "max": 100000000,
       "step": 1
     },
     {
       "name": "loanPurpose",
       "label": "Loan Purpose",
       "type": "select",
-      "required": true,
+      "placeholder": "Select loan purpose",
+      "required": false,
+      "rules": [],
       "options": [
-        { "value": "debt_consolidation", "label": "Debt Consolidation" },
-        { "value": "home_improvement", "label": "Home Improvement" },
-        { "value": "medical_expenses", "label": "Medical Expenses" },
-        { "value": "education", "label": "Education" },
-        { "value": "other", "label": "Other" }
+        { "value": "Medical Emergency", "label": "Medical Emergency" },
+        { "value": "Home Renovation", "label": "Home Renovation" },
+        { "value": "Wedding /Marriage", "label": "Wedding /Marriage" },
+        { "value": "Travel / Vacation", "label": "Travel / Vacation" },
+        { "value": "Debt Consolidation", "label": "Debt Consolidation" },
+        { "value": "Others", "label": "Others" }
       ],
       "step": 1
     },
     {
-      "name": "employmentStatus",
+      "name": "employmentType",
       "label": "Employment Type",
       "type": "select",
+      "placeholder": "Select employment type",
       "required": true,
+      "rules": ["required"],
+      "errorMessage": "Please enter a valid Employment type",
       "options": [
-        { "value": "salaried", "label": "Salaried" },
-        { "value": "self-employed", "label": "Self-Employed" },
-        { "value": "business", "label": "Business Owner" },
-        { "value": "retired", "label": "Retired" }
+        { "value": "Salaried", "label": "Salaried" },
+        { "value": "Self-employed professional", "label": "Self-employed professional" },
+        { "value": "Self-employed business", "label": "Self-employed business" },
+        { "value": "Student", "label": "Student" }
       ],
       "step": 1
     },
     {
-      "name": "monthlyIncome",
-      "label": "Monthly Income (INR)",
-      "type": "number",
-      "placeholder": "e.g. 50000",
-      "required": true,
-      "validation": {
-        "min": 10000,
-        "max": 10000000
-      },
-      "step": 1
-    },
-    {
-      "name": "creditScore",
-      "label": "Credit Score (if known)",
-      "type": "number",
-      "placeholder": "e.g. 750",
+      "name": "netMonthlyIncome",
+      "label": "Net Monthly Income",
+      "type": "currency",
+      "placeholder": "Enter monthly income",
       "required": false,
-      "validation": {
-        "min": 300,
-        "max": 850
-      },
+      "rules": ["numeric", { "type": "min", "params": [10000] }, { "type": "max", "params": [10000000] }],
+      "errorMessage": "Please enter a Net monthly income (min ₹10,000, max ₹1,00,00,000)",
+      "min": 10000,
+      "max": 10000000,
       "step": 1
     },
     {
-      "name": "zipCode",
-      "label": "ZIP Code",
+      "name": "pinCode",
+      "label": "PIN Code",
+      "type": "pincode",
+      "placeholder": "Enter 6-digit PIN code",
+      "required": true,
+      "rules": ["required", "zipCode"],
+      "errorMessage": "Please select a pin code",
+      "maxLength": 6,
+      "searchType": true,
+      "cityFieldName": "city",
+      "stateFieldName": "state",
+      "step": 1
+    },
+    {
+      "name": "city",
+      "label": "City",
       "type": "text",
-      "placeholder": "Enter ZIP code",
+      "placeholder": "Select or enter city",
       "required": true,
-      "validation": {
-        "regex": "^[0-9]{6}$",
-        "minLength": 6,
-        "maxLength": 6
-      },
+      "rules": ["required", "city"],
+      "errorMessage": "Please select a city",
+      "searchType": true,
       "step": 1
     },
     {
-      "name": "consentMarketing",
-      "label": "I consent to receive marketing communications",
-      "type": "checkbox",
-      "required": false,
+      "name": "state",
+      "label": "State",
+      "type": "select",
+      "placeholder": "Select state",
+      "required": true,
+      "rules": ["required"],
+      "errorMessage": "Please select a state",
+      "searchType": true,
+      "options": [
+        { "value": "1", "label": "Andhra Pradesh" },
+        { "value": "2", "label": "Arunachal Pradesh" },
+        { "value": "3", "label": "Assam" },
+        { "value": "4", "label": "Bihar" },
+        { "value": "5", "label": "Chhattisgarh" },
+        { "value": "6", "label": "Delhi" },
+        { "value": "7", "label": "Goa" },
+        { "value": "8", "label": "Gujarat" },
+        { "value": "9", "label": "Haryana" },
+        { "value": "10", "label": "Himachal Pradesh" },
+        { "value": "11", "label": "Jharkhand" },
+        { "value": "12", "label": "Karnataka" },
+        { "value": "13", "label": "Kerala" },
+        { "value": "14", "label": "Madhya Pradesh" },
+        { "value": "15", "label": "Maharashtra" },
+        { "value": "16", "label": "Manipur" },
+        { "value": "17", "label": "Meghalaya" },
+        { "value": "18", "label": "Mizoram" },
+        { "value": "19", "label": "Nagaland" },
+        { "value": "20", "label": "Odisha" },
+        { "value": "21", "label": "Punjab" },
+        { "value": "22", "label": "Rajasthan" },
+        { "value": "23", "label": "Sikkim" },
+        { "value": "24", "label": "Tamil Nadu" },
+        { "value": "25", "label": "Telangana" },
+        { "value": "26", "label": "Tripura" },
+        { "value": "27", "label": "Uttar Pradesh" },
+        { "value": "28", "label": "Uttarakhand" },
+        { "value": "29", "label": "West Bengal" },
+        { "value": "30", "label": "Puducherry" }
+      ],
       "step": 1
     }
   ]
 }
-
