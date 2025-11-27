@@ -36,7 +36,7 @@ const Button = ({
 
   const variantStyles = {
     primary: {
-      backgroundColor: tokens.colors.cta.primary, // Paisawaala: #160E7A
+      background: 'linear-gradient(90deg, #160E7A 0%, #4A40EB 100%)',
       color: '#ffffff',
       border: 'none',
     },
@@ -92,13 +92,15 @@ const Button = ({
   // Handle hover state for primary buttons
   const handleMouseEnter = (e) => {
     if (variant === 'primary' && !disabled && !loading) {
-      e.currentTarget.style.backgroundColor = 'rgba(67, 56, 202, 0.9)'; // hover:bg-opacity-90
+      e.currentTarget.style.background = 'linear-gradient(90deg, rgba(22, 14, 122, 0.9) 0%, rgba(74, 64, 235, 0.9) 100%)';
+      e.currentTarget.style.boxShadow = '0 4px 12px rgba(22, 14, 122, 0.3)';
     }
   };
 
   const handleMouseLeave = (e) => {
     if (variant === 'primary' && !disabled && !loading) {
-      e.currentTarget.style.backgroundColor = tokens.colors.cta.primary;
+      e.currentTarget.style.background = 'linear-gradient(90deg, #160E7A 0%, #4A40EB 100%)';
+      e.currentTarget.style.boxShadow = 'none';
     }
   };
 
