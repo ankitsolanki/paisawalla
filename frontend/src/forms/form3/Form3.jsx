@@ -499,7 +499,7 @@ const Form3 = ({
           )}
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
               {fields.map(renderField)}
             </div>
 
@@ -517,7 +517,7 @@ const Form3 = ({
             )}
 
             {RECAPTCHA_SITE_KEY && ReCAPTCHA && !recaptchaError && (
-              <div style={{ marginBottom: '1rem' }}>
+              <div style={{ marginBottom: '1.5rem' }}>
                 <ReCAPTCHA
                   sitekey={RECAPTCHA_SITE_KEY}
                   onChange={handleRecaptchaChange}
