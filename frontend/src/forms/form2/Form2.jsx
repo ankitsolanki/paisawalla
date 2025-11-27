@@ -9,7 +9,9 @@ import Select from '../../components/ui/Select';
 import CurrencyInput from '../../components/ui/CurrencyInput';
 import PincodeInput from '../../components/PincodeInput';
 import SubmitSuccess from '../../components/SubmitSuccess';
+import FormSection from '../../components/forms/FormSection';
 import { validateForm, validateField } from '../../utils/validationRules';
+import { tokens } from '../../design-system/tokens';
 import apiClient from '../../utils/apiClient';
 import { webflowBridge } from '../../embed/webflowBridge';
 import { getAuthParamsFromUrl } from '../../utils/queryEncoder';
@@ -37,6 +39,48 @@ const RECAPTCHA_SITE_KEY = getRecaptchaKey();
 
 const FORM_FIELD_KEYS = Object.keys(form2Schema).filter((key) => key !== 'steps');
 
+const STEP_SECTIONS = {
+  1: [
+    {
+      id: 'personal-info',
+      title: 'Personal Information',
+      subtitle: 'Tell us about yourself',
+      rows: [
+        { fields: ['firstName', 'lastName'], cols: [1, 1] },
+        { fields: ['dateOfBirth'] },
+        { fields: ['email'] },
+      ],
+    },
+    {
+      id: 'loan-details',
+      title: 'Loan Requirements',
+      subtitle: 'What are you looking for?',
+      rows: [
+        { fields: ['loanAmount'] },
+        { fields: ['loanPurpose'] },
+      ],
+    },
+    {
+      id: 'employment-info',
+      title: 'Employment Details',
+      subtitle: 'Help us understand your income',
+      rows: [
+        { fields: ['employmentType'] },
+        { fields: ['netMonthlyIncome'] },
+      ],
+    },
+    {
+      id: 'location-info',
+      title: 'Location Details',
+      subtitle: 'Where are you located?',
+      rows: [
+        { fields: ['pinCode'] },
+        { fields: ['city', 'state'], cols: [1, 1] },
+      ],
+    },
+  ],
+};
+
 const Form2 = ({ 
   theme = 'light',
   title = 'Quick Eligibility Check',
@@ -54,6 +98,8 @@ const Form2 = ({
   const [prefillMessage, setPrefillMessage] = useState('');
   const { windowWidth } = useResponsive();
   const isMobile = windowWidth < 640;
+  const isTablet = windowWidth >= 640 && windowWidth < 1024;
+  const isCompactLayout = isMobile || isTablet;
 
   // Dynamically load ReCAPTCHA only if we have a valid key
   useEffect(() => {
@@ -405,6 +451,33 @@ const Form2 = ({
     );
   }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeChange, handlePincodeLookup, autoPopulatedFields]);
 
+  // Render step fields using FormSection
+  const renderStepFields = useCallback((stepNumber) => {
+    const sections = STEP_SECTIONS[stepNumber];
+    if (!sections) return null;
+
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isCompactLayout ? tokens.spacing.xl : tokens.spacing['2xl'],
+        }}
+      >
+        {sections.map((section) => (
+          <FormSection
+            key={section.id}
+            title={section.title}
+            subtitle={section.subtitle}
+            rows={section.rows}
+            renderField={renderField}
+            isCompact={isCompactLayout}
+          />
+        ))}
+      </div>
+    );
+  }, [renderField, isCompactLayout]);
+
   if (isSubmitted) {
     return (
       <ErrorBoundary>
@@ -417,15 +490,13 @@ const Form2 = ({
     );
   }
 
-  const fields = Object.keys(form2Schema);
-
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <div
           style={{
             width: '100%',
-            maxWidth: '42rem',
+            maxWidth: isCompactLayout ? '100%' : '56rem',
             margin: '0 auto',
             padding: isMobile ? '1rem' : '1.5rem',
           }}
@@ -509,8 +580,12 @@ const Form2 = ({
           )}
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-              {fields.map(renderField)}
+            <div
+              style={{
+                marginBottom: isMobile ? '1rem' : '1.5rem',
+              }}
+            >
+              {renderStepFields(1)}
             </div>
 
             {errors.submit && (
@@ -542,15 +617,21 @@ const Form2 = ({
               </div>
             )}
 
-            <Button
-              type="submit"
-              variant="primary"
-              fullWidth
-              disabled={isSubmitting}
-              loading={isSubmitting}
+            <div
+              style={{
+                marginTop: isMobile ? '1.25rem' : '2rem',
+              }}
             >
-              {isSubmitting ? 'Submitting...' : 'Check Eligibility'}
-            </Button>
+              <Button
+                type="submit"
+                variant="primary"
+                fullWidth
+                disabled={isSubmitting}
+                loading={isSubmitting}
+              >
+                {isSubmitting ? 'Submitting...' : 'Check Eligibility'}
+              </Button>
+            </div>
           </form>
         </div>
       </ThemeProvider>
