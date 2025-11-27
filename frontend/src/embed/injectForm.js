@@ -1,5 +1,5 @@
 /**
- * injectForm.js - Webflow embedding script
+ * injectForm.js - Webflow embedding script for Forms
  * 
  * Usage in Webflow:
  * <div id="pw-form"></div>
@@ -8,7 +8,19 @@
  *   data-form="form1"
  *   data-theme="light"
  *   data-api-url="https://api-paisawalla.gofo.app"
+ *   data-title="Custom Form Title" (optional)
+ *   data-description="Custom form description" (optional)
+ *   data-recaptcha-site-key="YOUR_RECAPTCHA_KEY" (optional)
  * ></script>
+ * 
+ * Supported Attributes:
+ *   - data-form: Form type (form1, form2, or form3) - Required
+ *   - data-theme: Theme (light or dark) - Default: light
+ *   - data-container: Container element ID - Default: pw-form
+ *   - data-api-url: API base URL - Required
+ *   - data-title: Custom form title - Default: form-specific
+ *   - data-description: Custom form description - Default: none
+ *   - data-recaptcha-site-key: reCAPTCHA site key - Default: none
  */
 
 import React from 'react';
@@ -65,6 +77,8 @@ if (script) {
   const formType = scriptTag.getAttribute('data-form') || 'form1';
   const theme = scriptTag.getAttribute('data-theme') || 'light';
   const containerId = scriptTag.getAttribute('data-container') || 'pw-form';
+  const title = scriptTag.getAttribute('data-title') || undefined;
+  const description = scriptTag.getAttribute('data-description') || undefined;
 
   // Find container element
   const container = document.getElementById(containerId);
@@ -141,7 +155,10 @@ if (script) {
       
       // Create React root and render form
       const root = createRoot(container);
-      root.render(React.createElement(FormComponent, { theme }));
+      const formProps = { theme };
+      if (title) formProps.title = title;
+      if (description) formProps.description = description;
+      root.render(React.createElement(FormComponent, formProps));
 
       // Post message to Webflow that form is ready
       if (window.parent) {

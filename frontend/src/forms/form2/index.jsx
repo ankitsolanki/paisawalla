@@ -6,10 +6,10 @@ import form2Schema from './form2.schema.json';
 /**
  * Form 2 - Get Started (11 fields, single step)
  */
-const Form2 = ({ theme = 'light' }) => {
+const Form2 = ({ theme = 'light', title, description }) => {
   return (
     <Suspense fallback={<LoadingSpinner fullScreen />}>
-      <DynamicForm schema={form2Schema} theme={theme} />
+      <DynamicForm schema={form2Schema} theme={theme} title={title} description={description} />
     </Suspense>
   );
 };

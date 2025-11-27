@@ -136,7 +136,11 @@ const STEP_SECTIONS = {
   ],
 };
 
-const Form1 = ({ theme = 'light' }) => {
+const Form1 = ({ 
+  theme = 'light',
+  title = 'Personal Loan Application',
+  description = undefined
+}) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
@@ -1207,12 +1211,25 @@ const Form1 = ({ theme = 'light' }) => {
             style={{
               fontSize: isMobile ? '1.25rem' : '1.5rem', // h2: 1.25rem mobile, 1.5rem desktop (20px/24px) - smaller than h1
               fontWeight: 700,
-              marginBottom: isMobile ? '1rem' : '1.5rem',
+              marginBottom: description ? (isMobile ? '0.5rem' : '0.75rem') : (isMobile ? '1rem' : '1.5rem'),
               textAlign: isMobile ? 'center' : 'left',
             }}
           >
-            Personal Loan Application
+            {title}
           </h2>
+          
+          {description && (
+            <p
+              style={{
+                fontSize: isMobile ? '0.875rem' : '0.9375rem',
+                color: '#656c77',
+                marginBottom: isMobile ? '1rem' : '1.5rem',
+                textAlign: isMobile ? 'center' : 'left',
+              }}
+            >
+              {description}
+            </p>
+          )}
 
           {prefillStatus === 'success' && (
             <div

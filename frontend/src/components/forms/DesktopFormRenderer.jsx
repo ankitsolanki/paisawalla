@@ -23,7 +23,7 @@ import { tokens } from '../../design-system/tokens';
  * - Side-by-side buttons
  * - Full feature set
  */
-const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
+const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
@@ -601,16 +601,16 @@ const DesktopFormRenderer = ({ schema, theme = 'light' }) => {
                 color: tokens.colors.gray[900],
               }}
             >
-              {schema.title}
+              {title || schema.title}
             </h1>
-            {schema.description && (
+            {(description || schema.description) && (
               <p
                 style={{
                   fontSize: tokens.typography.fontSize.base,
                   color: tokens.colors.gray[500],
                 }}
               >
-                {schema.description}
+                {description || schema.description}
               </p>
             )}
           </div>

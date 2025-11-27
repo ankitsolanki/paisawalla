@@ -8,8 +8,8 @@ import ResponsiveFormRenderer from './forms/ResponsiveFormRenderer';
  * - Tablet: 2-column grid, balanced spacing
  * - Desktop: Multi-column grid, generous spacing
  */
-const DynamicForm = ({ schema, theme = 'light' }) => {
-  return <ResponsiveFormRenderer schema={schema} theme={theme} />;
+const DynamicForm = ({ schema, theme = 'light', title, description }) => {
+  return <ResponsiveFormRenderer schema={schema} theme={theme} title={title} description={description} />;
 };
 
 export default DynamicForm;

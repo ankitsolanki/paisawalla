@@ -237,7 +237,6 @@ const AuthForm = ({
               width: '100%',
               maxWidth: '28rem', // max-w-md
               padding: '2rem', // p-8
-              backgroundColor: '#ffffff',
               borderRadius: '1rem', // rounded-2xl
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)', // shadow-lg
               display: 'flex',

@@ -17,7 +17,11 @@ import form2Schema from './form2Schema';
 
 const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '';
 
-const Form2 = ({ theme = 'light' }) => {
+const Form2 = ({ 
+  theme = 'light',
+  title = 'Get Started',
+  description = undefined
+}) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -226,9 +230,21 @@ const Form2 = ({ theme = 'light' }) => {
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
         <div style={{ maxWidth: '42rem', margin: '0 auto', padding: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>
-            Get Started
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: description ? '0.75rem' : '1.5rem' }}>
+            {title}
           </h2>
+          
+          {description && (
+            <p
+              style={{
+                fontSize: '0.9375rem',
+                color: '#656c77',
+                marginBottom: '1.5rem',
+              }}
+            >
+              {description}
+            </p>
+          )}
 
           <form onSubmit={handleSubmit}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>

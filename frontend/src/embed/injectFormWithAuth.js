@@ -74,6 +74,8 @@ if (script) {
   const formType = scriptTag.getAttribute('data-form') || 'form1';
   const theme = scriptTag.getAttribute('data-theme') || 'light';
   const containerId = scriptTag.getAttribute('data-container') || 'pw-form';
+  const title = scriptTag.getAttribute('data-title') || undefined;
+  const description = scriptTag.getAttribute('data-description') || undefined;
 
   // Find container element
   const container = document.getElementById(containerId);
@@ -231,7 +233,10 @@ if (script) {
       
       // Create React root and render form
       const root = createRoot(container);
-      root.render(React.createElement(FormComponent, { theme }));
+      const formProps = { theme };
+      if (title) formProps.title = title;
+      if (description) formProps.description = description;
+      root.render(React.createElement(FormComponent, formProps));
 
       // Post message to Webflow that form is ready
       if (window.parent) {

@@ -41,7 +41,11 @@ const getRecaptchaKey = () => {
 
 const RECAPTCHA_SITE_KEY = getRecaptchaKey();
 
-const Form3 = ({ theme = 'light' }) => {
+const Form3 = ({ 
+  theme = 'light',
+  title = 'Complete Your Application',
+  description = 'Get matched offers from 35+ lenders. 100% digital process.'
+}) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -371,12 +375,14 @@ const Form3 = ({ theme = 'light' }) => {
         <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem' }}>
           {stage === 'details' && (
             <>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.5rem', color: '#000000' }}>
-                Complete Your Application
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: description ? '0.5rem' : '0.5rem', color: '#000000' }}>
+                {title}
               </h2>
-              <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
-                Get matched offers from 35+ lenders. 100% digital process.
-              </p>
+              {description && (
+                <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+                  {description}
+                </p>
+              )}
             </>
           )}
 

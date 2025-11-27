@@ -23,7 +23,7 @@ import { tokens } from '../../design-system/tokens';
  * - Side-by-side buttons
  * - Balanced spacing
  */
-const TabletFormRenderer = ({ schema, theme = 'light' }) => {
+const TabletFormRenderer = ({ schema, theme = 'light', title, description }) => {
   const [currentStep, setCurrentStep] = React.useState(1);
   const [formData, setFormData] = React.useState({});
   const [errors, setErrors] = React.useState({});
@@ -514,16 +514,16 @@ const TabletFormRenderer = ({ schema, theme = 'light' }) => {
                 color: tokens.colors.gray[900],
               }}
             >
-              {schema.title}
+              {title || schema.title}
             </h1>
-            {schema.description && (
+            {(description || schema.description) && (
               <p
                 style={{
                   fontSize: tokens.typography.fontSize.base,
                   color: tokens.colors.gray[500],
                 }}
               >
-                {schema.description}
+                {description || schema.description}
               </p>
             )}
           </div>
