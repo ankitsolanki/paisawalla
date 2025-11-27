@@ -7,7 +7,6 @@ import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
 import CurrencyInput from '../../components/ui/CurrencyInput';
 import PincodeInput from '../../components/PincodeInput';
-import GenderField from '../../components/GenderField';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
 import { validateForm, validateField } from '../../utils/validationRules';
@@ -328,71 +327,6 @@ const Form3 = ({
       fullWidth: fieldSchema.fullWidth !== false,
       placeholder: fieldSchema.placeholder,
     };
-
-    // Handle checkbox type
-    if (fieldSchema.type === 'checkbox') {
-      return (
-        <div key={fieldName} style={{ gridColumn: '1 / -1', marginBottom: '0.5rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              name={fieldName}
-              checked={formData[fieldName] || false}
-              onChange={(e) => handleChange({ target: { name: fieldName, value: e.target.checked } })}
-              required={fieldSchema.required}
-              style={{ marginRight: '0.5rem' }}
-            />
-            <span>
-              {fieldSchema.label}
-              {fieldSchema.required && <span style={{ color: '#ef4444', marginLeft: '0.25rem' }}>*</span>}
-            </span>
-          </label>
-          {errors[fieldName] && (
-            <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#dc2626' }}>
-              {errors[fieldName]}
-            </p>
-          )}
-        </div>
-      );
-    }
-
-    // Handle gender field - use GenderField component
-    if (fieldName === 'gender') {
-      return (
-        <GenderField
-          key={fieldName}
-          name={fieldName}
-          value={formData[fieldName] || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          required={fieldSchema.required}
-          error={errors[fieldName]}
-          disabled={false}
-          options={fieldSchema.options || []}
-          label={fieldSchema.label}
-        />
-      );
-    }
-
-    // Handle radio type (for non-gender radio fields)
-    if (fieldSchema.type === 'radio') {
-      return (
-        <GenderField
-          key={fieldName}
-          name={fieldName}
-          value={formData[fieldName] || ''}
-          onChange={handleChange}
-          onBlur={handleBlur}
-          onFocus={handleFocus}
-          required={fieldSchema.required}
-          error={errors[fieldName]}
-          disabled={false}
-          options={fieldSchema.options || []}
-          label={fieldSchema.label}
-        />
-      );
-    }
 
     if (fieldSchema.type === 'select') {
       return (

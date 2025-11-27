@@ -45,32 +45,6 @@
       "step": 1
     },
     {
-      "name": "gender",
-      "label": "Gender",
-      "type": "radio",
-      "placeholder": "Select gender",
-      "required": true,
-      "rules": ["required"],
-      "errorMessage": "Please select a gender",
-      "options": [
-        { "value": "male", "label": "Male" },
-        { "value": "female", "label": "Female" },
-        { "value": "other", "label": "Other" }
-      ],
-      "step": 1
-    },
-    {
-      "name": "panNumber",
-      "label": "PAN Number",
-      "type": "text",
-      "placeholder": "ABCDE1234F",
-      "required": true,
-      "rules": ["required", "pan"],
-      "errorMessage": "Please Enter a Valid Pan",
-      "maxLength": 10,
-      "step": 1
-    },
-    {
       "name": "loanAmount",
       "label": "Desired Loan Amount",
       "type": "currency",
@@ -96,18 +70,6 @@
         { "value": "Self-employed business", "label": "Self-employed business" },
         { "value": "Student", "label": "Student" }
       ],
-      "step": 1
-    },
-    {
-      "name": "netMonthlyIncome",
-      "label": "Net Monthly Income",
-      "type": "currency",
-      "placeholder": "Enter monthly income",
-      "required": false,
-      "rules": ["numeric", { "type": "min", "params": [10000] }, { "type": "max", "params": [10000000] }],
-      "errorMessage": "Please enter a Net monthly income (min ₹10,000, max ₹1,00,00,000)",
-      "min": 10000,
-      "max": 10000000,
       "step": 1
     },
     {
@@ -176,15 +138,6 @@
         { "value": "29", "label": "West Bengal" },
         { "value": "30", "label": "Puducherry" }
       ],
-      "step": 1
-    },
-    {
-      "name": "consentCreditCheck",
-      "label": "I authorize PW.com to access my credit information",
-      "type": "checkbox",
-      "required": true,
-      "rules": ["required"],
-      "errorMessage": "This field is required",
       "step": 1
     }
   ]

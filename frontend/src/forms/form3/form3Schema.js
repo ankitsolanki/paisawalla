@@ -1,4 +1,4 @@
-// Form 3 Schema - Simplified quick eligibility form (post-auth)
+// Form 3 Schema - Quick eligibility form (post-auth)
 // Note: Phone number is already authenticated via AuthForm
 export default {
   firstName: {
@@ -32,28 +32,6 @@ export default {
     rules: ['required', 'dobDate'],
     errorMessage: 'Please enter a valid Date of Birth',
   },
-  gender: {
-    label: 'Gender',
-    type: 'radio',
-    required: true,
-    rules: ['required'],
-    placeholder: 'Select gender',
-    errorMessage: 'Please select a gender',
-    options: [
-      { value: 'male', label: 'Male' },
-      { value: 'female', label: 'Female' },
-      { value: 'other', label: 'Other' },
-    ],
-  },
-  panNumber: {
-    label: 'PAN Number',
-    type: 'text',
-    required: true,
-    rules: ['required', 'pan'],
-    placeholder: 'ABCDE1234F',
-    errorMessage: 'Please Enter a Valid Pan',
-    maxLength: 10,
-  },
   loanAmount: {
     label: 'Desired Loan Amount',
     type: 'currency',
@@ -77,16 +55,6 @@ export default {
       { value: 'Self-employed business', label: 'Self-employed business' },
       { value: 'Student', label: 'Student' },
     ],
-  },
-  netMonthlyIncome: {
-    label: 'Net Monthly Income',
-    type: 'currency',
-    required: false,
-    rules: ['numeric', { type: 'min', params: [10000] }, { type: 'max', params: [10000000] }],
-    placeholder: 'Enter monthly income',
-    errorMessage: 'Please enter a Net monthly income (min ₹10,000, max ₹1,00,00,000)',
-    min: 10000,
-    max: 10000000,
   },
   pinCode: {
     label: 'PIN Code',
@@ -149,13 +117,6 @@ export default {
       { value: '29', label: 'West Bengal' },
       { value: '30', label: 'Puducherry' },
     ],
-  },
-  consentCreditCheck: {
-    label: 'I authorize PW.com to access my credit information',
-    type: 'checkbox',
-    required: true,
-    rules: ['required'],
-    errorMessage: 'This field is required',
   },
 };
 
