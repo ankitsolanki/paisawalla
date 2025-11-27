@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTheme } from '../../design-system/ThemeProvider';
 
 /**
@@ -23,6 +23,7 @@ const Input = ({
   ...props
 }) => {
   const { tokens, colors } = useTheme();
+  const inputRef = useRef(null);
 
   // Detect if mobile (simple check - can be enhanced)
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
@@ -88,6 +89,7 @@ const Input = ({
       className="floating-label-group"
     >
       <input
+        ref={inputRef}
         id={name}
         name={name}
         type={type}
@@ -111,12 +113,16 @@ const Input = ({
           ...(name === 'ssn' || name === 'panNumber' ? { textTransform: 'uppercase' } : {}),
           // Ensure date inputs are fully clickable
           ...(isDateInput ? { cursor: 'pointer' } : {}),
+          // For date inputs: hide the text when not focused (but keep it selectable when focused)
+          ...(isDateInput && !isFocused && !hasValue ? { color: 'transparent' } : {}),
         }}
         autoCapitalize={name === 'panNumber' ? 'characters' : undefined}
         autoComplete={name === 'panNumber' ? 'off' : undefined}
-        className={`floating-input ${className}`}
+        className={`floating-input ${className}${isDateInput ? ' date-input' : ''}`}
         {...props}
       />
+      
+      
       {label && (
         <label
           htmlFor={name}
@@ -162,6 +168,25 @@ const Input = ({
             opacity: 1;
             transform: translateY(0);
           }
+        }
+        
+        /* Hide native date input format hint (dd/mm/yyyy) */
+        input[type="date"] {
+          color-scheme: light;
+        }
+        
+        input.date-input:not(:focus)::before {
+          content: '';
+        }
+        
+        /* Hide placeholder text in date input when not focused */
+        input[type="date"]:not(:focus)::placeholder {
+          color: transparent;
+        }
+        
+        /* Style calendar icon */
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          cursor: pointer;
         }
       `}</style>
     </div>

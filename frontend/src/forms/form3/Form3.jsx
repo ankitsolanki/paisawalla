@@ -4,8 +4,10 @@ import { useFormTracking } from '../../hooks/useFormTracking';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
+import Select from '../../components/ui/Select';
 import CurrencyInput from '../../components/ui/CurrencyInput';
 import PincodeInput from '../../components/PincodeInput';
+import GenderField from '../../components/GenderField';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
 import { validateForm, validateField } from '../../utils/validationRules';
@@ -51,21 +53,20 @@ const Form3 = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [recaptchaToken, setRecaptchaToken] = useState(null);
-  const [stage, setStage] = useState('details'); // 'details' -> 'submitted' (phone/otp removed)
   const [ReCAPTCHA, setReCAPTCHA] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState(false);
   const [leadId, setLeadId] = useState(null);
   const [checkingEligibility, setCheckingEligibility] = useState(false);
   const [applicationId, setApplicationId] = useState(null);
   const [eligibilityError, setEligibilityError] = useState(null);
+  const [autoPopulatedFields, setAutoPopulatedFields] = useState(new Set());
 
   // Check for encoded auth params on mount
   useEffect(() => {
     const authParams = getAuthParamsFromUrl();
     if (authParams && authParams.authenticated && authParams.phone) {
-      // User is already authenticated, skip auth and go directly to details stage
-      setFormData((prev) => ({ ...prev, phone: authParams.phone }));
-      setStage('details');
+      // User is already authenticated via AuthForm
+      // No need to store phone again - just proceed with form
     }
   }, []);
 
@@ -112,12 +113,41 @@ const Form3 = ({
     trackFieldInteraction(name, 'blur', value);
     
     const fieldSchema = form3Schema[name];
-    if (fieldSchema && fieldSchema.rules) {
-      const error = validateField(value || '', fieldSchema.rules);
+    if (!fieldSchema) return;
+
+    // Only validate format/pattern rules on blur, NOT required fields
+    let rulesToValidate = fieldSchema.rules || [];
+    
+    // Remove 'required' rule - we don't want to show required errors on blur
+    rulesToValidate = rulesToValidate.filter(rule => {
+      if (typeof rule === 'string') {
+        return rule !== 'required';
+      }
+      if (typeof rule === 'object' && rule.type === 'required') {
+        return false;
+      }
+      return true;
+    });
+
+    // Only validate if field has a value and there are non-required rules to validate
+    if (value && value.trim() !== '' && rulesToValidate.length > 0) {
+      const error = validateField(value, rulesToValidate);
       if (error) {
         setErrors((prev) => ({ ...prev, [name]: error }));
         trackFieldInteraction(name, 'error', value);
+      } else {
+        setErrors((prev) => {
+          const newErrors = { ...prev };
+          delete newErrors[name];
+          return newErrors;
+        });
       }
+    } else if (value && value.trim() !== '') {
+      setErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
     }
   }, [trackFieldInteraction]);
 
@@ -125,6 +155,66 @@ const Form3 = ({
     const { name, value } = e.target;
     trackFieldInteraction(name, 'focus', value);
   }, [trackFieldInteraction]);
+
+  // Handle PIN code lookup and auto-populate city/state
+  const handlePincodeLookup = useCallback((details) => {
+    if (!details) return;
+
+    const { city, state, cityFieldName, stateFieldName } = details;
+
+    setFormData((prev) => {
+      const updated = { ...prev };
+      
+      if (cityFieldName && city) {
+        updated[cityFieldName] = city;
+        trackFieldInteraction(cityFieldName, 'auto-populated', city);
+        setAutoPopulatedFields((prevSet) => new Set(prevSet).add(cityFieldName));
+      }
+      
+      if (stateFieldName && state) {
+        const stateSchema = form3Schema[stateFieldName];
+        if (stateSchema && stateSchema.options) {
+          const exactMatch = stateSchema.options.find(
+            (opt) => opt.label.toLowerCase() === state.toLowerCase()
+          );
+          
+          if (exactMatch) {
+            updated[stateFieldName] = exactMatch.value;
+            trackFieldInteraction(stateFieldName, 'auto-populated', exactMatch.value);
+            setAutoPopulatedFields((prevSet) => new Set(prevSet).add(stateFieldName));
+          } else {
+            const partialMatch = stateSchema.options.find(
+              (opt) => opt.label.toLowerCase().includes(state.toLowerCase()) ||
+                       state.toLowerCase().includes(opt.label.toLowerCase())
+            );
+            
+            if (partialMatch) {
+              updated[stateFieldName] = partialMatch.value;
+              trackFieldInteraction(stateFieldName, 'auto-populated', partialMatch.value);
+              setAutoPopulatedFields((prevSet) => new Set(prevSet).add(stateFieldName));
+            }
+          }
+        }
+      }
+      
+      return updated;
+    });
+  }, [trackFieldInteraction]);
+
+  // Clear auto-populated state when PIN code is cleared
+  const handlePincodeChange = useCallback((e) => {
+    const { value } = e.target;
+    handleChange(e);
+    
+    if (!value || value.length === 0) {
+      setAutoPopulatedFields((prevSet) => {
+        const newSet = new Set(prevSet);
+        newSet.delete('city');
+        newSet.delete('state');
+        return newSet;
+      });
+    }
+  }, [handleChange]);
 
   const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -235,10 +325,85 @@ const Form3 = ({
       onBlur: handleBlur,
       onFocus: handleFocus,
       error: errors[fieldName],
-      fullWidth: true,
+      fullWidth: fieldSchema.fullWidth !== false,
       placeholder: fieldSchema.placeholder,
-      disabled: false,
     };
+
+    // Handle checkbox type
+    if (fieldSchema.type === 'checkbox') {
+      return (
+        <div key={fieldName} style={{ gridColumn: '1 / -1', marginBottom: '0.5rem' }}>
+          <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+            <input
+              type="checkbox"
+              name={fieldName}
+              checked={formData[fieldName] || false}
+              onChange={(e) => handleChange({ target: { name: fieldName, value: e.target.checked } })}
+              required={fieldSchema.required}
+              style={{ marginRight: '0.5rem' }}
+            />
+            <span>
+              {fieldSchema.label}
+              {fieldSchema.required && <span style={{ color: '#ef4444', marginLeft: '0.25rem' }}>*</span>}
+            </span>
+          </label>
+          {errors[fieldName] && (
+            <p style={{ marginTop: '0.25rem', fontSize: '0.875rem', color: '#dc2626' }}>
+              {errors[fieldName]}
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    // Handle gender field - use GenderField component
+    if (fieldName === 'gender') {
+      return (
+        <GenderField
+          key={fieldName}
+          name={fieldName}
+          value={formData[fieldName] || ''}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          required={fieldSchema.required}
+          error={errors[fieldName]}
+          disabled={false}
+          options={fieldSchema.options || []}
+          label={fieldSchema.label}
+        />
+      );
+    }
+
+    // Handle radio type (for non-gender radio fields)
+    if (fieldSchema.type === 'radio') {
+      return (
+        <GenderField
+          key={fieldName}
+          name={fieldName}
+          value={formData[fieldName] || ''}
+          onChange={handleChange}
+          onBlur={handleBlur}
+          onFocus={handleFocus}
+          required={fieldSchema.required}
+          error={errors[fieldName]}
+          disabled={false}
+          options={fieldSchema.options || []}
+          label={fieldSchema.label}
+        />
+      );
+    }
+
+    if (fieldSchema.type === 'select') {
+      return (
+        <Select
+          key={fieldName}
+          {...commonProps}
+          options={fieldSchema.options || []}
+          disabled={autoPopulatedFields.has(fieldName)}
+        />
+      );
+    }
 
     if (fieldSchema.type === 'currency') {
       return (
@@ -256,41 +421,51 @@ const Form3 = ({
         <PincodeInput
           key={fieldName}
           {...commonProps}
-          onPincodeLookup={(details) => {
-            // Auto-populate city and state if available
-            if (details && details.city && details.cityFieldName) {
-              handleChange({ target: { name: details.cityFieldName, value: details.city } });
-            }
-            if (details && details.state && details.stateFieldName) {
-              handleChange({ target: { name: details.stateFieldName, value: details.state } });
-            }
-          }}
+          onChange={handlePincodeChange}
+          onPincodeLookup={handlePincodeLookup}
           cityFieldName={fieldSchema.cityFieldName}
           stateFieldName={fieldSchema.stateFieldName}
         />
       );
     }
 
+    // Handle city field - disable if auto-populated
+    if (fieldName === 'city') {
+      const isAutoPopulated = autoPopulatedFields.has(fieldName);
+      return (
+        <Input
+          key={fieldName}
+          {...commonProps}
+          type="text"
+          disabled={isAutoPopulated}
+        />
+      );
+    }
+
+    // For date fields, ensure the value is in yyyy-MM-dd format
+    let adjustedValue = commonProps.value;
+    if (fieldSchema.type === 'date' && adjustedValue) {
+      if (adjustedValue.includes('T')) {
+        adjustedValue = adjustedValue.split('T')[0];
+      }
+    }
+
     return (
       <Input
         key={fieldName}
         {...commonProps}
+        value={adjustedValue}
         type={fieldSchema.type || 'text'}
         min={fieldSchema.min}
         max={fieldSchema.max}
         step={fieldSchema.step}
+        maxLength={fieldSchema.maxLength}
       />
     );
-  }, [formData, errors, handleChange, handleBlur, handleFocus, stage]);
+  }, [formData, errors, handleChange, handleBlur, handleFocus, handlePincodeChange, handlePincodeLookup, autoPopulatedFields]);
 
   // All hooks must be called before conditional returns
   const fields = useMemo(() => Object.keys(form3Schema), []);
-
-  // Select which fields to render (all fields for details stage)
-  const stageFields = useMemo(() => {
-    if (stage === 'details') return fields; // all fields
-    return [];
-  }, [stage, fields]);
 
   // Show eligibility checking screen after form submission
   if (checkingEligibility && leadId) {
@@ -372,23 +547,26 @@ const Form3 = ({
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
-        <div style={{ maxWidth: '32rem', margin: '0 auto', padding: '1.25rem' }}>
-          {stage === 'details' && (
-            <>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: description ? '0.5rem' : '0.5rem', color: '#000000' }}>
-                {title}
-              </h2>
-              {description && (
-                <p style={{ color: '#656c77', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
-                  {description}
-                </p>
-              )}
-            </>
+        <div style={{ maxWidth: '42rem', margin: '0 auto', padding: '1.5rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: description ? '0.75rem' : '1.5rem' }}>
+            {title}
+          </h2>
+          
+          {description && (
+            <p
+              style={{
+                fontSize: '0.9375rem',
+                color: '#656c77',
+                marginBottom: '1.5rem',
+              }}
+            >
+              {description}
+            </p>
           )}
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem', marginBottom: '1.25rem' }}>
-              {stageFields.map(renderField)}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1rem', marginBottom: '1.25rem' }}>
+              {fields.map(renderField)}
             </div>
 
             {errors.submit && (
@@ -404,7 +582,7 @@ const Form3 = ({
               </div>
             )}
 
-            {stage === 'details' && RECAPTCHA_SITE_KEY && ReCAPTCHA && !recaptchaError && (
+            {RECAPTCHA_SITE_KEY && ReCAPTCHA && !recaptchaError && (
               <div style={{ marginBottom: '1.25rem' }}>
                 <ReCAPTCHA
                   sitekey={RECAPTCHA_SITE_KEY}
