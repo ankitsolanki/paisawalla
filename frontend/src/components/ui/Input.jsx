@@ -34,17 +34,16 @@ const Input = ({
   // Determine if label should float (when focused or has value)
   const hasValue = value && value.toString().trim() !== '';
   
-  // For date inputs: float label ONLY when there's a value (not on focus)
-  // This prevents overlap with browser's date format hint
+  // For date inputs: float label when focused or has value (consistent with other inputs)
   // For other inputs: float label when focused or has value
-  const shouldFloatLabel = isDateInput ? hasValue : (isFocused || hasValue);
+  const shouldFloatLabel = isFocused || hasValue;
   
   // Show placeholder only when focused and value is empty
   const shouldShowPlaceholder = isFocused && !hasValue;
   
-  // For date inputs, use a format hint instead of label to avoid overlap
+  // For date inputs, use format hint as placeholder to show only when focused
   const placeholderText = isDateInput 
-    ? (placeholder || 'DD/MM/YYYY') 
+    ? (placeholder || 'dd-mm-yyyy') 
     : (placeholder || label || '');
 
   const inputStyles = {
@@ -85,7 +84,6 @@ const Input = ({
       style={{ 
         width: fullWidth ? '100%' : 'auto',
         position: 'relative',
-        marginBottom: tokens.spacing.md,
       }}
       className="floating-label-group"
     >
@@ -103,7 +101,7 @@ const Input = ({
           setIsFocused(true);
           onFocus?.(e);
         }}
-        placeholder={shouldShowPlaceholder && !isDateInput ? placeholderText : ''} // Show placeholder only when focused and value is empty (not for date inputs)
+        placeholder={shouldShowPlaceholder ? placeholderText : ''} // Show placeholder when focused and value is empty
         required={required}
         disabled={disabled}
         style={{
@@ -128,20 +126,6 @@ const Input = ({
           {label}
           {required && <span style={{ color: tokens.colors.error[500] }}> *</span>}
         </label>
-      )}
-      
-      {/* Helper text for date inputs showing format hint */}
-      {isDateInput && !hasValue && !isFocused && (
-        <p
-          style={{
-            marginTop: tokens.spacing.xs,
-            fontSize: tokens.typography.fontSize.sm,
-            color: tokens.colors.gray[400],
-            margin: '4px 0 0 0',
-          }}
-        >
-          Format: DD/MM/YYYY
-        </p>
       )}
       
       {/* Error message container - always reserved space to prevent layout shift */}

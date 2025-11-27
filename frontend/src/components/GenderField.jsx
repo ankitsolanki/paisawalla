@@ -28,7 +28,7 @@ const GenderField = ({
   const isSmallScreen = windowWidth < 640;
 
   return (
-    <div style={{ marginBottom: tokens.spacing.md }}>
+    <div>
       <fieldset style={{ border: 'none', padding: 0, margin: 0 }}>
         <legend
           style={{

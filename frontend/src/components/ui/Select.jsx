@@ -77,7 +77,6 @@ const Select = ({
   return (
     <div 
       style={{ 
-        marginBottom: tokens.spacing.md, 
         width: fullWidth ? '100%' : 'auto',
         maxWidth: '100%', // Prevent container overflow
         position: 'relative',

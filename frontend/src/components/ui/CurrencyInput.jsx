@@ -208,7 +208,6 @@ const CurrencyInput = ({
       style={{ 
         width: fullWidth ? '100%' : 'auto',
         position: 'relative',
-        marginBottom: tokens.spacing.md,
       }}
       className="floating-label-group"
     >
