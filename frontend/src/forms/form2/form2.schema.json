@@ -26,6 +26,16 @@
       "step": 1
     },
     {
+      "name": "dateOfBirth",
+      "label": "Date of Birth",
+      "type": "date",
+      "placeholder": "Select your date of birth",
+      "required": true,
+      "rules": ["required", "dobDate"],
+      "errorMessage": "Please enter a valid date of birth (age 21-55)",
+      "step": 1
+    },
+    {
       "name": "email",
       "label": "Email Address",
       "type": "email",

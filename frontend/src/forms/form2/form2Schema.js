@@ -17,6 +17,14 @@ export default {
     rules: [],
     placeholder: 'Enter your last name',
   },
+  dateOfBirth: {
+    label: 'Date of Birth',
+    type: 'date',
+    required: true,
+    rules: ['required', 'dobDate'],
+    placeholder: 'Select your date of birth',
+    errorMessage: 'Please enter a valid date of birth (age 21-55)',
+  },
   email: {
     label: 'Email Address',
     type: 'email',

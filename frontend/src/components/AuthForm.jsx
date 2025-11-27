@@ -10,6 +10,146 @@ import { useResponsive } from '../hooks/useResponsive';
 import { tokens } from '../design-system/tokens';
 
 /**
+ * ConsentModal Component
+ * Displays the consent and authorization terms in a modal
+ * Fully responsive across all resolutions
+ */
+const ConsentModal = ({ isOpen, onClose }) => {
+  const { windowWidth } = useResponsive();
+  
+  if (!isOpen) return null;
+
+  // Responsive values
+  const isMobileView = windowWidth < 640;
+  const isTabletView = windowWidth >= 640 && windowWidth < 1024;
+  
+  const modalPadding = isMobileView ? '1.5rem' : isTabletView ? '1.75rem' : '2rem';
+  const modalMaxWidth = isMobileView ? 'calc(100vw - 2rem)' : isTabletView ? '90vw' : '500px';
+  const titleFontSize = isMobileView ? '1.1rem' : isTabletView ? '1.25rem' : '1.375rem';
+  const contentFontSize = isMobileView ? tokens.typography.fontSize.xs : tokens.typography.fontSize.sm;
+  const contentLineHeight = isMobileView ? '1.5' : '1.6';
+  const contentMargin = isMobileView ? '0 0 1rem 0' : '0 0 1.25rem 0';
+  const closeButtonSize = isMobileView ? '1.75rem' : '2rem';
+  const closeButtonFontSize = isMobileView ? '1.25rem' : '1.5rem';
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 999,
+          padding: isMobileView ? '0.75rem' : '1rem',
+        }}
+      >
+        {/* Modal */}
+        <div
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            backgroundColor: 'white',
+            borderRadius: tokens.borderRadius.lg,
+            padding: modalPadding,
+            maxWidth: modalMaxWidth,
+            width: '100%',
+            maxHeight: isMobileView ? '90vh' : '85vh',
+            minHeight: 'auto',
+            overflowY: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+            zIndex: 1000,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {/* Close Button */}
+          <button
+            onClick={onClose}
+            style={{
+              alignSelf: 'flex-end',
+              background: 'none',
+              border: 'none',
+              fontSize: closeButtonFontSize,
+              cursor: 'pointer',
+              padding: '0.25rem',
+              width: closeButtonSize,
+              height: closeButtonSize,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: tokens.colors.gray[500],
+              marginBottom: isMobileView ? '0.5rem' : '0.75rem',
+              transition: 'color 0.2s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.color = tokens.colors.gray[700];
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.color = tokens.colors.gray[500];
+            }}
+            aria-label="Close modal"
+          >
+            ✕
+          </button>
+
+          {/* Title */}
+          <h2
+            style={{
+              fontSize: titleFontSize,
+              fontWeight: tokens.typography.fontWeight.bold,
+              color: tokens.colors.gray[900],
+              marginBottom: isMobileView ? '1rem' : isTabletView ? '1.25rem' : '1.5rem',
+              marginTop: 0,
+              lineHeight: '1.3',
+            }}
+          >
+            Consent & Authorization
+          </h2>
+
+          {/* Content */}
+          <div
+            style={{
+              flex: 1,
+              fontSize: contentFontSize,
+              color: tokens.colors.gray[700],
+              lineHeight: contentLineHeight,
+              overflowY: 'auto',
+              marginBottom: isMobileView ? '1rem' : '1.25rem',
+            }}
+          >
+            <p style={{ margin: contentMargin }}>
+              I hereby authorize Paisawaala as my representative to obtain my Credit Information
+              from Experian (Experian Terms and Condition) and I authorize Experian to share my
+              credit data with Paisawaala. I also agree to be contacted by Paisawaala and its
+              representatives via call, SMS, RCS, email and WhatsApp regarding its products and
+              other linked products as per the Terms & Conditions and Privacy Policy.
+            </p>
+          </div>
+
+          {/* Action Button */}
+          <div style={{ marginTop: 'auto' }}>
+            <Button
+              onClick={onClose}
+              variant="primary"
+              fullWidth
+            >
+              I Understand
+            </Button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/**
  * Standalone Authentication Form Component
  * 
  * Handles phone number input, OTP sending, and OTP verification.
@@ -218,8 +358,8 @@ const AuthForm = ({
     setErrors({});
   }, []);
 
-  const [termsAccepted, setTermsAccepted] = useState(true);
-  const [whatsappConsent, setWhatsappConsent] = useState(true);
+  const [consentAccepted, setConsentAccepted] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
     <ErrorBoundary>
@@ -245,21 +385,21 @@ const AuthForm = ({
             <div style={{ textAlign: 'left' }}>
             {stage === 'phone' && (
             <>
-                  <h1
+                  <h2
                 style={{
-                      fontSize: isMobile ? '1.5rem' : '2rem', // h1: 1.5rem mobile, 2rem desktop (24px/32px)
-                      fontWeight: tokens.typography.fontWeight.extrabold || 800, // font-extrabold
+                      fontSize: isMobile ? '1.125rem' : '1.5rem', // h2: 1.125rem mobile, 1.5rem desktop (18px/24px)
+                      fontWeight: tokens.typography.fontWeight.bold || 700, // font-bold
                       color: tokens.colors.gray[900],
-                      lineHeight: '1.2', // leading-tight
+                      lineHeight: '1.3', // leading-snug
                       margin: 0,
                     }}
                   >
                     {title}
-                  </h1>
+                  </h2>
               <p
                 style={{
-                      marginTop: '0.75rem', // mt-3
-                      fontSize: isMobile ? '0.875rem' : '1rem', // 0.875rem mobile, 1rem desktop (14px/16px)
+                      marginTop: '0.5rem', // mt-2
+                      fontSize: isMobile ? '0.875rem' : '0.9375rem', // 0.875rem mobile, 0.9375rem desktop (14px/15px)
                       color: tokens.colors.gray[600],
                       margin: 0,
                     }}
@@ -271,21 +411,21 @@ const AuthForm = ({
 
           {stage === 'otp' && (
             <>
-                  <h1
+                  <h2
                 style={{
-                      fontSize: isMobile ? '1.5rem' : '2rem', // h1: 1.5rem mobile, 2rem desktop (24px/32px)
-                      fontWeight: tokens.typography.fontWeight.extrabold || 800,
+                      fontSize: isMobile ? '1.125rem' : '1.5rem', // h2: 1.125rem mobile, 1.5rem desktop (18px/24px)
+                      fontWeight: tokens.typography.fontWeight.bold || 700,
                       color: tokens.colors.gray[900],
-                      lineHeight: '1.2',
+                      lineHeight: '1.3',
                       margin: 0,
                 }}
               >
                 Enter Verification Code
-                  </h1>
+                  </h2>
               <p
                 style={{
-                      marginTop: '0.75rem',
-                      fontSize: isMobile ? '0.875rem' : '1rem', // 0.875rem mobile, 1rem desktop (14px/16px)
+                      marginTop: '0.5rem',
+                      fontSize: isMobile ? '0.875rem' : '0.9375rem', // 0.875rem mobile, 0.9375rem desktop (14px/15px)
                       color: tokens.colors.gray[600],
                       margin: 0,
                 }}
@@ -300,10 +440,10 @@ const AuthForm = ({
             <form
               onSubmit={stage === 'phone' ? handleSendOtp : handleVerifyOtp}
               style={{
-                marginTop: '2rem', // mt-8
+                marginTop: '1.5rem', // Reduced from 2rem for balanced spacing
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '1.5rem', // space-y-6
+                gap: '1.5rem', // space-y-6 - consistent gap
               }}
             >
             {stage === 'phone' && (
@@ -381,94 +521,60 @@ const AuthForm = ({
                     </p>
                   </div>
 
-                  {/* Checkboxes */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                    {/* Terms & Conditions */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', height: '1.25rem' }}>
-                        <input
-                          type="checkbox"
-                          id="terms"
-                          name="terms"
-                          checked={termsAccepted}
-                          onChange={(e) => setTermsAccepted(e.target.checked)}
-                          style={{
-                            height: '1.25rem', // h-5
-                            width: '1.25rem', // w-5
-                            borderRadius: tokens.borderRadius.sm,
-                            border: `1px solid ${tokens.colors.gray[300]}`,
-                            accentColor: tokens.colors.primary[500],
-                            cursor: 'pointer',
-                          }}
-                        />
-                      </div>
-                      <div style={{ marginLeft: '0.75rem' }}>
-                        <label
-                          htmlFor="terms"
-                          style={{
-                            fontSize: tokens.typography.fontSize.sm,
-                            color: tokens.colors.gray[600],
-                            cursor: 'pointer',
-                          }}
-                        >
-                          By proceeding, you agree with our{' '}
-                          <a
-                            href="#"
-                            style={{
-                              fontWeight: tokens.typography.fontWeight.semibold,
-                              color: tokens.colors.gray[800],
-                              textDecoration: 'underline',
-                            }}
-                          >
-                            Terms & Conditions
-                          </a>{' '}
-                          &{' '}
-                          <a
-                            href="#"
-                            style={{
-                              fontWeight: tokens.typography.fontWeight.semibold,
-                              color: tokens.colors.gray[800],
-                              textDecoration: 'underline',
-                            }}
-                          >
-                            Privacy Policy
-                          </a>
-                        </label>
-                      </div>
-                    </div>
-
-                    {/* WhatsApp Consent */}
-                    <div style={{ display: 'flex', alignItems: 'flex-start' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', height: '1.25rem' }}>
-                        <input
-                          type="checkbox"
-                          id="whatsapp"
-                          name="whatsapp"
-                          checked={whatsappConsent}
-                          onChange={(e) => setWhatsappConsent(e.target.checked)}
-                          style={{
-                            height: '1.25rem',
-                            width: '1.25rem',
-                            borderRadius: tokens.borderRadius.sm,
-                            border: `1px solid ${tokens.colors.gray[300]}`,
-                            accentColor: tokens.colors.primary[500],
-                            cursor: 'pointer',
-                          }}
-                />
-              </div>
-                      <div style={{ marginLeft: '0.75rem' }}>
-                        <label
-                          htmlFor="whatsapp"
-                          style={{
-                            fontSize: tokens.typography.fontSize.sm,
-                            color: tokens.colors.gray[600],
-                            cursor: 'pointer',
-                          }}
-                        >
-                          I agree to receive updates on Whatsapp
-                        </label>
-                      </div>
-                    </div>
+                  {/* Single Consent Checkbox */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem' }}>
+                    <input
+                      type="checkbox"
+                      id="consent"
+                      name="consent"
+                      checked={consentAccepted}
+                      onChange={(e) => setConsentAccepted(e.target.checked)}
+                      style={{
+                        height: '1.25rem',
+                        width: '1.25rem',
+                        borderRadius: tokens.borderRadius.sm,
+                        border: `1px solid ${tokens.colors.gray[300]}`,
+                        accentColor: tokens.colors.primary[500],
+                        cursor: 'pointer',
+                        flexShrink: 0,
+                        marginTop: '0.125rem',
+                      }}
+                    />
+                    <label
+                      htmlFor="consent"
+                      style={{
+                        fontSize: isMobile ? tokens.typography.fontSize.xs : tokens.typography.fontSize.sm,
+                        color: tokens.colors.gray[600],
+                        cursor: 'pointer',
+                        lineHeight: '1.5',
+                      }}
+                    >
+                      I agree to the terms and provide my consent{' '}
+                      <button
+                        type="button"
+                        onClick={() => setIsModalOpen(true)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: tokens.colors.primary[600],
+                          cursor: 'pointer',
+                          textDecoration: 'underline',
+                          fontWeight: tokens.typography.fontWeight.semibold,
+                          fontSize: 'inherit',
+                          padding: '0',
+                          display: 'inline',
+                          verticalAlign: 'baseline',
+                        }}
+                        onMouseEnter={(e) => {
+                          e.target.style.color = tokens.colors.primary[700];
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.color = tokens.colors.primary[600];
+                        }}
+                      >
+                        (Read terms)
+                      </button>
+                    </label>
                   </div>
                 </>
             )}
@@ -509,10 +615,10 @@ const AuthForm = ({
               type="submit"
               variant="primary"
               fullWidth
-                disabled={otpSending || otpVerifying || (stage === 'phone' && !termsAccepted)}
+              disabled={otpSending || otpVerifying || (stage === 'phone' && !consentAccepted)}
               loading={otpSending || otpVerifying}
             >
-                {stage === 'phone' && (otpSending ? 'Sending...' : 'Apply Now')}
+              {stage === 'phone' && (otpSending ? 'Sending...' : 'Apply Now')}
               {stage === 'otp' && (otpVerifying ? 'Verifying...' : 'Verify OTP')}
             </Button>
 
@@ -541,6 +647,9 @@ const AuthForm = ({
           </form>
           </div>
         </div>
+
+        {/* Consent Modal */}
+        <ConsentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </ThemeProvider>
     </ErrorBoundary>
   );
