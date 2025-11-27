@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { ThemeProvider } from '../../design-system/ThemeProvider';
 import { useFormTracking } from '../../hooks/useFormTracking';
+import { useResponsive } from '../../hooks/useResponsive';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -34,6 +35,8 @@ const getRecaptchaKey = () => {
 
 const RECAPTCHA_SITE_KEY = getRecaptchaKey();
 
+const FORM_FIELD_KEYS = Object.keys(form2Schema).filter((key) => key !== 'steps');
+
 const Form2 = ({ 
   theme = 'light',
   title = 'Quick Eligibility Check',
@@ -47,6 +50,10 @@ const Form2 = ({
   const [ReCAPTCHA, setReCAPTCHA] = useState(null);
   const [recaptchaError, setRecaptchaError] = useState(false);
   const [autoPopulatedFields, setAutoPopulatedFields] = useState(new Set());
+  const [prefillStatus, setPrefillStatus] = useState('idle'); // idle | loading | success | error | not_found
+  const [prefillMessage, setPrefillMessage] = useState('');
+  const { windowWidth } = useResponsive();
+  const isMobile = windowWidth < 640;
 
   // Dynamically load ReCAPTCHA only if we have a valid key
   useEffect(() => {
@@ -68,13 +75,65 @@ const Form2 = ({
     trackSubmitError,
   } = useFormTracking('form2', formData);
 
-  // Check for encoded auth params on mount and pre-fill phone if present
+  // Helper to apply prefilled data
+  const applyPrefillData = useCallback((payload) => {
+    if (!payload || typeof payload !== 'object') {
+      return;
+    }
+
+    setFormData((prev) => {
+      const updated = { ...prev };
+
+      FORM_FIELD_KEYS.forEach((field) => {
+        if (Object.prototype.hasOwnProperty.call(payload, field)) {
+          let value = payload[field];
+          
+          if (value === null || value === undefined) {
+            return;
+          }
+          
+          updated[field] = value;
+        }
+      });
+
+      return updated;
+    });
+  }, []);
+
+  // Check for encoded auth params on mount and prefill if user exists
   useEffect(() => {
     const authParams = getAuthParamsFromUrl();
     if (authParams && authParams.authenticated && authParams.phone) {
-      // Phone is already authenticated - we don't need to store it in form2
-      // Just acknowledge that user is authenticated
+      // Try to prefill data from existing lead
+      setPrefillStatus('loading');
+      apiClient.get('/api/leads/lookup', {
+        params: {
+          phone: authParams.phone,
+          formType: 'form2',
+        },
+      })
+        .then((response) => {
+          const leadData = response?.data || response;
+          if (leadData && typeof leadData === 'object') {
+            applyPrefillData(leadData);
+            setPrefillStatus('success');
+            setPrefillMessage('We found your previous details and filled them in. Please review and update if required.');
+          } else {
+            setPrefillStatus('not_found');
+          }
+        })
+        .catch((error) => {
+          const errorMessage = error?.message || 'Unable to fetch your existing details.';
+          if (errorMessage.toLowerCase().includes('not found')) {
+            setPrefillStatus('not_found');
+            setPrefillMessage('');
+          } else {
+            setPrefillStatus('error');
+            setPrefillMessage(errorMessage);
+          }
+        });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleChange = useCallback((e) => {
@@ -363,21 +422,90 @@ const Form2 = ({
   return (
     <ErrorBoundary>
       <ThemeProvider theme={theme}>
-        <div style={{ maxWidth: '42rem', margin: '0 auto', padding: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: description ? '0.75rem' : '1.5rem' }}>
+        <div
+          style={{
+            width: '100%',
+            maxWidth: '42rem',
+            margin: '0 auto',
+            padding: isMobile ? '1rem' : '1.5rem',
+          }}
+        >
+          <h2
+            style={{
+              fontSize: isMobile ? '1.25rem' : '1.5rem',
+              fontWeight: 700,
+              marginBottom: description ? (isMobile ? '0.5rem' : '0.75rem') : (isMobile ? '1rem' : '1.5rem'),
+              textAlign: isMobile ? 'center' : 'left',
+            }}
+          >
             {title}
           </h2>
           
           {description && (
             <p
               style={{
-                fontSize: '0.9375rem',
+                fontSize: isMobile ? '0.875rem' : '0.9375rem',
                 color: '#656c77',
-                marginBottom: '1.5rem',
+                marginBottom: isMobile ? '1rem' : '1.5rem',
+                textAlign: isMobile ? 'center' : 'left',
               }}
             >
               {description}
             </p>
+          )}
+
+          {prefillStatus === 'success' && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#ecfdf5',
+                border: '1px solid #34d399',
+                color: '#064e3b',
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Details auto-filled</strong>
+              <span style={{ fontSize: '0.875rem' }}>
+                {prefillMessage || 'We found an existing application and pre-filled your information. Please review and confirm.'}
+              </span>
+            </div>
+          )}
+
+          {prefillStatus === 'error' && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#fef2f2',
+                border: '1px solid #f87171',
+                color: '#991b1b',
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Unable to auto-fill</strong>
+              <span style={{ fontSize: '0.875rem' }}>
+                {prefillMessage || 'We could not fetch your existing information. Please continue by entering your details.'}
+              </span>
+            </div>
+          )}
+
+          {prefillStatus === 'not_found' && (
+            <div
+              style={{
+                marginBottom: '1rem',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#f3f4f6',
+                border: '1px solid #e5e7eb',
+                color: '#374151',
+              }}
+            >
+              <strong style={{ display: 'block', marginBottom: '0.25rem' }}>Let's get your details</strong>
+              <span style={{ fontSize: '0.875rem' }}>
+                We could not find an existing application for this number. Please fill in your information to continue.
+              </span>
+            </div>
           )}
 
           <form onSubmit={handleSubmit}>
