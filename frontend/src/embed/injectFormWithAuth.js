@@ -62,20 +62,87 @@ if (script) {
 (function() {
   'use strict';
 
+  // Helper function to find the correct script tag
+  // This is more reliable than just using document.querySelector when multiple script tags exist
+  const findScriptTag = () => {
+    // First, try document.currentScript (most reliable when available)
+    if (document.currentScript) {
+      return document.currentScript;
+    }
+
+    // If currentScript is not available, find script by source URL
+    // This ensures we get the correct script tag even when multiple exist
+    const allScripts = Array.from(document.querySelectorAll('script[src*="injectFormWithAuth.js"]'));
+    
+    if (allScripts.length === 0) {
+      // Fallback: try to find any script with data-form attribute
+      return document.querySelector('script[data-form]');
+    }
+    
+    if (allScripts.length === 1) {
+      // Only one script tag, use it
+      return allScripts[0];
+    }
+    
+    // Multiple script tags - try to find the one that matches its container
+    // This handles the case where multiple forms are on the same page
+    for (const script of allScripts) {
+      const containerId = script.getAttribute('data-container') || 'pw-form';
+      const container = document.getElementById(containerId);
+      
+      if (container) {
+        // Check if this script is near its container in the DOM
+        // This helps identify which script tag belongs to which container
+        let current = script;
+        let found = false;
+        const maxChecks = 100; // Max DOM nodes to check
+        
+        for (let i = 0; i < maxChecks && current; i++) {
+          // Check if container is a sibling or nearby
+          if (current.nextElementSibling === container || 
+              current.previousElementSibling === container ||
+              (current.parentElement && current.parentElement.contains(container))) {
+            found = true;
+            break;
+          }
+          current = current.parentElement;
+        }
+        
+        if (found) {
+          return script;
+        }
+      }
+    }
+    
+    // If we can't determine which one, return the last one (most recently added)
+    // Log a warning to help debug
+    console.warn('PW Forms: Multiple script tags found, using the last one. Consider using unique container IDs for each form.');
+    return allScripts[allScripts.length - 1];
+  };
+
   // Get configuration from script tag
-  const scriptTag = document.currentScript || 
-    document.querySelector('script[data-form]');
+  const scriptTag = findScriptTag();
   
   if (!scriptTag) {
     console.error('PW Forms: Script tag not found');
     return;
   }
 
-  const formType = scriptTag.getAttribute('data-form') || 'form1';
+  // Get form type and normalize to lowercase to handle case sensitivity
+  let formType = scriptTag.getAttribute('data-form');
+  if (formType) {
+    formType = formType.toLowerCase().trim();
+  } else {
+    formType = 'form1';
+  }
+
   const theme = scriptTag.getAttribute('data-theme') || 'light';
   const containerId = scriptTag.getAttribute('data-container') || 'pw-form';
   const title = scriptTag.getAttribute('data-title') || undefined;
   const description = scriptTag.getAttribute('data-description') || undefined;
+
+  // Debug logging (helpful for troubleshooting)
+  console.log('PW Forms: Initializing with:', { formType, theme, containerId });
 
   // Find container element
   const container = document.getElementById(containerId);
