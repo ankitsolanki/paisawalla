@@ -10,142 +10,167 @@ import { useResponsive } from '../hooks/useResponsive';
 import { tokens } from '../design-system/tokens';
 
 /**
- * ConsentModal Component
- * Displays the consent and authorization terms in a modal
+ * ConsentAccordion Component
+ * Displays the consent and authorization terms in an expandable/collapsible accordion
  * Fully responsive across all resolutions
  */
-const ConsentModal = ({ isOpen, onClose }) => {
+const ConsentAccordion = ({ isOpen, onToggle }) => {
   const { windowWidth } = useResponsive();
   
-  if (!isOpen) return null;
-
   // Responsive values
   const isMobileView = windowWidth < 640;
   const isTabletView = windowWidth >= 640 && windowWidth < 1024;
   
-  const modalPadding = isMobileView ? '1.5rem' : isTabletView ? '1.75rem' : '2rem';
-  const modalMaxWidth = isMobileView ? 'calc(100vw - 2rem)' : isTabletView ? '90vw' : '500px';
-  const titleFontSize = isMobileView ? '1.1rem' : isTabletView ? '1.25rem' : '1.375rem';
+  const accordionPadding = isMobileView ? '1rem' : isTabletView ? '1.25rem' : '1.5rem';
+  const titleFontSize = isMobileView ? '1rem' : isTabletView ? '1.125rem' : '1.25rem';
   const contentFontSize = isMobileView ? tokens.typography.fontSize.xs : tokens.typography.fontSize.sm;
   const contentLineHeight = isMobileView ? '1.5' : '1.6';
-  const contentMargin = isMobileView ? '0 0 1rem 0' : '0 0 1.25rem 0';
-  const closeButtonSize = isMobileView ? '1.75rem' : '2rem';
-  const closeButtonFontSize = isMobileView ? '1.25rem' : '1.5rem';
+  const contentMargin = isMobileView ? '0 0 0.75rem 0' : '0 0 1rem 0';
+
+  if (!isOpen) return null;
 
   return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
+    <div
+      style={{
+        marginTop: '0.75rem',
+        border: `1px solid ${tokens.colors.gray[200]}`,
+        borderRadius: tokens.borderRadius.md,
+        backgroundColor: tokens.colors.gray[50],
+        overflow: 'hidden',
+        transition: 'all 0.3s ease',
+      }}
+    >
+      {/* Accordion Header */}
+      <button
+        type="button"
+        onClick={onToggle}
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          width: '100%',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 999,
-          padding: isMobileView ? '0.75rem' : '1rem',
+          justifyContent: 'space-between',
+          padding: accordionPadding,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
         }}
+        aria-expanded={isOpen}
+        aria-controls="consent-accordion-content"
       >
-        {/* Modal */}
-        <div
-          onClick={(e) => e.stopPropagation()}
+        <h3
           style={{
-            backgroundColor: 'white',
-            borderRadius: tokens.borderRadius.lg,
-            padding: modalPadding,
-            maxWidth: modalMaxWidth,
-            width: '100%',
-            maxHeight: isMobileView ? '90vh' : '85vh',
-            minHeight: 'auto',
-            overflowY: 'auto',
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
-            zIndex: 1000,
-            display: 'flex',
-            flexDirection: 'column',
+            fontSize: titleFontSize,
+            fontWeight: tokens.typography.fontWeight.semibold,
+            color: tokens.colors.gray[900],
+            margin: 0,
+            lineHeight: '1.3',
           }}
         >
-          {/* Close Button */}
-          <button
-            onClick={onClose}
-            style={{
-              alignSelf: 'flex-end',
-              background: 'none',
-              border: 'none',
-              fontSize: closeButtonFontSize,
-              cursor: 'pointer',
-              padding: '0.25rem',
-              width: closeButtonSize,
-              height: closeButtonSize,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: tokens.colors.gray[500],
-              marginBottom: isMobileView ? '0.5rem' : '0.75rem',
-              transition: 'color 0.2s ease',
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.color = tokens.colors.gray[700];
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.color = tokens.colors.gray[500];
-            }}
-            aria-label="Close modal"
-          >
-            ✕
-          </button>
+          Consent & Authorization
+        </h3>
+        <span
+          style={{
+            fontSize: '1.25rem',
+            color: tokens.colors.gray[500],
+            transition: 'color 0.2s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            marginLeft: '0.75rem',
+            fontWeight: tokens.typography.fontWeight.medium,
+          }}
+          aria-hidden="true"
+          onMouseEnter={(e) => {
+            e.target.style.color = tokens.colors.gray[700];
+          }}
+          onMouseLeave={(e) => {
+            e.target.style.color = tokens.colors.gray[500];
+          }}
+        >
+          ✕
+        </span>
+      </button>
 
-          {/* Title */}
-          <h2
-            style={{
-              fontSize: titleFontSize,
-              fontWeight: tokens.typography.fontWeight.bold,
-              color: tokens.colors.gray[900],
-              marginBottom: isMobileView ? '1rem' : isTabletView ? '1.25rem' : '1.5rem',
-              marginTop: 0,
-              lineHeight: '1.3',
-            }}
-          >
-            Consent & Authorization
-          </h2>
-
-          {/* Content */}
-          <div
-            style={{
-              flex: 1,
-              fontSize: contentFontSize,
-              color: tokens.colors.gray[700],
-              lineHeight: contentLineHeight,
-              overflowY: 'auto',
-              marginBottom: isMobileView ? '1rem' : '1.25rem',
-            }}
-          >
-            <p style={{ margin: contentMargin }}>
-              I hereby authorize Paisawaala as my representative to obtain my Credit Information
-              from Experian (Experian Terms and Condition) and I authorize Experian to share my
-              credit data with Paisawaala. I also agree to be contacted by Paisawaala and its
-              representatives via call, SMS, RCS, email and WhatsApp regarding its products and
-              other linked products as per the Terms & Conditions and Privacy Policy.
-            </p>
-          </div>
-
-          {/* Action Button */}
-          <div style={{ marginTop: 'auto' }}>
-            <Button
-              onClick={onClose}
-              variant="primary"
-              fullWidth
+      {/* Accordion Content */}
+      <div
+        id="consent-accordion-content"
+        style={{
+          maxHeight: isOpen ? '1000px' : '0',
+          overflow: 'hidden',
+          transition: 'max-height 0.3s ease, padding 0.3s ease',
+          padding: isOpen ? `0 ${accordionPadding} ${accordionPadding} ${accordionPadding}` : '0',
+        }}
+      >
+        <div
+          style={{
+            fontSize: contentFontSize,
+            color: tokens.colors.gray[700],
+            lineHeight: contentLineHeight,
+          }}
+        >
+          <p style={{ margin: contentMargin }}>
+            I hereby authorize Paisawaala as my representative to obtain my Credit Information
+            from Experian (
+            <a
+              href="/experian-consumer-consent"
+              style={{
+                color: tokens.colors.primary[600],
+                textDecoration: 'underline',
+                fontWeight: tokens.typography.fontWeight.medium,
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = tokens.colors.primary[700];
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = tokens.colors.primary[600];
+              }}
             >
-              I Understand
-            </Button>
-          </div>
+              Experian Terms and Condition
+            </a>
+            ) and I authorize Experian to share my
+            credit data with Paisawaala. I also agree to be contacted by Paisawaala and its
+            representatives via call, SMS, RCS, email and WhatsApp regarding its products and
+            other linked products as per the{' '}
+            <a
+              href="/terms-of-use"
+              style={{
+                color: tokens.colors.primary[600],
+                textDecoration: 'underline',
+                fontWeight: tokens.typography.fontWeight.medium,
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = tokens.colors.primary[700];
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = tokens.colors.primary[600];
+              }}
+            >
+              Terms & Conditions
+            </a>{' '}
+            and{' '}
+            <a
+              href="/privacy-policy"
+              style={{
+                color: tokens.colors.primary[600],
+                textDecoration: 'underline',
+                fontWeight: tokens.typography.fontWeight.medium,
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = tokens.colors.primary[700];
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = tokens.colors.primary[600];
+              }}
+            >
+              Privacy Policy
+            </a>
+            .
+          </p>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
@@ -359,7 +384,7 @@ const AuthForm = ({
   }, []);
 
   const [consentAccepted, setConsentAccepted] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
 
   return (
     <ErrorBoundary>
@@ -552,7 +577,7 @@ const AuthForm = ({
                       I agree to the terms and provide my consent{' '}
                       <button
                         type="button"
-                        onClick={() => setIsModalOpen(true)}
+                        onClick={() => setIsAccordionOpen(!isAccordionOpen)}
                         style={{
                           background: 'none',
                           border: 'none',
@@ -576,6 +601,12 @@ const AuthForm = ({
                       </button>
                     </label>
                   </div>
+
+                  {/* Consent Accordion */}
+                  <ConsentAccordion 
+                    isOpen={isAccordionOpen} 
+                    onToggle={() => setIsAccordionOpen(!isAccordionOpen)} 
+                  />
                 </>
             )}
 
@@ -647,9 +678,6 @@ const AuthForm = ({
           </form>
           </div>
         </div>
-
-        {/* Consent Modal */}
-        <ConsentModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       </ThemeProvider>
     </ErrorBoundary>
   );
