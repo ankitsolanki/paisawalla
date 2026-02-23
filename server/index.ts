@@ -76,21 +76,19 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
+  // When API_ONLY=true, run backend only (no Vite/static) for split dev setup.
+  // Otherwise in production serve static, in development use Vite.
+  const apiOnly = process.env.API_ONLY === "true";
+  if (!apiOnly) {
+    if (process.env.NODE_ENV === "production") {
+      serveStatic(app);
+    } else {
+      const { setupVite } = await import("./vite");
+      await setupVite(httpServer, app);
+    }
   }
 
-  // ALWAYS serve the app on the port specified in the environment variable PORT
-  // Other ports are firewalled. Default to 5000 if not specified.
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || "5000", 10);
+  const port = parseInt(process.env.PORT || "2525", 10);
   httpServer.listen(
     {
       port,
@@ -119,7 +117,7 @@ function startPaisawallaBackend() {
     ...process.env,
     PORT: backendPort,
     NODE_ENV: process.env.NODE_ENV || "development",
-    CORS_ORIGIN: `http://localhost:5000,http://0.0.0.0:5000`,
+    CORS_ORIGIN: `http://localhost:2525,http://localhost:2526,http://0.0.0.0:2525,http://0.0.0.0:2526`,
   };
 
   const child = spawn("node", ["src/app.js"], {

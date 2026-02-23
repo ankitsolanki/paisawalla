@@ -390,7 +390,7 @@ class AnalyticsService {
         const apiUrl = 
           (typeof window !== 'undefined' && window.VITE_API_BASE_URL) ||
           import.meta.env.VITE_API_BASE_URL || 
-          'http://localhost:3000';
+          '';
         
         // Use Blob with proper content-type to avoid CORS issues
         const blob = new Blob([data], { type: 'application/json' });

@@ -30,7 +30,7 @@ function OffersDemo({ theme, version = 'v1' }: { theme: string; version?: 'v1' |
     setSeeding(true);
     setSeedStatus('idle');
     try {
-      const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000';
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
       const res = await fetch(`${apiBase}/api/test-variants/seed`, { method: 'POST' });
       if (res.ok) {
         setSeedStatus('success');

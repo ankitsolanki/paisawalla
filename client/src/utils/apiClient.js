@@ -4,7 +4,8 @@ import { retryWithBackoff } from './retry';
 const getApiBaseUrl = () => {
   if (typeof window !== 'undefined' && window.VITE_API_BASE_URL) return window.VITE_API_BASE_URL;
   if (import.meta.env.VITE_API_BASE_URL) return import.meta.env.VITE_API_BASE_URL;
-  return 'http://localhost:3000';
+  // Use same origin in dev (Vite proxies /api to backend) and when not configured
+  return '';
 };
 
 const API_BASE_URL = getApiBaseUrl();
