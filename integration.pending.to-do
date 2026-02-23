@@ -1,0 +1,362 @@
+# Integration Pending - Experian APIs
+# ====================================
+# Last updated: Feb 18, 2026
+# Status: ECV working, BRE pending Experian team response
+# Contact: Experian team has been reached out to for BRE provisioning
+
+
+## ============================================================
+## 1. EXPERIAN OAUTH2 TOKEN (WORKING)
+## ============================================================
+
+Endpoint: POST https://uat-in-api.experian.com/oauth2/v1/token
+Content-Type: application/x-www-form-urlencoded
+Status: WORKING
+
+Request body (form-urlencoded):
+  grant_type=password
+  client_id=${EXPERIAN_CLIENT_ID}
+  client_secret=${EXPERIAN_CLIENT_SECRET}
+  username=${EXPERIAN_USERNAME}
+  password=${EXPERIAN_PASSWORD}
+
+Response: { access_token: "...", expires_in: 1800 }
+
+Implementation: paisawalla/backend/src/services/experianTokenService.js
+  - Caches token for 28 minutes (1680s) out of 30-min expiry
+  - Auto-refreshes on expiry
+  - Deduplicates concurrent token requests
+  - Invalidates on 401 response from any API call
+
+Working curl:
+  curl -X POST "https://uat-in-api.experian.com/oauth2/v1/token" \
+    -H "Content-Type: application/x-www-form-urlencoded" \
+    -d "grant_type=password&client_id=${EXPERIAN_CLIENT_ID}&client_secret=${EXPERIAN_CLIENT_SECRET}&username=${EXPERIAN_USERNAME}&password=${EXPERIAN_PASSWORD}"
+
+
+## ============================================================
+## 2. EXPERIAN ECV - Enhanced Credit View (WORKING)
+## ============================================================
+
+### 2a. Registration / Enhanced Match (WORKING)
+
+Endpoint: POST https://uat-in-api.experian.com/ecs/ecv-api/v1/enhanced-match
+Content-Type: application/x-www-form-urlencoded
+Authorization: Bearer ${token}
+Status: WORKING
+
+IMPORTANT URL NOTES:
+  - CORRECT endpoint: /ecs/ecv-api/v1/enhanced-match
+  - WRONG (tried first): /ecs/ecv-api/v1/register-enhanced-match-mobile-otp (returned "Validation with Experian Failed")
+  - WRONG (tried second): /ecs/ecv-api/v1/register-enhanced-matchmobile-otp (returned HTTP 500)
+  - The working URL was found from the user's Postman collection
+
+Request params (form-urlencoded):
+  clientName=UNIMOBILE_EM          (from env: EXPERIAN_CLIENT_NAME)
+  allowInput=1
+  allowEdit=1
+  allowCaptcha=1
+  allowConsent=1
+  allowEmailVerify=1
+  allowVoucher=1
+  voucherCode=TestOWW8H            (from env: EXPERIAN_VOUCHER_CODE)
+  firstName=Adrian
+  surName=Fernandes
+  mobileNo=9769051199
+  email=adrian.fernandes@theunimobile.com
+  reason=Find out my credit score
+  noValidationByPass=0
+  emailConditionalByPass=1
+  pan=SCXPF1234J                   (NOTE: ends with J, not I)
+
+Response fields (IMPORTANT - has trailing underscores):
+  {
+    "errorString": null,
+    "stageOneId_": "5096048",      <-- NOT "stgOneHitId"
+    "stageTwoId_": "4346655",      <-- NOT "stgTwoHitId"
+    "showHtmlReportForCreditReport": ...,
+    "newUserId": 1857728,
+    "subscriptionMsg": null
+  }
+
+Implementation: paisawalla/backend/src/services/experianEcvService.js (register method)
+  - Maps stageOneId_ -> stgOneHitId, stageTwoId_ -> stgTwoHitId internally
+  - Also captures newUserId
+
+Working curl:
+  curl -X POST 'https://uat-in-api.experian.com/ecs/ecv-api/v1/enhanced-match' \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -H 'Authorization: Bearer ${TOKEN}' \
+    --data-urlencode 'clientName=UNIMOBILE_EM' \
+    --data-urlencode 'allowInput=1' \
+    --data-urlencode 'allowEdit=1' \
+    --data-urlencode 'allowCaptcha=1' \
+    --data-urlencode 'allowConsent=1' \
+    --data-urlencode 'allowEmailVerify=1' \
+    --data-urlencode 'allowVoucher=1' \
+    --data-urlencode 'voucherCode=TestOWW8H' \
+    --data-urlencode 'firstName=Adrian' \
+    --data-urlencode 'surName=Fernandes' \
+    --data-urlencode 'mobileNo=9769051199' \
+    --data-urlencode 'email=adrian.fernandes@theunimobile.com' \
+    --data-urlencode 'reason=Find out my credit score' \
+    --data-urlencode 'noValidationByPass=0' \
+    --data-urlencode 'emailConditionalByPass=1' \
+    --data-urlencode 'pan=SCXPF1234J' \
+    --data-urlencode '='
+
+
+### 2b. Generate OTP (WORKING - but user will provide separate OTP endpoint)
+
+Endpoint: POST https://uat-in-api.experian.com/ecs/ecv-api/v1/generate-mobile-otp
+Content-Type: application/x-www-form-urlencoded
+Authorization: Bearer ${token}
+Status: WORKING (but will be replaced with user-provided OTP endpoint)
+
+Request params (form-urlencoded):
+  stgOneHitId=${stageOneId from registration}
+  stgTwoHitId=${stageTwoId from registration}
+  mobileNo=${phone}
+  type=CUSTOM
+
+NOTE: User said we do NOT need Experian's OTP for ECV. A separate OTP endpoint
+will be provided later. The ECV flow will use that separate endpoint instead.
+
+Implementation: paisawalla/backend/src/services/experianEcvService.js (generateOtp method)
+
+
+### 2c. Validate OTP (WORKING - but will be replaced with separate endpoint)
+
+Endpoint: POST https://uat-in-api.experian.com/ecs/ecv-api/v1/validate-mobile-otp
+Content-Type: application/x-www-form-urlencoded
+Authorization: Bearer ${token}
+Status: WORKING (but will be replaced with user-provided OTP endpoint)
+
+Request params (form-urlencoded):
+  stgOneHitId=${stageOneId}
+  stgTwoHitId=${stageTwoId}
+  otp=${otp}
+  mobileNo=${phone}
+  type=CUSTOM
+
+Response: OTP verified, but creditScore was null with test OTP 123456.
+  Real OTP (sent to phone) would likely return actual credit report.
+
+NOTE: Same as above - will be replaced with separate OTP endpoint from user.
+
+Implementation: paisawalla/backend/src/services/experianEcvService.js (validateOtp method)
+
+
+### 2d. Other ECV endpoints (NOT YET TESTED)
+
+On-Demand Refresh:
+  POST https://uat-in-api.experian.com/ecs/ecv-api/v1/ondemand-refresh
+  Params: clientName, hitId
+
+Generate Masked Mobile:
+  POST https://uat-in-api.experian.com/ecs/ecv-api/v1/generate-masked-mobile
+  Params: stgOneHitId, stgTwoHitId, clientName
+
+
+## ============================================================
+## 3. EXPERIAN BRE - Business Rules Engine (PENDING)
+## ============================================================
+
+Status: PENDING - returned 401 Unauthorized when tested
+Likely cause: BRE product not yet provisioned on the UAT account, or
+  different credentials/path needed
+
+### 3a. NewApp - Submit new application for lender decisioning
+
+Endpoint: POST https://uat-in-api.experian.com/decisionanalytics/experianone/nps6t36gvswc/services/v1/applications/NewApp
+Content-Type: application/json
+Authorization: Bearer ${token}
+x-user-domain: theunimobile.com
+X-Correlation-Id: ${uuid}
+Status: PENDING (401 Unauthorized)
+
+Request payload structure:
+  {
+    "DV-Application": { "ServiceID": "NewApp" },
+    "DV-Applicant": {
+      "Applicant": [{
+        "ApplicantType": "Primary",
+        "ApplicantCategory": "Individual",
+        "ExistingCustomer": "N",
+        "Title": "Mr.",
+        "FirstName": "...",
+        "LastName": "...",
+        "DateOfBirth": "DDMMYYYY",
+        "Gender": "Male/Female",
+        "PhoneMobile": "...",
+        "EmailId": "...",
+        "BankAccount": [{ "AccountType": "S", "AccountNumber": "...", "IFSCCode": "...", "BankName": "..." }],
+        "Address": [{ "AddressLine1": "...", "City": "...", "Pincode": "...", "State": "..." }],
+        "Identification": [{ "IdentificationType": "PAN", "IdentificationNumber": "..." }],
+        "Employment": [{ "EmploymentStatus": "Salaried", "EmployerName": "...", "GrossIncome": ..., "TakeHomeSalary": ... }]
+      }]
+    },
+    "DV-Product": {
+      "Product": [{
+        "ProductType": "PL",
+        "ProductID": "PL",
+        "AppliedAmount": ...,
+        "TenureMonths": ...,
+        "PurposeOfLoan": "..."
+      }]
+    },
+    "DV-Collateral": {
+      "Collateral": [{ ... }]
+    }
+  }
+
+Expected response structure (based on Experian docs):
+  {
+    "serviceContextId": "...",
+    "data": {
+      "DV-Application": {
+        "ApplicationID": "...",
+        "ApplicationStatus": "...",
+        "ApplicationStage": "...",
+        "StrategyName": "...",
+        "ErrorCount": "0",
+        ...
+      },
+      "DV-Applicant": {
+        "Applicant": [{
+          "LenderEligibility": [{
+            "Name": "Lender Name",
+            "LoanAmount": "...",
+            "Tenure": "...",
+            "ROI": "...",
+            "Decision": {
+              "DecisionText": "...",
+              "DecisionCategory": "Approve/Ineligible",
+              "SortedReasonCodeTable": [...],
+              "ReasonCodeDescription": [...]
+            }
+          }]
+        }]
+      },
+      "DV-CreditReport": {
+        "Applicant": [{
+          "CreditReport": [{
+            "BureauCalled": "...",
+            "Bureau_Score": "...",
+            "NTCFlag": "..."
+          }]
+        }]
+      }
+    }
+  }
+
+Implementation:
+  - Service: paisawalla/backend/src/services/breService.js
+  - Controller: paisawalla/backend/src/controllers/breController.js
+  - Model: paisawalla/backend/src/models/BreSession.js
+
+QUESTIONS FOR EXPERIAN TEAM:
+  1. Is the BRE endpoint URL correct? /decisionanalytics/experianone/nps6t36gvswc/services/v1/applications/NewApp
+  2. Does BRE use the same OAuth token as ECV, or different credentials?
+  3. Is the x-user-domain header correct as "theunimobile.com"?
+  4. Is the BRE product provisioned on the UAT account?
+  5. Can you provide a working curl for BRE NewApp (like the ECV enhanced-match curl)?
+  6. What is the correct payload structure - does it match the DV-Application/DV-Applicant/DV-Product/DV-Collateral format above?
+
+
+### 3b. ContinueApp (NOT TESTED)
+
+Endpoint: POST https://uat-in-api.experian.com/.../v1/applications/update/ContinueApp
+Implementation: breService.js (continueApp method)
+
+
+### 3c. CustomerDecision (NOT TESTED)
+
+Endpoint: POST https://uat-in-api.experian.com/.../v1/applications/update/CustomerDecision
+Implementation: breService.js (customerDecision method)
+
+
+### 3d. AppQuery (NOT TESTED)
+
+Endpoint: POST https://uat-in-api.experian.com/.../v1/applications/search/AppQuery
+Implementation: breService.js (queryApplication method)
+
+
+## ============================================================
+## 4. SEPARATE OTP ENDPOINT (PENDING - user will provide)
+## ============================================================
+
+Status: PENDING - user will provide the endpoint details later
+Purpose: Used for OTP verification in the ECV credit score journey
+  (instead of Experian's own generate-mobile-otp / validate-mobile-otp)
+
+When received, update:
+  - paisawalla/backend/src/services/experianEcvService.js (generateOtp, validateOtp methods)
+  - paisawalla/backend/src/controllers/ecvController.js
+  - Possibly create a new OTP service file
+
+
+## ============================================================
+## 5. ENVIRONMENT VARIABLES
+## ============================================================
+
+All stored as environment variables / secrets:
+  EXPERIAN_CLIENT_ID        - OAuth client ID (set)
+  EXPERIAN_CLIENT_SECRET    - OAuth client secret (set)
+  EXPERIAN_USERNAME         - API username (set)
+  EXPERIAN_PASSWORD         - API password (set)
+  EXPERIAN_CLIENT_NAME      - "UNIMOBILE_EM" (set)
+  EXPERIAN_VOUCHER_CODE     - "TestOWW8H" (set)
+
+Defaults in code (env vars optional):
+  EXPERIAN_BASE_URL         - default: https://uat-in-api.experian.com
+  EXPERIAN_BRE_BASE_URL     - default: https://uat-in-api.experian.com
+  EXPERIAN_BRE_PATH         - default: /decisionanalytics/experianone/nps6t36gvswc/services
+  EXPERIAN_USER_DOMAIN      - default: theunimobile.com
+
+
+## ============================================================
+## 6. TEST DATA
+## ============================================================
+
+Test person:
+  Name: Adrian Fernandes
+  DOB: 16011984 (DDMMYYYY format)
+  PAN: SCXPF1234J (ends with J, NOT I)
+  Phone: 9769051199
+  Email: adrian.fernandes@theunimobile.com
+
+Test OTP: 123456 (hardcoded in our auth system for testing)
+
+Test lead/application created in MongoDB for integration testing.
+
+
+## ============================================================
+## 7. KEY LEARNINGS & GOTCHAS
+## ============================================================
+
+1. ECV endpoint naming is NOT intuitive:
+   - The working endpoint is just "enhanced-match", not any variation of
+     "register-enhanced-match-mobile-otp" or "register-enhanced-matchmobile-otp"
+
+2. ECV response field names have TRAILING UNDERSCORES:
+   - stageOneId_ (not stgOneHitId or stageOneId)
+   - stageTwoId_ (not stgTwoHitId or stageTwoId)
+
+3. Content-Type matters:
+   - ECV: application/x-www-form-urlencoded (body is URLSearchParams)
+   - BRE: application/json (body is JSON)
+   - Token: application/x-www-form-urlencoded
+
+4. The working ECV curl has a trailing --data-urlencode '=' parameter
+
+5. PAN value in test data is SCXPF1234J (J at end), not SCXPF1234I (I at end)
+
+6. Port mapping: local 3001 -> external 3000 (backend), local 5000 -> external 80 (main app)
+
+7. Token expiry is 1800s (30 min), we cache for 1680s (28 min) to refresh early
+
+8. Experian UAT can be flaky - 500 errors may be temporary server issues on their side
+
+9. Cookie headers appeared in working curl (Incapsula WAF) but are NOT needed
+   when calling from server-side - those are browser-specific WAF cookies
