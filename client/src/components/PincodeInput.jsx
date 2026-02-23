@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import Input from './ui/Input';
+import Input from './ui/CustomInput';
 
 const PincodeInput = ({
   label,

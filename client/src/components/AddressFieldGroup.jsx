@@ -1,5 +1,5 @@
-import Input from './ui/Input';
-import Select from './ui/Select';
+import Input from './ui/CustomInput';
+import Select from './ui/CustomSelect';
 import PincodeInput from './PincodeInput';
 
 const AddressFieldGroup = ({

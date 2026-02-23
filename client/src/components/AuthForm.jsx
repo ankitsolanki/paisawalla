@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import ErrorBoundary from './ui/ErrorBoundary';
-import Button from './ui/Button';
-import Input from './ui/Input';
+import Button from './ui/CustomButton';
+import Input from './ui/CustomInput';
 import { validateField } from '../utils/validationRules';
 import apiClient from '../utils/apiClient';
 import { buildUrlWithAuthParams } from '../utils/queryEncoder';

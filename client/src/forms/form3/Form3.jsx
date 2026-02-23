@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useFormTracking } from '../../hooks/useFormTracking';
 import ErrorBoundary from '../../components/ui/ErrorBoundary';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import Select from '../../components/ui/Select';
+import Button from '../../components/ui/CustomButton';
+import Input from '../../components/ui/CustomInput';
+import Select from '../../components/ui/CustomSelect';
 import CurrencyInput from '../../components/ui/CurrencyInput';
 import PincodeInput from '../../components/PincodeInput';
 import SubmitSuccess from '../../components/SubmitSuccess';

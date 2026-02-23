@@ -2,9 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { useFormTracking } from '../../hooks/useFormTracking';
 import ErrorBoundary from '../ui/ErrorBoundary';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import Button from '../ui/Button';
-import Input from '../ui/Input';
-import Select from '../ui/Select';
+import Button from '../ui/CustomButton';
+import Input from '../ui/CustomInput';
+import Select from '../ui/CustomSelect';
 
 const BaseForm = ({
   formType,
