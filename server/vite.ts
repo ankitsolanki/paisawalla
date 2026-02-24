@@ -31,6 +31,33 @@ export async function setupVite(server: Server, app: Express) {
 
   app.use(vite.middlewares);
 
+  // Expose stable embed script URLs in dev to match production paths
+  const embedEntries: Record<string, string> = {
+    "/injectForm.js": "/src/embed/injectForm.js",
+    "/injectAuth.js": "/src/embed/injectAuth.js",
+    "/injectOffers.js": "/src/embed/injectOffers.js",
+    "/injectFormWithAuth.js": "/src/embed/injectFormWithAuth.js",
+  };
+
+  for (const [publicPath, sourcePath] of Object.entries(embedEntries)) {
+    app.get(publicPath, async (_req, res, next) => {
+      try {
+        const result = await vite.transformRequest(sourcePath);
+
+        if (!result) {
+          return next();
+        }
+
+        res
+          .status(200)
+          .setHeader("Content-Type", "application/javascript")
+          .send(result.code);
+      } catch (e) {
+        next(e);
+      }
+    });
+  }
+
   app.use("/{*path}", async (req, res, next) => {
     const url = req.originalUrl;
 
