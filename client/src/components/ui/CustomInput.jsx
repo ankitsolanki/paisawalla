@@ -34,11 +34,11 @@ const Input = ({
       ? 'border-primary ring-2 ring-primary'
       : 'border-border';
 
-  const paddingClass = shouldFloatLabel ? 'pt-6 pb-2 px-5' : 'py-4 px-5';
+  const paddingClass = shouldFloatLabel ? 'pt-5 md:pt-6 pb-1.5 md:pb-2 px-3.5 md:px-5' : 'py-3.5 md:py-4 px-3.5 md:px-5';
   const disabledClass = disabled ? 'opacity-60 cursor-not-allowed' : '';
 
   return (
-    <div className={`relative ${fullWidth ? 'w-full' : ''} floating-label-group`}>
+    <div className={`relative ${fullWidth ? 'w-full' : ''} ${isDateInput ? 'overflow-hidden' : ''} floating-label-group`}>
       <input
         ref={inputRef}
         id={name}
@@ -59,16 +59,16 @@ const Input = ({
         disabled={disabled}
         autoCapitalize={name === 'panNumber' ? 'characters' : undefined}
         autoComplete={name === 'panNumber' ? 'off' : undefined}
-        className={`w-full rounded-xl border text-base outline-none transition-all duration-300 font-sans ${borderClass} ${paddingClass} ${disabledClass} ${(name === 'ssn' || name === 'panNumber') ? 'uppercase' : ''} ${isDateInput ? 'cursor-pointer' : ''} floating-input ${isDateInput ? 'date-input' : ''} ${className}`}
-        style={isDateInput && !isFocused && !hasValue ? { color: 'transparent' } : undefined}
+        className={`w-full rounded-xl border text-base outline-none transition-all duration-300 font-sans ${borderClass} ${paddingClass} ${disabledClass} ${(name === 'ssn' || name === 'panNumber') ? 'uppercase' : ''} ${isDateInput ? 'cursor-pointer pr-10 min-w-0' : ''} floating-input ${isDateInput ? 'date-input' : ''} ${className}`}
+        style={isDateInput ? { ...((!isFocused && !hasValue) ? { color: 'transparent' } : {}), boxSizing: 'border-box', maxWidth: '100%', WebkitAppearance: 'none' } : undefined}
         {...props}
       />
 
       {label && (
         <label
           htmlFor={name}
-          className={`absolute left-5 pointer-events-none transition-all duration-300 ${shouldFloatLabel ? 'text-xs text-primary' : 'text-base text-muted-foreground'}`}
-          style={{ top: shouldFloatLabel ? '0.5rem' : '1.25rem' }}
+          className={`absolute left-3.5 md:left-5 pointer-events-none transition-all duration-300 truncate max-w-[calc(100%-2rem)] ${shouldFloatLabel ? 'text-xs text-primary' : 'text-sm md:text-base text-muted-foreground'}`}
+          style={{ top: shouldFloatLabel ? '0.4rem' : '1rem' }}
         >
           {label}
           {required && <span className="text-destructive"> *</span>}

@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import ErrorBoundary from './ui/ErrorBoundary';
 import Button from './ui/CustomButton';
 import Input from './ui/CustomInput';
@@ -38,7 +38,7 @@ const ConsentNoticePanel = ({ isOpen, onToggle }) => {
         </span>
       </button>
 
-      <div className="max-h-[50vh] sm:max-h-[400px] overflow-y-auto p-4 sm:p-5 text-xs sm:text-sm text-muted-foreground leading-relaxed">
+      <div className="max-h-[50vh] sm:max-h-[400px] overflow-y-auto p-4 sm:p-5 text-xs sm:text-sm text-muted-foreground leading-relaxed break-words" style={{ overflowWrap: 'anywhere' }}>
         <div className="mb-4 p-3 bg-accent rounded-sm">
           <p className="m-0 mb-1 font-semibold text-foreground">
             Data Fiduciary: Unimobile Messaging Solutions LLP ("Paisawaala")
@@ -191,7 +191,30 @@ const AuthForm = ({
   const [consentB, setConsentB] = useState(false);
   const [consentC, setConsentC] = useState(false);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+  const timerRef = useRef(null);
   const mandatoryConsentsGiven = consentA && consentB;
+
+  const startResendTimer = useCallback(() => {
+    setResendTimer(30);
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      setResendTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
 
   const validatePhone = useCallback((phoneValue) => {
     const cleaned = phoneValue.replace(/\D/g, '');
@@ -274,13 +297,14 @@ const AuthForm = ({
 
       setStage('otp');
       setOtp('');
+      startResendTimer();
     } catch (error) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to send OTP. Please try again.';
       setErrors((prev) => ({ ...prev, phone: errorMessage }));
     } finally {
       setOtpSending(false);
     }
-  }, [phone, validatePhone, cleanPhone]);
+  }, [phone, validatePhone, cleanPhone, startResendTimer]);
 
   const handleVerifyOtp = useCallback(async (e) => {
     e?.preventDefault();
@@ -333,16 +357,18 @@ const AuthForm = ({
   }, [otp, phone, redirectUrl, onAuthComplete, consentA, consentB, consentC, cleanPhone]);
 
   const handleResendOtp = useCallback(async () => {
+    if (resendTimer > 0) return;
     setOtp('');
     setErrors({});
     try {
       const phoneDigits = cleanPhone(phone);
       await apiClient.post('/api/auth/resend-otp', { phone: phoneDigits });
+      startResendTimer();
     } catch (error) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to resend OTP.';
       setErrors((prev) => ({ ...prev, otp: errorMessage }));
     }
-  }, [phone, cleanPhone]);
+  }, [phone, cleanPhone, resendTimer, startResendTimer]);
 
   return (
     <ErrorBoundary>
@@ -380,7 +406,7 @@ const AuthForm = ({
               <>
                 <div>
                   <div className="relative">
-                    <span className="absolute top-0 left-0 bottom-0 flex items-center pl-4 text-muted-foreground text-base">
+                    <span className="absolute top-0 left-0 bottom-0 flex items-center pl-3.5 md:pl-4 text-muted-foreground text-base">
                       +91
                     </span>
                     <input
@@ -391,8 +417,10 @@ const AuthForm = ({
                       placeholder="Enter mobile number"
                       required
                       autoComplete="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       data-testid="input-phone"
-                      className={`w-full pl-12 pr-4 py-3 border ${errors.phone ? 'border-destructive' : 'border-border'} rounded-lg text-base text-foreground bg-muted outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20`}
+                      className={`w-full pl-11 md:pl-12 pr-3.5 md:pr-4 py-3 border ${errors.phone ? 'border-destructive' : 'border-border'} rounded-lg text-base text-foreground bg-transparent outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20`}
                     />
                   </div>
                   <p className={`mt-2 text-sm min-h-[1.25rem] ${errors.phone ? 'text-destructive' : 'text-muted-foreground'}`}>
@@ -502,6 +530,8 @@ const AuthForm = ({
                   name="otp"
                   label="Enter Verification Code"
                   type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   value={otp}
                   onChange={handleOtpChange}
                   placeholder="Enter the 6-digit code"
@@ -533,14 +563,25 @@ const AuthForm = ({
 
             {stage === 'otp' && (
               <p className="mt-3 text-sm text-muted-foreground text-center">
-                Didn't receive the code?{' '}
-                <span
-                  className="text-primary cursor-pointer underline"
-                  onClick={handleResendOtp}
-                  data-testid="link-resend-otp"
-                >
-                  Resend OTP
-                </span>
+                {resendTimer > 0 ? (
+                  <>
+                    Resend OTP in{' '}
+                    <span className="font-semibold text-foreground" data-testid="text-resend-timer">
+                      {resendTimer}s
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    Didn't receive the code?{' '}
+                    <span
+                      className="text-primary cursor-pointer underline font-semibold"
+                      onClick={handleResendOtp}
+                      data-testid="link-resend-otp"
+                    >
+                      Resend OTP
+                    </span>
+                  </>
+                )}
               </p>
             )}
           </form>

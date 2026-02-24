@@ -37,9 +37,11 @@ export default {
   lastName: {
     label: 'Last Name',
     type: 'text',
-    required: false,
-    rules: [],
+    required: true,
+    rules: ['required'],
     placeholder: 'Enter your last name',
+    errorMessage: 'Last Name is required',
+    maxLength: 26,
   },
   email: {
     label: 'Email Address',

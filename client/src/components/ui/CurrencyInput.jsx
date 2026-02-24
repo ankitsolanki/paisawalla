@@ -27,7 +27,11 @@ const CurrencyInput = ({
   const formatIndianCurrency = (num) => {
     if (!num && num !== 0) return '';
     const numStr = num.toString().replace(/,/g, '');
-    return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    if (numStr.length <= 3) return numStr;
+    const lastThree = numStr.slice(-3);
+    const rest = numStr.slice(0, -3);
+    const formatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',');
+    return formatted + ',' + lastThree;
   };
 
   const parseFormattedValue = (str) => {
@@ -122,7 +126,7 @@ const CurrencyInput = ({
       ? 'border-primary ring-2 ring-primary'
       : 'border-border';
 
-  const paddingClass = shouldFloatLabel ? 'pt-6 pb-2 px-5' : 'py-4 px-5';
+  const paddingClass = shouldFloatLabel ? 'pt-5 md:pt-6 pb-1.5 md:pb-2 px-3.5 md:px-5' : 'py-3.5 md:py-4 px-3.5 md:px-5';
   const disabledClass = disabled ? 'opacity-60 cursor-not-allowed' : '';
 
   return (
@@ -146,8 +150,8 @@ const CurrencyInput = ({
       {label && (
         <label
           htmlFor={name}
-          className={`absolute left-5 pointer-events-none transition-all duration-300 ${shouldFloatLabel ? 'text-xs text-primary' : 'text-base text-muted-foreground'}`}
-          style={{ top: shouldFloatLabel ? '0.5rem' : '1.25rem' }}
+          className={`absolute left-3.5 md:left-5 pointer-events-none transition-all duration-300 truncate max-w-[calc(100%-2rem)] ${shouldFloatLabel ? 'text-xs text-primary' : 'text-sm md:text-base text-muted-foreground'}`}
+          style={{ top: shouldFloatLabel ? '0.4rem' : '1rem' }}
         >
           {label}
           {required && <span className="text-destructive"> *</span>}

@@ -274,7 +274,7 @@ const OffersListingV2 = ({
             ))}
           </div>
 
-          <div className="relative shrink-0 flex md:block">
+          <div className="relative shrink-0 flex justify-end md:block">
             <button
               data-testid="button-sort-v2"
               onClick={() => setShowSortDropdown(!showSortDropdown)}

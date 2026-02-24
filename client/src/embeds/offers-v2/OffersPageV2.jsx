@@ -299,7 +299,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
                 data-testid="button-refresh-offers-v2"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
-                className={`flex items-center justify-center gap-2 w-full md:w-auto px-4 py-2.5 md:py-2 border rounded-xl text-sm md:text-xs font-semibold font-sans whitespace-nowrap shrink-0 transition-all duration-200 ${
+                className={`flex items-center justify-center gap-2 w-full md:w-auto px-5 md:px-4 py-3 md:py-2 border rounded-xl text-sm md:text-xs font-semibold font-sans whitespace-nowrap shrink-0 transition-all duration-200 ${
                   refreshStatus === 'updated'
                     ? 'border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e]'
                     : 'border-border bg-transparent text-muted-foreground'

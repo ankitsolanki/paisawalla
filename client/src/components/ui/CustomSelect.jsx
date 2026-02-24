@@ -28,8 +28,8 @@ const Select = ({
       : 'border-border';
 
   const paddingClass = shouldFloatLabel
-    ? 'pt-6 pb-2 sm:px-5 px-4 sm:pr-10 pr-9'
-    : 'sm:py-4 py-3.5 sm:px-5 px-4 sm:pr-10 pr-9';
+    ? 'pt-5 md:pt-6 pb-1.5 md:pb-2 px-3.5 md:px-5 pr-8 md:pr-10'
+    : 'py-3.5 md:py-4 px-3.5 md:px-5 pr-8 md:pr-10';
 
   const disabledClass = disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer';
 
@@ -54,7 +54,7 @@ const Select = ({
         }}
         required={required}
         disabled={disabled}
-        className={`w-full rounded-xl border sm:text-base text-sm outline-none transition-all duration-300 appearance-none truncate box-border ${borderClass} ${paddingClass} ${disabledClass} ${className}`}
+        className={`w-full rounded-xl border text-base outline-none transition-all duration-300 appearance-none truncate box-border bg-transparent ${borderClass} ${paddingClass} ${disabledClass} ${className}`}
         style={{
           backgroundImage: `url("${arrowSvg}")`,
           backgroundRepeat: 'no-repeat',
@@ -74,8 +74,8 @@ const Select = ({
       {label && (
         <label
           htmlFor={name}
-          className={`absolute sm:left-5 left-4 pointer-events-none transition-all duration-300 ${shouldFloatLabel ? 'text-xs text-primary' : 'sm:text-base text-sm text-muted-foreground'}`}
-          style={{ top: shouldFloatLabel ? '0.5rem' : '1.25rem' }}
+          className={`absolute left-3.5 md:left-5 pointer-events-none transition-all duration-300 truncate max-w-[calc(100%-2rem)] ${shouldFloatLabel ? 'text-xs text-primary' : 'text-sm md:text-base text-muted-foreground'}`}
+          style={{ top: shouldFloatLabel ? '0.4rem' : '1rem' }}
         >
           {label}
           {required && <span className="text-destructive"> *</span>}
