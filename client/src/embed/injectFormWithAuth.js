@@ -152,6 +152,21 @@ if (script) {
     return;
   }
 
+  // Attach Shadow DOM for style isolation from host page
+  const host = container;
+  const shadow = host.attachShadow({ mode: 'open' });
+  const mount = document.createElement('div');
+
+  // Inject CSS into shadow root (isolated from host page styles)
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = new URL('./injectForm.css', import.meta.url).href;
+  link.onerror = () => {
+    console.warn('PW Forms: CSS file not found, styles may be inline');
+  };
+  shadow.appendChild(link);
+  shadow.appendChild(mount);
+
   // Map form types to components
   const formComponents = {
     'form1': Form1,
@@ -162,7 +177,7 @@ if (script) {
   const FormComponent = formComponents[formType];
   
   if (!FormComponent) {
-    container.innerHTML = `
+    mount.innerHTML = `
       <div style="padding: 20px; color: #dc2626; border: 1px solid #dc2626; border-radius: 8px; background: #fee2e2;">
         <h3 style="margin-top: 0; color: #dc2626;">Error Loading Form</h3>
         <p>Unknown form type: ${formType}</p>
@@ -171,29 +186,6 @@ if (script) {
     `;
     return;
   }
-
-  // Load CSS if it exists (for library builds)
-  const loadCSS = () => {
-    const scriptSrc = scriptTag.src;
-    const baseUrl = scriptSrc.substring(0, scriptSrc.lastIndexOf('/'));
-    const cssUrl = `${baseUrl}/injectForm.css`;
-    
-    // Check if CSS is already loaded
-    if (document.querySelector(`link[href="${cssUrl}"]`)) {
-      return;
-    }
-    
-    const link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = cssUrl;
-    link.onerror = () => {
-      // CSS file not found, that's okay - styles might be inline
-      console.warn('PW Forms: CSS file not found, styles may be inline');
-    };
-    // Add scoped attribute to prevent affecting host page
-    link.setAttribute('data-pw-form-styles', 'true');
-    document.head.appendChild(link);
-  };
 
   // Check if user is already authenticated
   const checkAuth = () => {
@@ -213,11 +205,8 @@ if (script) {
   // Render the auth form
   const loadAuthForm = () => {
     try {
-      // Load CSS first
-      loadCSS();
-      
       // Show loading state
-      container.innerHTML = `
+      mount.innerHTML = `
         <div style="padding: 20px; text-align: center;">
           <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
           <p style="margin-top: 10px; color: #6b7280;">Loading authentication form...</p>
@@ -231,7 +220,7 @@ if (script) {
       `;
 
       // Add scoped container class to prevent style leakage
-      container.classList.add('pw-form-container');
+      host.classList.add('pw-form-container');
       
       // Build redirect URL (current page)
       const redirectUrl = buildRedirectUrl();
@@ -241,7 +230,7 @@ if (script) {
       const description = scriptTag.getAttribute('data-description') || undefined;
       
       // Create React root and render auth form
-      const root = createRoot(container);
+      const root = createRoot(mount);
       const authFormProps = { redirectUrl, theme };
       if (title) authFormProps.title = title;
       if (description) authFormProps.description = description;
@@ -258,7 +247,7 @@ if (script) {
 
     } catch (error) {
       console.error('PW Forms: Error loading auth form', error);
-      container.innerHTML = `
+      mount.innerHTML = `
         <div style="padding: 20px; color: #dc2626; border: 1px solid #dc2626; border-radius: 8px; background: #fee2e2;">
           <h3 style="margin-top: 0; color: #dc2626;">Error Loading Auth Form</h3>
           <p>Failed to load auth form: ${error.message}</p>
@@ -279,11 +268,8 @@ if (script) {
   // Render the form
   const loadForm = () => {
     try {
-      // Load CSS first
-      loadCSS();
-      
       // Show loading state
-      container.innerHTML = `
+      mount.innerHTML = `
         <div style="padding: 20px; text-align: center;">
           <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; animation: spin 1s linear infinite;"></div>
           <p style="margin-top: 10px; color: #6b7280;">Loading form...</p>
@@ -297,10 +283,10 @@ if (script) {
       `;
 
       // Add scoped container class to prevent style leakage
-      container.classList.add('pw-form-container');
+      host.classList.add('pw-form-container');
       
       // Create React root and render form
-      const root = createRoot(container);
+      const root = createRoot(mount);
       const formProps = { theme };
       if (title) formProps.title = title;
       if (description) formProps.description = description;
@@ -317,7 +303,7 @@ if (script) {
 
     } catch (error) {
       console.error('PW Forms: Error loading form', error);
-      container.innerHTML = `
+      mount.innerHTML = `
         <div style="padding: 20px; color: #dc2626; border: 1px solid #dc2626; border-radius: 8px; background: #fee2e2;">
           <h3 style="margin-top: 0; color: #dc2626;">Error Loading Form</h3>
           <p>Failed to load form: ${error.message}</p>
