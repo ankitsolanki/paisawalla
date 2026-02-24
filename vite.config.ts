@@ -62,6 +62,16 @@ export default defineConfig({
 
           return "assets/[name]-[hash].js";
         },
+        assetFileNames: (assetInfo) => {
+          // Ensure the embed stylesheet is available at a stable URL
+          // that matches what the embed scripts expect: `/injectForm.css`.
+          if (assetInfo.name === "embed-styles.css") {
+            return "injectForm.css";
+          }
+
+          // Default pattern for all other assets
+          return "assets/[name]-[hash][extname]";
+        },
       },
     },
   },
