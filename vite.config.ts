@@ -5,7 +5,6 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   resolve: {
-    extensions: [".tsx", ".ts", ".mjs", ".js", ".jsx", ".json"],
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
@@ -18,10 +17,6 @@ export default defineConfig({
     emptyOutDir: true,
   },
   server: {
-    port: 2526,
-    proxy: {
-      "/api": "http://localhost:2525",
-    },
     fs: {
       strict: true,
       deny: ["**/.*"],

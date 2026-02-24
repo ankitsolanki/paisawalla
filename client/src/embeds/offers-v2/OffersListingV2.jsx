@@ -251,7 +251,7 @@ const OffersListingV2 = ({
     <ErrorBoundary>
       <div className="font-sans pb-20">
         <div
-          className="mx-4 md:mx-6 mt-3 flex items-center gap-2"
+          className="mx-4 md:mx-6 mt-3 flex flex-col md:flex-row md:items-center gap-2.5 md:gap-2"
         >
           <div
             data-testid="filter-chips-v2"
@@ -263,7 +263,7 @@ const OffersListingV2 = ({
                 key={chip.id}
                 data-testid={`chip-filter-${chip.id}`}
                 onClick={() => setActiveFilter(chip.id)}
-                className={`whitespace-nowrap px-3 py-1.5 rounded-full text-[11px] font-semibold cursor-pointer border transition-colors shrink-0 ${
+                className={`whitespace-nowrap px-3.5 md:px-3 py-2 md:py-1.5 rounded-full text-xs md:text-[11px] font-semibold cursor-pointer border transition-colors shrink-0 ${
                   activeFilter === chip.id
                     ? 'bg-primary text-primary-foreground border-primary'
                     : 'bg-transparent text-foreground border-border'
@@ -274,11 +274,11 @@ const OffersListingV2 = ({
             ))}
           </div>
 
-          <div className="relative shrink-0">
+          <div className="relative shrink-0 flex md:block">
             <button
               data-testid="button-sort-v2"
               onClick={() => setShowSortDropdown(!showSortDropdown)}
-              className="flex items-center gap-1 px-2.5 py-1.5 border border-border rounded-full text-[11px] font-semibold text-muted-foreground cursor-pointer bg-transparent"
+              className="flex items-center gap-1.5 md:gap-1 px-3.5 md:px-2.5 py-2 md:py-1.5 border border-border rounded-full text-xs md:text-[11px] font-semibold text-muted-foreground cursor-pointer bg-transparent"
             >
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                 <path d="M2 3H10M3 6H9M4 9H8" className="stroke-current" strokeWidth="1.2" strokeLinecap="round" />

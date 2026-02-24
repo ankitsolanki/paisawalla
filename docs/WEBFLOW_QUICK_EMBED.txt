@@ -1,0 +1,200 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                  WEBFLOW EMBED SCRIPTS - QUICK REFERENCE                  ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+🚀 CHOOSE YOUR EMBEDDING OPTION:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 1: Simple Form Embedding
+────────────────────────────────
+Use: injectForm.js
+For: Single form on a page
+Result: Form loads directly
+
+HTML CODE:
+──────────
+<div id="pw-form"></div>
+
+<script 
+  src="https://app-paisawalla.gofo.app/injectForm.js"
+  data-form="form1"
+  data-api-url="https://api-paisawalla.gofo.app"
+  data-recaptcha-site-key="YOUR_RECAPTCHA_KEY"
+></script>
+
+CHANGE:
+• data-form: "form1", "form2", or "form3"
+• YOUR_RECAPTCHA_KEY: Your Google reCAPTCHA public key
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 2: Auth Page + Form Page Journey
+────────────────────────────────────────
+Use: injectAuth.js + injectForm.js
+For: Two-page workflow (phone verification → form)
+Result: User verifies phone, then fills form
+
+AUTH PAGE HTML:
+───────────────
+<div id="pw-auth"></div>
+
+<script 
+  src="https://app-paisawalla.gofo.app/injectAuth.js"
+  data-redirect-url="https://paisawaala.webflow.io/apply"
+  data-api-url="https://api-paisawalla.gofo.app"
+></script>
+
+FORM PAGE HTML:
+───────────────
+<div id="pw-form"></div>
+
+<script 
+  src="https://app-paisawalla.gofo.app/injectForm.js"
+  data-form="form1"
+  data-api-url="https://api-paisawalla.gofo.app"
+  data-recaptcha-site-key="YOUR_RECAPTCHA_KEY"
+></script>
+
+CHANGE:
+• data-redirect-url: Your form page URL on Webflow
+• YOUR_RECAPTCHA_KEY: Your Google reCAPTCHA public key
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 3: Smart All-in-One (Recommended for Single Page)
+─────────────────────────────────────────────────────────
+Use: injectFormWithAuth.js
+For: Single page that handles both auth and form
+Result: Smart form - shows auth if needed, form if already authenticated
+
+HTML CODE:
+──────────
+<div id="pw-form"></div>
+
+<script 
+  src="https://app-paisawalla.gofo.app/injectFormWithAuth.js"
+  data-form="form1"
+  data-api-url="https://api-paisawalla.gofo.app"
+  data-recaptcha-site-key="YOUR_RECAPTCHA_KEY"
+  data-title="Get Your Personal Loan Today"
+  data-description="Apply in just 10 minutes"
+></script>
+
+CHANGE:
+• data-form: "form1", "form2", or "form3"
+• YOUR_RECAPTCHA_KEY: Your Google reCAPTCHA public key
+• data-title: Custom title (optional)
+• data-description: Custom description (optional)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+OPTION 4: Loan Offers Display
+──────────────────────────────
+Use: injectOffers.js
+For: Show loan offers after application (needs applicationId)
+Result: Display available loan offers
+
+HTML CODE:
+──────────
+<div id="offers"></div>
+
+<script>
+  // Get applicationId from URL parameter
+  const appId = new URLSearchParams(window.location.search).get('applicationId');
+  
+  if (appId) {
+    const script = document.createElement('script');
+    script.src = 'https://app-paisawalla.gofo.app/injectOffers.js';
+    script.setAttribute('data-application-id', appId);
+    script.setAttribute('data-api-url', 'https://api-paisawalla.gofo.app');
+    script.setAttribute('data-container', 'offers');
+    document.body.appendChild(script);
+  } else {
+    document.getElementById('offers').innerHTML = 
+      '<p>Application ID required in URL</p>';
+  }
+</script>
+
+NOTE: URL should be like: yoursite.com/offers?applicationId=ABC123
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+⚙️ CONFIGURATION VALUES TO UPDATE:
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ YOUR_RECAPTCHA_KEY                                                      │
+│ Where: https://console.cloud.google.com/                               │
+│ Get: Google reCAPTCHA v2 "Site Key"                                    │
+│                                                                         │
+│ https://api-paisawalla.gofo.app                                         │
+│ Update: Your backend API URL                                            │
+│                                                                         │
+│ https://paisawaala.webflow.io/apply                                     │
+│ Update: Your Webflow page URL (for redirect)                            │
+│                                                                         │
+│ https://app-paisawalla.gofo.app/injectForm.js                           │
+│ Update: Your hosted script URL (where you uploaded the JS)              │
+└─────────────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 FORMS AVAILABLE:
+
+  Form1 (form1)    → Complete personal loan application (6 steps)
+  Form2 (form2)    → Medium complexity form (11 fields)
+  Form3 (form3)    → Quick eligibility check (5 fields)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎯 WHICH OPTION TO CHOOSE?
+
+Want single form on page?
+→ Use OPTION 1: injectForm.js
+
+Want separate auth & form pages?
+→ Use OPTION 2: injectAuth.js + injectForm.js
+
+Want everything on one page?
+→ Use OPTION 3: injectFormWithAuth.js (RECOMMENDED)
+
+Want to show offers after form?
+→ Use OPTION 4: injectOffers.js
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ ADDING TO WEBFLOW:
+
+1. In Webflow, add an Embed element where you want the form
+2. Paste the HTML code from the option you chose
+3. Update the configuration values (your URLs, API URL, reCAPTCHA key)
+4. Publish
+5. Test on your live site
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🐛 TROUBLESHOOTING:
+
+Form not showing?
+  ✓ Check browser console (F12 → Console)
+  ✓ Verify script URL is correct and accessible
+  ✓ Check that container div id matches data-container
+
+Form shows errors?
+  ✓ Verify data-api-url is correct
+  ✓ Check CORS is enabled on backend
+  ✓ Verify backend is running
+
+reCAPTCHA not working?
+  ✓ Check site key is correct
+  ✓ Domain must be registered in Google reCAPTCHA console
+  ✓ Must use HTTPS in production
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 FULL DOCUMENTATION:
+   → WEBFLOW_EMBED_SCRIPTS.md (comprehensive guide)
+   → WEBFLOW_EMBED_GUIDE.md (form details)
+   → WEBFLOW_AUTH_EMBED_GUIDE.md (auth journey)
+
+═══════════════════════════════════════════════════════════════════════════════

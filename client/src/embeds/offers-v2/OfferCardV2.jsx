@@ -183,12 +183,12 @@ const OfferCardV2 = ({ offer, applicationId, rank, isCompareSelected, onToggleCo
       className={`relative bg-white border rounded-xl font-sans transition-all duration-200 shadow-sm hover:shadow-md ${isBestOffer ? 'border-primary/40 ring-1 ring-primary/10' : 'border-gray-200'}`}
     >
       {/* ===== MOBILE LAYOUT (< md) ===== */}
-      <div className="md:hidden p-3">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="md:hidden p-3.5">
+        <div className="flex items-center gap-2.5 mb-3">
           {lenderAvatar}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
-              <p data-testid={`text-lender-${offer.id || offer._id}`} className="text-[13px] font-bold text-gray-900 m-0 truncate">{lenderName}</p>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <p data-testid={`text-lender-${offer.id || offer._id}`} className="text-[14px] font-bold text-gray-900 m-0 truncate">{lenderName}</p>
               {isBestOffer && (
                 <span
                   className="text-white text-[8px] font-bold uppercase tracking-wide px-1.5 py-px rounded shrink-0"
@@ -206,30 +206,30 @@ const OfferCardV2 = ({ offer, applicationId, rank, isCompareSelected, onToggleCo
           </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-1.5 py-2 border-y border-gray-100">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 py-2.5 border-y border-gray-100">
           <div>
-            <span className="text-[9px] text-gray-400 uppercase tracking-wider block">Amount</span>
-            <span data-testid={`text-amount-${offer.id || offer._id}`} className="text-[12px] font-semibold text-gray-900">{formatCurrency(offer.amount || 0)}</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-0.5">Amount</span>
+            <span data-testid={`text-amount-${offer.id || offer._id}`} className="text-[13px] font-semibold text-gray-900">{formatCurrency(offer.amount || 0)}</span>
           </div>
           <div>
-            <span className="text-[9px] text-gray-400 uppercase tracking-wider block">Tenure</span>
-            <span data-testid={`text-tenure-${offer.id || offer._id}`} className="text-[12px] font-semibold text-gray-900">{tenureLabel}</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-0.5">Tenure</span>
+            <span data-testid={`text-tenure-${offer.id || offer._id}`} className="text-[13px] font-semibold text-gray-900">{tenureLabel}</span>
           </div>
           <div>
-            <span className="text-[9px] text-gray-400 uppercase tracking-wider block">Disbursal</span>
-            <span data-testid={`text-disbursal-${offer.id || offer._id}`} className="text-[12px] font-semibold text-gray-900">{processingLabel}</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-0.5">Disbursal</span>
+            <span data-testid={`text-disbursal-${offer.id || offer._id}`} className="text-[13px] font-semibold text-gray-900">{processingLabel}</span>
           </div>
           <div>
-            <span className="text-[9px] text-gray-400 uppercase tracking-wider block">Rate</span>
-            <span data-testid={`text-rate-${offer.id || offer._id}`} className="text-[12px] font-semibold text-gray-900">{apr ? `${apr}%` : '--'}</span>
+            <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-0.5">Rate</span>
+            <span data-testid={`text-rate-${offer.id || offer._id}`} className="text-[13px] font-semibold text-gray-900">{apr ? `${apr}%` : '--'}</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 pt-2">
+        <div className="flex items-center gap-2 pt-2.5">
           <button
             data-testid={`button-apply-v2-${offer.id || offer._id}`}
             onClick={handleApply}
-            className="flex-1 py-1.5 text-white border-none rounded-lg text-[11px] font-semibold cursor-pointer"
+            className="flex-1 py-2 text-white border-none rounded-lg text-xs font-semibold cursor-pointer"
             style={{ background: 'linear-gradient(90deg, #160E7A 0%, #4A40EB 100%)' }}
           >
             Apply Now
@@ -237,7 +237,7 @@ const OfferCardV2 = ({ offer, applicationId, rank, isCompareSelected, onToggleCo
           <button
             data-testid={`button-compare-v2-${offer.id || offer._id}`}
             onClick={() => onToggleCompare && onToggleCompare(offer)}
-            className={`px-3 py-1.5 min-w-[76px] border rounded-lg text-[11px] font-semibold cursor-pointer transition-colors ${
+            className={`px-3 py-2 min-w-[76px] border rounded-lg text-xs font-semibold cursor-pointer transition-colors ${
               isCompareSelected
                 ? 'bg-indigo-50 border-indigo-400 text-indigo-600'
                 : 'bg-transparent border-gray-200 text-gray-500'
@@ -248,11 +248,10 @@ const OfferCardV2 = ({ offer, applicationId, rank, isCompareSelected, onToggleCo
           <button
             data-testid={`button-expand-v2-${offer.id || offer._id}`}
             onClick={() => setExpanded(!expanded)}
-            className="text-indigo-600 text-[11px] font-medium cursor-pointer bg-transparent border-none p-0 shrink-0 flex items-center gap-0.5"
+            className="text-indigo-600 p-1.5 cursor-pointer bg-transparent border-none hover:bg-indigo-50 rounded-md transition-colors flex items-center shrink-0"
           >
-            {expanded ? 'Less' : 'More'}
-            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" className={`transition-transform ${expanded ? 'rotate-180' : ''}`}>
-              <path d="M2.5 3.75L5 6.25L7.5 3.75" className="stroke-indigo-600" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" className={`transition-transform ${expanded ? 'rotate-180' : ''}`}>
+              <path d="M3.5 5.25L7 8.75L10.5 5.25" className="stroke-indigo-600" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
         </div>

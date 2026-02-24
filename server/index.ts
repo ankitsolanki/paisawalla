@@ -2,7 +2,6 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
-import { spawn } from "child_process";
 
 const app = express();
 const httpServer = createServer(app);
@@ -76,81 +75,22 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  // When API_ONLY=true, run backend only (no Vite/static) for split dev setup.
-  // Otherwise in production serve static, in development use Vite.
-  const apiOnly = process.env.API_ONLY === "true";
-  if (!apiOnly) {
-    if (process.env.NODE_ENV === "production") {
-      serveStatic(app);
-    } else {
-      const { setupVite } = await import("./vite");
-      await setupVite(httpServer, app);
-    }
+  if (process.env.NODE_ENV === "production") {
+    serveStatic(app);
+  } else {
+    const { setupVite } = await import("./vite");
+    await setupVite(httpServer, app);
   }
 
-  const port = parseInt(process.env.PORT || "2525", 10);
+  const port = parseInt(process.env.PORT || "5000", 10);
   httpServer.listen(
     {
       port,
       host: "0.0.0.0",
+      reusePort: true,
     },
     () => {
       log(`serving on port ${port}`);
-      startPaisawallaBackend();
     },
   );
 })();
-
-let backendRestartCount = 0;
-const MAX_BACKEND_RESTARTS = 10;
-let currentBackendChild: ReturnType<typeof spawn> | null = null;
-
-process.on("exit", () => {
-  if (currentBackendChild) currentBackendChild.kill();
-});
-
-function startPaisawallaBackend() {
-  const backendPort = "3001";
-  const backendCwd = `${process.cwd()}/paisawalla/backend`;
-
-  const env = {
-    ...process.env,
-    PORT: backendPort,
-    NODE_ENV: process.env.NODE_ENV || "development",
-    CORS_ORIGIN: `http://localhost:2525,http://localhost:2526,http://0.0.0.0:2525,http://0.0.0.0:2526`,
-  };
-
-  const child = spawn("node", ["src/app.js"], {
-    cwd: backendCwd,
-    env,
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-  currentBackendChild = child;
-
-  child.stdout?.on("data", (data: Buffer) => {
-    const msg = data.toString().trim();
-    if (msg) log(msg, "paisawalla-backend");
-  });
-
-  child.stderr?.on("data", (data: Buffer) => {
-    const msg = data.toString().trim();
-    if (msg) log(msg, "paisawalla-backend");
-  });
-
-  child.on("error", (err) => {
-    log(`Failed to start paisawalla backend: ${err.message}`, "paisawalla-backend");
-  });
-
-  child.on("exit", (code, signal) => {
-    if (code === 0) {
-      backendRestartCount = 0;
-    }
-    backendRestartCount++;
-    if (backendRestartCount <= MAX_BACKEND_RESTARTS) {
-      log(`Paisawalla backend exited (code=${code}, signal=${signal}). Restarting in 3s... (attempt ${backendRestartCount}/${MAX_BACKEND_RESTARTS})`, "paisawalla-backend");
-      setTimeout(() => startPaisawallaBackend(), 3000);
-    } else {
-      log(`Paisawalla backend exceeded max restarts (${MAX_BACKEND_RESTARTS}). Not restarting.`, "paisawalla-backend");
-    }
-  });
-}

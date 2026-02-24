@@ -1,8 +1,8 @@
-import poonawallaLogo from '@assets/poonawalla-logo_1771828943668.webp';
-import prefrLogo from '@assets/prefr-logo_1771828943668.webp';
-import abflLogo from '@assets/abfl-logo_1771828943668.webp';
-import heroFincorpLogo from '@assets/hero-fincorp-logo_1771828943667.webp';
-import mpokketLogo from '@assets/mpokket-logo_1771828943668.webp';
+import poonawallaLogo from '@assets/poonawalla-logo_1771850423383.webp';
+import prefrLogo from '@assets/prefr-logo_1771850423383.webp';
+import abflLogo from '@assets/abfl-logo_1771850423382.webp';
+import heroFincorpLogo from '@assets/hero-fincorp-logo_1771850423384.webp';
+import mpokketLogo from '@assets/mpokket-logo_1771850423382.webp';
 
 const LENDER_LOGOS = {
   poonawalla: poonawallaLogo,
