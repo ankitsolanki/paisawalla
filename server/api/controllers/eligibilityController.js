@@ -347,7 +347,7 @@ export const checkEligibility = async (req, res, next) => {
       }
     }
 
-    application.status = offers.length > 0 ? 'offers_available' : 'completed';
+    application.status = offers.length > 0 ? 'offers_available' : 'bre_completed';
     await application.save();
 
     logger.info('[ELIGIBILITY] Check complete', {

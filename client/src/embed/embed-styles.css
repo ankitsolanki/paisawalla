@@ -6,6 +6,10 @@
 
 /* Reset and isolate the form container */
 .pw-form-container {
+  /* Re-define design tokens for Shadow DOM - variables may not inherit from document :root */
+  --destructive: 350 82% 57%;
+  --destructive-foreground: 0 0% 100%;
+
   /* Reset all inherited styles - prevents host page styles from affecting form */
   all: initial;
   
@@ -87,5 +91,14 @@
 .pw-form-container iframe {
   border: none;
   display: block;
+}
+
+/* Ensure error/destructive text displays in red - Shadow DOM may not inherit :root variables */
+.pw-form-container .text-destructive,
+.pw-form-container [class*="text-destructive"],
+.pw-form-container p.text-destructive,
+.pw-form-container [data-testid="text-consent-validation"],
+.pw-form-container [data-testid="text-submit-error"] {
+  color: #dc2626 !important;
 }
 
