@@ -17,6 +17,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import AuthForm from '../components/AuthForm';
 import { getAuthParamsFromUrl, buildUrlWithAuthParams } from '../utils/queryEncoder';
+import '../index.css';
 import './embed-styles.css';
 
 // Provide minimal process polyfill for libraries expecting process.env

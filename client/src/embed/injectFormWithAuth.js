@@ -25,6 +25,7 @@ import Form2 from '../forms/form2/index.jsx';
 import Form3 from '../forms/form3/index.jsx';
 import AuthForm from '../components/AuthForm';
 import { getAuthParamsFromUrl, buildUrlWithAuthParams } from '../utils/queryEncoder';
+import '../index.css';
 import './embed-styles.css';
 
 // Provide minimal process polyfill for libraries expecting process.env
