@@ -101,7 +101,7 @@ if (script) {
   const loadCSS = () => {
     const scriptSrc = scriptTag.src;
     const baseUrl = scriptSrc.substring(0, scriptSrc.lastIndexOf('/'));
-    const cssUrl = `${baseUrl}/injectOffers.css`;
+    const cssUrl = `${baseUrl}/injectForm.css`;
     
     // Check if CSS is already loaded
     if (document.querySelector(`link[href="${cssUrl}"]`)) {
