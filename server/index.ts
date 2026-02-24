@@ -13,16 +13,17 @@ declare module "http" {
   }
 }
 
-// Allow cross-origin loading of public embed scripts (for Webflow, etc.)
-const embedScriptPaths = [
+// Allow cross-origin loading of public embed scripts and their built assets (for Webflow, etc.)
+const embedCorsPaths = [
   "/injectForm.js",
   "/injectAuth.js",
   "/injectOffers.js",
   "/injectFormWithAuth.js",
+  "/assets",
 ];
 
 app.use(
-  embedScriptPaths,
+  embedCorsPaths,
   cors({
     origin: true, // reflect request origin, allowing embeds from any site
     methods: ["GET", "HEAD", "OPTIONS"],
