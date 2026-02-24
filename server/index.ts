@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import cors from "cors";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -11,6 +12,23 @@ declare module "http" {
     rawBody: unknown;
   }
 }
+
+// Allow cross-origin loading of public embed scripts (for Webflow, etc.)
+const embedScriptPaths = [
+  "/injectForm.js",
+  "/injectAuth.js",
+  "/injectOffers.js",
+  "/injectFormWithAuth.js",
+];
+
+app.use(
+  embedScriptPaths,
+  cors({
+    origin: true, // reflect request origin, allowing embeds from any site
+    methods: ["GET", "HEAD", "OPTIONS"],
+    maxAge: 86400,
+  }),
+);
 
 app.use(
   express.json({
