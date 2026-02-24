@@ -1,6 +1,9 @@
 /* Scoped styles for embedded forms - prevents affecting host page */
 /* All styles are scoped to .pw-form-container to prevent affecting host page */
 
+/* Include full app styles (Tailwind, CSS variables, component styles) for Shadow DOM */
+@import '../index.css';
+
 /* Reset and isolate the form container */
 .pw-form-container {
   /* Reset all inherited styles - prevents host page styles from affecting form */

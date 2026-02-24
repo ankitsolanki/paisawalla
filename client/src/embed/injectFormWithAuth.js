@@ -156,6 +156,7 @@ if (script) {
   const host = container;
   const shadow = host.attachShadow({ mode: 'open' });
   const mount = document.createElement('div');
+  mount.classList.add('pw-form-container');
 
   // Inject CSS into shadow root (isolated from host page styles)
   const link = document.createElement('link');
