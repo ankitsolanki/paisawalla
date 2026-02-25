@@ -8,11 +8,10 @@ import CurrencyInput from '../../components/ui/CurrencyInput';
 import PincodeInput from '../../components/PincodeInput';
 import SubmitSuccess from '../../components/SubmitSuccess';
 import EligibilityChecking from '../../components/EligibilityChecking';
-import OffersListingV2 from '../../embeds/offers-v2/OffersListingV2';
 import FormSection from '../../components/forms/FormSection';
 import { validateForm, validateField } from '../../utils/validationRules';
 import apiClient from '../../utils/apiClient';
-import { webflowBridge } from '../../embed/webflowBridge';
+import { webflowBridge, isEmbedded } from '../../embed/webflowBridge';
 import { getAuthParamsFromUrl } from '../../utils/queryEncoder';
 import form3Schema from './form3Schema';
 
@@ -80,7 +79,6 @@ const Form3 = ({
   const [recaptchaError, setRecaptchaError] = useState(false);
   const [leadId, setLeadId] = useState(null);
   const [checkingEligibility, setCheckingEligibility] = useState(false);
-  const [applicationId, setApplicationId] = useState(null);
   const [eligibilityError, setEligibilityError] = useState(null);
   const [prefillStatus, setPrefillStatus] = useState('idle'); // idle | loading | success | error | not_found
   const [prefillMessage, setPrefillMessage] = useState('');
@@ -447,12 +445,20 @@ const Form3 = ({
 
   // Handle eligibility checking completion
   const handleEligibilityComplete = useCallback((appId) => {
-    setApplicationId(appId);
     setCheckingEligibility(false);
     webflowBridge.postMessage('eligibilityComplete', {
       applicationId: appId,
       leadId,
     });
+    if (isEmbedded()) {
+      const script = document.querySelector('script[data-form]');
+      const offersUrl = script?.getAttribute('data-offers-url') || 'https://paisawaala.webflow.io/listing-page';
+      setTimeout(() => {
+        window.location.href = `${offersUrl}?applicationId=${appId}&leadId=${leadId || ''}`;
+      }, 500);
+    } else {
+      window.location.href = `/?page=offers&applicationId=${appId}${leadId ? `&leadId=${leadId}` : ''}`;
+    }
   }, [leadId]);
 
   // Handle eligibility checking error
@@ -563,26 +569,6 @@ const Form3 = ({
           onComplete={handleEligibilityComplete}
           onError={handleEligibilityError}
           theme={theme}
-        />
-      </ErrorBoundary>
-    );
-  }
-
-  if (applicationId && !checkingEligibility) {
-    return (
-      <ErrorBoundary>
-        <OffersListingV2
-          applicationId={applicationId}
-          leadId={leadId}
-          theme={theme}
-          onStateChange={(status, data) => {
-            webflowBridge.postMessage('offersStateChange', {
-              status,
-              applicationId,
-              leadId,
-              ...data,
-            });
-          }}
         />
       </ErrorBoundary>
     );
