@@ -60,7 +60,7 @@ In Amplify Console → **App settings** → **Environment variables**, add:
 | Variable | Value | Description |
 |----------|-------|-------------|
 | `VITE_API_BASE_URL` | `https://api.paisawaala.com` | Your EC2 backend URL (no trailing slash) |
-| `VITE_EMBED_BASE` | `https://app.paisawaala.com/` | App URL with trailing slash. Required for embeds so JS chunks load from your domain when the form runs on partner pages. |
+| `VITE_EMBED_BASE` | `https://app.paisawaala.com` | App URL with trailing slash. Required for embeds so JS chunks load from your domain when the form runs on partner pages. |
 
 **Note:** Vite requires the `VITE_` prefix for frontend-accessible env vars. These values get baked into the build at compile time.
 
@@ -133,7 +133,7 @@ The embeddable form scripts need the backend URL passed via a `data-api-url` att
 ```bash
 # Set the API URL and embed base (for production-like embed testing)
 export VITE_API_BASE_URL=https://api.paisawaala.com
-export VITE_EMBED_BASE=https://app.paisawaala.com/
+export VITE_EMBED_BASE=https://app.paisawaala.com
 
 # Build
 npm run build
