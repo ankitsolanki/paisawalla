@@ -457,7 +457,7 @@ const Form3 = ({
         window.location.href = `${offersUrl}?applicationId=${appId}&leadId=${leadId || ''}`;
       }, 500);
     } else {
-      window.location.href = `/?page=offers&applicationId=${appId}${leadId ? `&leadId=${leadId}` : ''}`;
+      window.location.href = `/listing-page?page=offers&applicationId=${appId}${leadId ? `&leadId=${leadId}` : ''}`;
     }
   }, [leadId]);
 
