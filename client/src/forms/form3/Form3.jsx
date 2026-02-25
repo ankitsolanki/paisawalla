@@ -127,6 +127,8 @@ const Form3 = ({
   useEffect(() => {
     const authParams = getAuthParamsFromUrl();
     if (authParams && authParams.authenticated && authParams.phone) {
+      // User is already authenticated - set phone from auth params (required for lead submission)
+      setFormData((prev) => ({ ...prev, phone: authParams.phone }));
       // Try to prefill data from existing lead
       setPrefillStatus('loading');
       apiClient.get('/api/leads/lookup', {

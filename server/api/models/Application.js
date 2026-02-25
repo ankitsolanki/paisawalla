@@ -22,7 +22,7 @@ const applicationSchema = new mongoose.Schema(
     },
     breStatus: {
       type: String,
-      enum: ['pending', 'initiated', 'processing', 'completed', 'failed', 'ecv_fallback'],
+      enum: ['pending', 'initiated', 'processing', 'completed', 'failed', 'ecv_fallback', 'rule_engine_fallback'],
     },
     breCompletedAt: Date,
     // Application data snapshot

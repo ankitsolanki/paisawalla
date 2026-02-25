@@ -60,8 +60,9 @@ In Amplify Console → **App settings** → **Environment variables**, add:
 | Variable | Value | Description |
 |----------|-------|-------------|
 | `VITE_API_BASE_URL` | `https://api.paisawaala.com` | Your EC2 backend URL (no trailing slash) |
+| `VITE_EMBED_BASE` | `https://app.paisawaala.com/` | App URL with trailing slash. Required for embeds so JS chunks load from your domain when the form runs on partner pages. |
 
-**Note:** Vite requires the `VITE_` prefix for frontend-accessible env vars. This value gets baked into the build at compile time.
+**Note:** Vite requires the `VITE_` prefix for frontend-accessible env vars. These values get baked into the build at compile time.
 
 ---
 
@@ -122,6 +123,7 @@ The embeddable form scripts need the backend URL passed via a `data-api-url` att
 | Blank page after deploy | Check that `baseDirectory` is set to `dist/public` in build settings |
 | Routes return 404 | Add the SPA rewrite rule from Step 5 |
 | API calls go to wrong URL | Verify `VITE_API_BASE_URL` is set in Amplify environment variables, then redeploy |
+| Embed: 404 after form submit | Set `VITE_EMBED_BASE` to your app URL with trailing slash (e.g. `https://app.paisawaala.com/`) and redeploy |
 | Build fails | Make sure `npm ci` runs before `npm run build` (preBuild phase) |
 
 ---
@@ -129,8 +131,9 @@ The embeddable form scripts need the backend URL passed via a `data-api-url` att
 ## Build Locally (Test Before Deploy)
 
 ```bash
-# Set the API URL
+# Set the API URL and embed base (for production-like embed testing)
 export VITE_API_BASE_URL=https://api.paisawaala.com
+export VITE_EMBED_BASE=https://app.paisawaala.com/
 
 # Build
 npm run build

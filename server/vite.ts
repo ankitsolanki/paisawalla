@@ -14,9 +14,10 @@ export async function setupVite(server: Server, app: Express) {
     hmr: { server, path: "/vite-hmr" },
     allowedHosts: true as const,
   };
+  const config = viteConfig({mode: ""});
 
   const vite = await createViteServer({
-    ...viteConfig,
+    ...config,
     configFile: false,
     customLogger: {
       ...viteLogger,
