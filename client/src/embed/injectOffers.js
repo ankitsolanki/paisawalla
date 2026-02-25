@@ -1,6 +1,9 @@
 /**
  * injectOffers.js - Webflow embedding script for Offers Listing Page
- * 
+ *
+ * V1 (default): data-container="offers-listing" -> <div id="offers-listing"></div>
+ * V2: data-container="offers-listing-v2" -> <div id="offers-listing-v2"></div>
+ *
  * Usage in Webflow:
  * <div id="offers-listing"></div>
  * <script 
@@ -26,6 +29,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import OffersListing from '../embeds/offers/OffersListing';
+import OffersPageV2 from '../embeds/offers-v2/OffersPageV2';
 import '../index.css';
 import './embed-styles.css';
 
@@ -73,6 +77,8 @@ if (script) {
   const leadId = scriptTag.getAttribute('data-lead-id') || null;
   const theme = scriptTag.getAttribute('data-theme') || 'light';
   const containerId = scriptTag.getAttribute('data-container') || 'offers-listing';
+  const useV2 = containerId === 'offers-listing-v2';
+  const OffersComponent = useV2 ? OffersPageV2 : OffersListing;
 
   // Validate required application ID
   if (!applicationId) {
@@ -150,7 +156,7 @@ if (script) {
       // Create React root and render offers listing
       const root = createRoot(container);
       root.render(
-        React.createElement(OffersListing, {
+        React.createElement(OffersComponent, {
           applicationId,
           leadId,
           theme,
