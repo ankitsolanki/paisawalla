@@ -321,6 +321,21 @@ function App() {
     }
   }, []);
 
+  const urlParams = new URLSearchParams(window.location.search);
+  const offersPageApplicationId = urlParams.get('applicationId');
+  const offersPageLeadId = urlParams.get('leadId') || undefined;
+  const isOffersPage = urlParams.get('page') === 'offers' && !!offersPageApplicationId;
+
+  if (isOffersPage) {
+    return (
+      <OffersPageV2
+        applicationId={offersPageApplicationId}
+        leadId={offersPageLeadId}
+        theme="light"
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-secondary p-6">
       <div className="max-w-5xl mx-auto">
