@@ -92,3 +92,67 @@ Preferred communication style: Simple, everyday language.
 - `RECAPTCHA_SECRET_KEY` — reCAPTCHA server-side secret
 - `EXPERIAN_CLIENT_ID`, `EXPERIAN_CLIENT_SECRET`, `EXPERIAN_USERNAME`, `EXPERIAN_PASSWORD` — Experian ECV credentials
 - `EXPERIAN_BRE_CLIENT_ID`, `EXPERIAN_BRE_CLIENT_SECRET`, `EXPERIAN_BRE_USERNAME`, `EXPERIAN_BRE_PASSWORD` — Experian BRE credentials
+
+## Docker Setup (Server)
+
+The server runs in a Docker container using a **multi-stage build** to keep the final image lean.
+
+### How the Image is Built
+
+The `Dockerfile` uses two stages:
+
+1. **Build stage** (`builder`):
+   - Base: `node:20-alpine`
+   - Enables pnpm via corepack
+   - Copies `package.json` and `pnpm-lock.yaml`, runs `pnpm install --frozen-lockfile`
+   - Copies the rest of the project and runs `pnpm build`
+   - Build output: Vite builds the client to `dist/public/`, esbuild bundles the server to `dist/index.cjs`
+
+2. **Run stage** (final image):
+   - Base: `node:20-alpine`
+   - Copies only what’s needed from the builder: `node_modules`, `dist`, `server`, `shared`, and `tsconfig.json`
+   - Exposes port **5000**
+   - Starts the server with `pnpm exec tsx server/index.ts` (production mode serves static files from `dist/public/`)
+
+### Build the Image
+
+```bash
+docker build -t paisawalla-server .
+```
+
+### Run the Image
+
+**Option 1: Using `docker run`**
+
+```bash
+docker run -p 5000:5000 --env-file .env paisawalla-server
+```
+
+Or with inline env vars:
+
+```bash
+docker run -p 5000:5000 -e MONGODB_URI="mongodb://..." -e NODE_ENV=production paisawalla-server
+```
+
+**Option 2: Using Docker Compose**
+
+```bash
+docker-compose up --build
+```
+
+This builds the image, maps `${PORT:-5000}` to container port 5000, and loads env vars from `.env`.
+
+### Required Environment Variables
+
+Ensure `.env` (or your env source) includes at least:
+
+- `MONGODB_URI` — MongoDB connection string (required)
+- `PORT` — Server port (default: 5000)
+- `NODE_ENV` — Set to `production` for Docker
+
+See the Environment Variables section above for optional vars (reCAPTCHA, Experian, etc.).
+
+### Notes
+
+- `.dockerignore` excludes `node_modules`, `dist`, `.git`, `.env`, and other non-essential files to speed up builds
+- The container listens on `0.0.0.0:5000` so it’s reachable from outside
