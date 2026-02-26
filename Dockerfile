@@ -1,27 +1,18 @@
-# Build stage
-FROM node:20-alpine AS builder
+FROM node:24-alpine
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
+#set the working directory
 WORKDIR /app
-
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm install --frozen-lockfile
-
-COPY . .
+# Copy project for build
+COPY . /app
+# Update apk index and install latest CA certificates
+RUN apk update && apk add --no-cache ca-certificates && update-ca-certificates
+#npm setup
+RUN npm install -g pnpm
+RUN pnpm i
 RUN pnpm build
-
-# Run stage
-FROM node:20-alpine
-
-RUN corepack enable && corepack prepare pnpm@latest --activate
-
-WORKDIR /app
-
-ENV NODE_ENV=production
-
-COPY --from=builder /app .
-
-EXPOSE 5000
-
+#Define the env variable for port(default is 5000)
+ENV port=5000
+#Expose application port
+EXPOSE ${port}
+#Start the application
 CMD ["pnpm", "exec", "tsx", "server/index.ts"]
