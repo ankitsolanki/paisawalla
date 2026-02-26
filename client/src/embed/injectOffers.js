@@ -149,12 +149,37 @@ if (script) {
       // Add scoped container class to prevent style leakage
       container.classList.add('pw-offers-container');
       
-      // Ensure container uses full width and cannot overflow the Webflow page
-      container.style.width = '100%';
-      container.style.maxWidth = '100%';
+      // Base container styles
       container.style.boxSizing = 'border-box';
       container.style.overflowX = 'hidden';
       container.style.position = 'relative';
+
+      // Realign container to the actual viewport.
+      // Webflow sometimes places sections with a fixed pixel width wider than the
+      // mobile viewport, causing our container to be offset off the left edge of
+      // the screen. We measure the container's real position and correct it.
+      const realignToViewport = () => {
+        const vw = window.innerWidth || document.documentElement.clientWidth;
+        const rect = container.getBoundingClientRect();
+        if (rect.left < -5 || rect.width > vw + 10) {
+          // Shift right by the amount we are off the left edge
+          container.style.left = (-rect.left) + 'px';
+          container.style.width = vw + 'px';
+          container.style.maxWidth = vw + 'px';
+          console.log('[PW:Offers] realigned container', {
+            wasLeft: Math.round(rect.left),
+            wasWidth: Math.round(rect.width),
+            nowWidth: vw,
+          });
+        } else {
+          container.style.width = '100%';
+          container.style.maxWidth = '100%';
+        }
+      };
+
+      // Run immediately and again after one frame to catch late-loading Webflow styles
+      realignToViewport();
+      requestAnimationFrame(realignToViewport);
       
       // Create React root and render offers listing
       const root = createRoot(container);
