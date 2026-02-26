@@ -88,6 +88,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   const transitionTo = useCallback((newState, data = {}) => {
     if (!mountedRef.current) return;
+    console.log(`[PW:Offers] state → ${newState}`, data);
     setState(newState);
     notifyState(newState, data);
   }, [notifyState]);
@@ -102,6 +103,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   const fetchOffers = useCallback(async () => {
     if (!applicationId) return;
+    console.log('[PW:Offers] fetchOffers start', { applicationId });
     let timeoutHandle;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutHandle = setTimeout(() => reject(new Error('BRE_TIMEOUT')), TIMEOUTS.OFFERS_FETCH);
@@ -116,6 +118,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
       if (response?.ok === false) {
         const errorState = mapErrorToState({ code: response.code, message: response.message });
+        console.warn('[PW:Offers] fetchOffers api error', { code: response.code, message: response.message, errorState });
         setError(new Error(response.message || 'Failed to fetch offers'));
         transitionTo(errorState, { error: response.message });
         return;
@@ -123,16 +126,19 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
       const offersList = response?.offers || [];
       if (offersList.length === 0) {
+        console.log('[PW:Offers] fetchOffers empty — no offers returned');
         transitionTo('empty', { count: 0 });
         return;
       }
 
+      console.log('[PW:Offers] fetchOffers success', { count: offersList.length, lenders: offersList.map((o) => o.lender || o.lenderName) });
       setOffers(offersList);
       setLastUpdated(Date.now());
       transitionTo('success', { count: offersList.length });
     } catch (err) {
       clearTimeout(timeoutHandle);
       const errorState = mapErrorToState(err);
+      console.error('[PW:Offers] fetchOffers error', { message: err.message, code: err.code, errorState });
       setError(err);
       transitionTo(errorState, { error: getErrorMessage(err), code: err.code });
     }
@@ -140,6 +146,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
+    console.log('[PW:Offers] handleRefresh start', { applicationId });
     setIsRefreshing(true);
     setRefreshStatus(null);
 
@@ -157,6 +164,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
       const offersList = response?.offers || [];
       if (offersList.length > 0) {
+        console.log('[PW:Offers] handleRefresh success', { count: offersList.length });
         setOffers(offersList);
         setLastUpdated(Date.now());
         setRefreshStatus('updated');
@@ -164,8 +172,11 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
         refreshTimerRef.current = setTimeout(() => {
           if (mountedRef.current) setRefreshStatus(null);
         }, 2000);
+      } else {
+        console.log('[PW:Offers] handleRefresh — no new offers');
       }
     } catch (err) {
+      console.warn('[PW:Offers] handleRefresh error', { message: err?.message });
       setRefreshStatus(null);
     } finally {
       if (mountedRef.current) setIsRefreshing(false);
@@ -173,13 +184,17 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
   }, [applicationId, isRefreshing]);
 
   const fetchPhoneAndShowOtp = useCallback(async () => {
+    console.log('[PW:Offers] fetchPhone start', { applicationId });
     try {
       const response = await apiClient.get(`/api/offers/application/${applicationId}/phone`);
       if (mountedRef.current) {
-        setPhoneData(response?.data || response);
+        const phoneInfo = response?.data || response;
+        console.log('[PW:Offers] fetchPhone success', { maskedPhone: phoneInfo?.maskedPhone });
+        setPhoneData(phoneInfo);
         transitionTo('otp_required');
       }
     } catch (err) {
+      console.error('[PW:Offers] fetchPhone error', { message: err.message, status: err.status });
       if (mountedRef.current) {
         setError(err);
         transitionTo('error', { error: getErrorMessage(err) });
@@ -189,6 +204,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   useEffect(() => {
     mountedRef.current = true;
+    console.log('[PW:Offers] mount', { applicationId, leadId, theme });
     return () => {
       mountedRef.current = false;
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
@@ -197,6 +213,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   useEffect(() => {
     if (!applicationId) {
+      console.warn('[PW:Offers] no applicationId — cannot load');
       setError(new Error('Application ID is required'));
       transitionTo('error', { error: 'Application ID is required' });
       return;
@@ -205,18 +222,24 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
     const checkSession = async () => {
       const sessionKey = getSessionKey(applicationId);
       const token = localStorage.getItem(sessionKey);
+      console.log('[PW:Offers] checkSession', { applicationId, hasToken: !!token });
 
       if (token) {
         try {
           const response = await apiClient.post('/api/auth/validate-token', { token, applicationId });
           if (response?.valid) {
+            console.log('[PW:Offers] session valid → fetching offers');
             transitionTo('loading');
             fetchOffers();
             return;
           }
+          console.log('[PW:Offers] session token invalid → clearing, will request OTP');
         } catch (err) {
+          console.warn('[PW:Offers] session validate error', { message: err.message });
           localStorage.removeItem(sessionKey);
         }
+      } else {
+        console.log('[PW:Offers] no session token → requesting OTP');
       }
       fetchPhoneAndShowOtp();
     };

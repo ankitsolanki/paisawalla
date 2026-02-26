@@ -132,6 +132,7 @@ const OffersListingV2 = ({
       }
     });
 
+    console.log('[PW:Listing] filteredAndSorted', { filter: activeFilter, sort: sortBy, total: allOffers.length, visible: list.length });
     return list;
   }, [allOffers, activeFilter, sortBy, computeApprovalScore]);
 
@@ -142,12 +143,14 @@ const OffersListingV2 = ({
 
   const fetchOffers = useCallback(async () => {
     if (!applicationId) {
+      console.warn('[PW:Listing] fetchOffers — no applicationId');
       setError(new Error('Application ID is required'));
       setStatus('error');
       notifyStateChange('error', { error: 'Application ID is required' });
       return;
     }
 
+    console.log('[PW:Listing] fetchOffers start', { applicationId });
     setStatus('loading');
     setError(null);
     notifyStateChange('loading');
@@ -164,8 +167,11 @@ const OffersListingV2 = ({
       ]);
       clearTimeout(timeoutHandle);
 
+      console.log('[PW:Listing] fetchOffers raw response', { ok: response?.ok, offerCount: response?.offers?.length ?? 'n/a' });
+
       if (response?.ok === false) {
         const errorState = mapErrorToState({ code: response.code, message: response.message });
+        console.warn('[PW:Listing] fetchOffers api error', { code: response.code, message: response.message, errorState });
         setStatus(errorState);
         setError(new Error(response.message || 'Failed to fetch offers'));
         notifyStateChange(errorState, { error: response.message });
@@ -174,24 +180,30 @@ const OffersListingV2 = ({
 
       const offersList = response?.offers || [];
       if (offersList.length === 0) {
+        console.log('[PW:Listing] fetchOffers empty — no offers returned');
         setStatus('empty');
         notifyStateChange('empty', { count: 0 });
         return;
       }
 
+      console.log('[PW:Listing] fetchOffers success', { count: offersList.length, lenders: offersList.map((o) => o.lender || o.lenderName) });
       setAllOffers(offersList);
       setStatus('success');
       notifyStateChange('success', { count: offersList.length, offers: offersList });
     } catch (err) {
       clearTimeout(timeoutHandle);
       const errorState = mapErrorToState(err);
+      console.error('[PW:Listing] fetchOffers error', { message: err.message, code: err.code, errorState });
       setError(err);
       setStatus(errorState);
       notifyStateChange(errorState, { error: getErrorMessage(err), code: err.code });
     }
   }, [applicationId, timeout, notifyStateChange]);
 
-  useEffect(() => { fetchOffers(); }, [applicationId]);
+  useEffect(() => {
+    console.log('[PW:Listing] mount', { applicationId });
+    fetchOffers();
+  }, [applicationId]);
 
   useEffect(() => {
     if (!showSortDropdown) return;
@@ -261,7 +273,7 @@ const OffersListingV2 = ({
                 <button
                   key={chip.id}
                   data-testid={`chip-filter-${chip.id}`}
-                  onClick={() => setActiveFilter(chip.id)}
+                  onClick={() => { console.log('[PW:Listing] filter →', chip.id); setActiveFilter(chip.id); }}
                   className={`whitespace-nowrap px-3.5 md:px-3 py-2 md:py-1.5 rounded-full text-xs md:text-[11px] font-semibold cursor-pointer border transition-colors shrink-0 ${
                     activeFilter === chip.id
                       ? 'bg-primary text-primary-foreground border-primary'
@@ -301,7 +313,7 @@ const OffersListingV2 = ({
                   <button
                     key={option.id}
                     data-testid={`button-sort-option-${option.id}`}
-                    onClick={() => { setSortBy(option.id); setShowSortDropdown(false); }}
+                    onClick={() => { console.log('[PW:Listing] sort →', option.id); setSortBy(option.id); setShowSortDropdown(false); }}
                     className={`w-full text-left px-3 py-2 text-[11px] font-medium cursor-pointer border-none bg-transparent transition-colors ${
                       sortBy === option.id ? 'text-primary bg-primary/5' : 'text-foreground'
                     }`}
