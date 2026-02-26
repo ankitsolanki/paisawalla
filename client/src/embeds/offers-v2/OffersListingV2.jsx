@@ -132,6 +132,7 @@ const OffersListingV2 = ({
       }
     });
 
+    console.log('[PW:Listing] filteredAndSorted', { filter: activeFilter, sort: sortBy, total: allOffers.length, visible: list.length });
     return list;
   }, [allOffers, activeFilter, sortBy, computeApprovalScore]);
 
@@ -142,12 +143,14 @@ const OffersListingV2 = ({
 
   const fetchOffers = useCallback(async () => {
     if (!applicationId) {
+      console.warn('[PW:Listing] fetchOffers — no applicationId');
       setError(new Error('Application ID is required'));
       setStatus('error');
       notifyStateChange('error', { error: 'Application ID is required' });
       return;
     }
 
+    console.log('[PW:Listing] fetchOffers start', { applicationId });
     setStatus('loading');
     setError(null);
     notifyStateChange('loading');
@@ -164,8 +167,11 @@ const OffersListingV2 = ({
       ]);
       clearTimeout(timeoutHandle);
 
+      console.log('[PW:Listing] fetchOffers raw response', { ok: response?.ok, offerCount: response?.offers?.length ?? 'n/a' });
+
       if (response?.ok === false) {
         const errorState = mapErrorToState({ code: response.code, message: response.message });
+        console.warn('[PW:Listing] fetchOffers api error', { code: response.code, message: response.message, errorState });
         setStatus(errorState);
         setError(new Error(response.message || 'Failed to fetch offers'));
         notifyStateChange(errorState, { error: response.message });
@@ -174,24 +180,30 @@ const OffersListingV2 = ({
 
       const offersList = response?.offers || [];
       if (offersList.length === 0) {
+        console.log('[PW:Listing] fetchOffers empty — no offers returned');
         setStatus('empty');
         notifyStateChange('empty', { count: 0 });
         return;
       }
 
+      console.log('[PW:Listing] fetchOffers success', { count: offersList.length, lenders: offersList.map((o) => o.lender || o.lenderName) });
       setAllOffers(offersList);
       setStatus('success');
       notifyStateChange('success', { count: offersList.length, offers: offersList });
     } catch (err) {
       clearTimeout(timeoutHandle);
       const errorState = mapErrorToState(err);
+      console.error('[PW:Listing] fetchOffers error', { message: err.message, code: err.code, errorState });
       setError(err);
       setStatus(errorState);
       notifyStateChange(errorState, { error: getErrorMessage(err), code: err.code });
     }
   }, [applicationId, timeout, notifyStateChange]);
 
-  useEffect(() => { fetchOffers(); }, [applicationId]);
+  useEffect(() => {
+    console.log('[PW:Listing] mount', { applicationId });
+    fetchOffers();
+  }, [applicationId]);
 
   useEffect(() => {
     if (!showSortDropdown) return;
@@ -249,52 +261,59 @@ const OffersListingV2 = ({
 
   return (
     <ErrorBoundary>
-      <div className="font-sans pb-20">
-        <div
-          className="mx-4 md:mx-6 mt-3 flex flex-col md:flex-row md:items-center gap-2.5 md:gap-2"
-        >
-          <div
-            data-testid="filter-chips-v2"
-            className="flex gap-1.5 overflow-x-auto flex-1 min-w-0"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {FILTER_CHIPS.map((chip) => (
-              <button
-                key={chip.id}
-                data-testid={`chip-filter-${chip.id}`}
-                onClick={() => setActiveFilter(chip.id)}
-                className={`whitespace-nowrap px-3.5 md:px-3 py-2 md:py-1.5 rounded-full text-xs md:text-[11px] font-semibold cursor-pointer border transition-colors shrink-0 ${
-                  activeFilter === chip.id
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'bg-transparent text-foreground border-border'
-                }`}
-              >
-                {chip.label}
-              </button>
-            ))}
+      <div className="font-sans pb-20 overflow-x-hidden">
+        <div className="mx-4 md:mx-6 mt-3 flex flex-row items-center gap-2">
+          <div className="relative flex-1 min-w-0 overflow-hidden">
+            <div
+              data-testid="filter-chips-v2"
+              className="flex gap-1.5 overflow-x-auto"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {FILTER_CHIPS.map((chip) => (
+                <button
+                  key={chip.id}
+                  data-testid={`chip-filter-${chip.id}`}
+                  onClick={() => { console.log('[PW:Listing] filter →', chip.id); setActiveFilter(chip.id); }}
+                  className={`whitespace-nowrap px-3.5 md:px-3 py-2 md:py-1.5 rounded-full text-xs md:text-[11px] font-semibold cursor-pointer border transition-colors shrink-0 ${
+                    activeFilter === chip.id
+                      ? 'bg-primary text-primary-foreground border-primary'
+                      : 'bg-transparent text-foreground border-border'
+                  }`}
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+            <div
+              className="pointer-events-none absolute right-0 top-0 bottom-0 w-6"
+              style={{ background: 'linear-gradient(to right, transparent, var(--background, #fff))' }}
+            />
           </div>
 
-          <div className="relative shrink-0 flex justify-end md:block">
+          <div className="relative shrink-0">
             <button
               data-testid="button-sort-v2"
               onClick={() => setShowSortDropdown(!showSortDropdown)}
-              className="flex items-center gap-1.5 md:gap-1 px-3.5 md:px-2.5 py-2 md:py-1.5 border border-border rounded-full text-xs md:text-[11px] font-semibold text-muted-foreground cursor-pointer bg-transparent"
+              className="flex items-center gap-1 md:gap-1 p-2 md:px-2.5 md:py-1.5 border border-border rounded-full text-xs md:text-[11px] font-semibold text-muted-foreground cursor-pointer bg-transparent"
             >
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none">
                 <path d="M2 3H10M3 6H9M4 9H8" className="stroke-current" strokeWidth="1.2" strokeLinecap="round" />
               </svg>
-              {currentSortLabel}
-              <svg width="8" height="8" viewBox="0 0 10 10" fill="none" className={`transition-transform ${showSortDropdown ? 'rotate-180' : ''}`}>
+              <span className="hidden md:inline">{currentSortLabel}</span>
+              <svg width="8" height="8" viewBox="0 0 10 10" fill="none" className={`hidden md:block transition-transform ${showSortDropdown ? 'rotate-180' : ''}`}>
                 <path d="M2.5 3.75L5 6.25L7.5 3.75" className="stroke-current" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </button>
+            {sortBy !== 'approval' && (
+              <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-primary border border-background translate-x-0.5 -translate-y-0.5" />
+            )}
             {showSortDropdown && (
               <div className="absolute right-0 top-full mt-1 bg-background border border-border rounded-xl shadow-lg z-20 min-w-[150px] py-1">
                 {SORT_OPTIONS.map((option) => (
                   <button
                     key={option.id}
                     data-testid={`button-sort-option-${option.id}`}
-                    onClick={() => { setSortBy(option.id); setShowSortDropdown(false); }}
+                    onClick={() => { console.log('[PW:Listing] sort →', option.id); setSortBy(option.id); setShowSortDropdown(false); }}
                     className={`w-full text-left px-3 py-2 text-[11px] font-medium cursor-pointer border-none bg-transparent transition-colors ${
                       sortBy === option.id ? 'text-primary bg-primary/5' : 'text-foreground'
                     }`}

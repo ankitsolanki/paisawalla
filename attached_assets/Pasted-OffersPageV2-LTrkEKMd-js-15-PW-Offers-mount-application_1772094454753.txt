@@ -1,0 +1,16 @@
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] mount {applicationId: '699ff0d77323d2d2ce0044e6', leadId: null, theme: 'light'}
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] checkSession {applicationId: '699ff0d77323d2d2ce0044e6', hasToken: true}
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] session token invalid → clearing, will request OTP
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] fetchPhone start {applicationId: '699ff0d77323d2d2ce0044e6'}
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] fetchPhone success {maskedPhone: '******3983'}
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] state → otp_required {}[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] state → loading {}[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] fetchOffers start {applicationId: '699ff0d77323d2d2ce0044e6'}
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] fetchOffers success {count: 1, lenders: Array(1)}
+OffersPageV2-LTrkEKMd.js:15 [PW:Offers] state → success {count: 1}
+OffersPageV2-LTrkEKMd.js:15 [PW:Listing] filteredAndSorted {filter: 'all', sort: 'approval', total: 0, visible: 0}
+OffersPageV2-LTrkEKMd.js:15 [PW:Listing] mount {applicationId: '699ff0d77323d2d2ce0044e6'}
+OffersPageV2-LTrkEKMd.js:15 [PW:Listing] fetchOffers start {applicationId: '699ff0d77323d2d2ce0044e6'}
+OffersPageV2-LTrkEKMd.js:15 [PW:Listing] fetchOffers raw response {ok: true, offerCount: 1}
+OffersPageV2-LTrkEKMd.js:15 [PW:Listing] fetchOffers success {count: 1, lenders: Array(1)}
+OffersPageV2-LTrkEKMd.js:15 [PW:Listing] filteredAndSorted {filter: 'all', sort: 'approval', total: 1, visible: 1}filter: "all"sort: "approval"total: 1visible: 1[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()

@@ -9,22 +9,40 @@ const normalizeOrigin = (origin) => {
 };
 
 /**
- * Check if an origin matches any allowed pattern (supports wildcard patterns)
+ * Check if an origin matches any allowed pattern.
+ * Supports exact matches and wildcard-prefix patterns like *.replit.dev
  */
 const isOriginAllowed = (origin, allowedOrigins) => {
   if (!origin) return false;
   const normalized = normalizeOrigin(origin);
   if (!normalized) return false;
-  return allowedOrigins.includes(normalized);
+
+  return allowedOrigins.some((allowed) => {
+    if (allowed.startsWith('*.')) {
+      const suffix = allowed.slice(1); // e.g. ".replit.dev"
+      try {
+        const { hostname } = new URL(normalized);
+        return hostname.endsWith(suffix);
+      } catch {
+        return false;
+      }
+    }
+    return allowed === normalized;
+  });
 };
 
 /**
  * Get CORS origin configuration
- * Allows all origins by default
- * If CORS_ORIGIN is set, it will restrict to those specific origins (comma-separated)
- * When CORS_ORIGIN is empty, allows all origins
+ * In development, always allows all origins.
+ * In production, if CORS_ORIGIN is set (comma-separated), restricts to those origins.
+ * Supports wildcard patterns like *.replit.dev and *.replit.app.
+ * When CORS_ORIGIN is empty, allows all origins.
  */
 const getCorsOrigin = () => {
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+
   const corsOrigin = process.env.CORS_ORIGIN || "";
   const origins = corsOrigin
     .split(',')
