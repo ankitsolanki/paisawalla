@@ -102,3 +102,51 @@
   color: #dc2626 !important;
 }
 
+/* ============================================================
+   Offers embed container isolation
+   Prevents Webflow's host CSS from breaking the offers embed
+   ============================================================ */
+
+.pw-offers-container {
+  overflow-x: hidden;
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.pw-offers-container *,
+.pw-offers-container *::before,
+.pw-offers-container *::after {
+  box-sizing: border-box;
+}
+
+/* Reinforce Tailwind's hidden class.
+   Webflow often sets span { display: inline } which overrides display:none */
+.pw-offers-container .hidden {
+  display: none !important;
+}
+
+/* Restore responsive visibility at the md breakpoint (768px) */
+@media (min-width: 768px) {
+  .pw-offers-container .md\:inline {
+    display: inline !important;
+  }
+  .pw-offers-container .md\:block {
+    display: block !important;
+  }
+  .pw-offers-container .md\:flex {
+    display: flex !important;
+  }
+  .pw-offers-container .md\:hidden {
+    display: none !important;
+  }
+}
+
+/* Restore mobile-only visibility below the md breakpoint */
+@media (max-width: 767px) {
+  .pw-offers-container .md\:hidden {
+    display: block !important;
+  }
+}
+
