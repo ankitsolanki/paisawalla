@@ -202,6 +202,33 @@ const OffersListingV2 = ({
 
   useEffect(() => {
     console.log('[PW:Listing] mount', { applicationId });
+    const rootEl = document.getElementById('offers-listing-v2');
+    if (rootEl) {
+      const rect = rootEl.getBoundingClientRect();
+      const cs = window.getComputedStyle(rootEl);
+      console.log('[PW:Listing] container', {
+        rectWidth: Math.round(rect.width),
+        rectLeft: Math.round(rect.left),
+        offsetWidth: rootEl.offsetWidth,
+        scrollWidth: rootEl.scrollWidth,
+        cssWidth: cs.width,
+        cssMaxWidth: cs.maxWidth,
+        cssOverflowX: cs.overflowX,
+        parentOffsetWidth: rootEl.parentElement?.offsetWidth,
+        parentScrollWidth: rootEl.parentElement?.scrollWidth,
+      });
+    } else {
+      console.warn('[PW:Listing] container #offers-listing-v2 not found in DOM');
+    }
+    const bodyCs = window.getComputedStyle(document.body);
+    console.log('[PW:Listing] body constraints', {
+      minWidth: bodyCs.minWidth,
+      width: bodyCs.width,
+      overflowX: bodyCs.overflowX,
+      scrollWidth: document.body.scrollWidth,
+      clientWidth: document.body.clientWidth,
+      overflow: document.body.scrollWidth > document.body.clientWidth ? 'OVERFLOWING' : 'ok',
+    });
     fetchOffers();
   }, [applicationId]);
 
