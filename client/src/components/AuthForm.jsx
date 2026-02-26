@@ -92,7 +92,7 @@ const ConsentNoticePanel = ({ isOpen, onToggle }) => {
 
         <p className="mt-2 mb-1 font-semibold">(B) Onboarding & Sharing with Lenders/NBFCs</p>
         <p className="my-1 ml-4">
-          I consent to share my necessary data as mentioned in clause 1.1 to 1.4 with Paisawaala and lenders/NBFCs solely to process my application(s) and provide the product/service I request.
+          I consent to share my necessary data as mentioned in clause 1.1 to 1.4 with Paisawaala and lenders/NBFCs solely to process my application(s) and provide the product/service I request, except for information mentioned in clause 1.3.3, which will not be shared with lenders/NBFCs.
         </p>
         <p className="my-0.5 ml-4 italic text-muted-foreground">
           Purpose limitation: Application submission, status updates, legal/regulatory compliance.
@@ -116,9 +116,19 @@ const ConsentNoticePanel = ({ isOpen, onToggle }) => {
 
         <SectionHeading number="3" title="Use & Sharing (purpose limited)" />
         <SubItem number="3.1" text="We use your data only for: (a) obtaining Experian credit info (if you opted in A); (b) assessing eligibility; (c) facilitating onboarding with lenders/financial institutions (if you opted in B); (d) keeping you informed of application status; (e) complying with legal/contractual requirements." />
-        <SubItem number="3.2" text="We share minimally necessary data with listed lenders/financial institutions and service providers only to achieve your selected purpose(s) and under contractual safeguards." />
+        <SubItem number="3.2" text="We share minimally necessary data not including the credit information with listed lenders/financial institutions and service providers only to achieve your selected purpose(s) and under contractual safeguards." />
         <p className="my-1 ml-4">
-          <strong>3.3</strong> Policy links: Paisawaala Terms & Conditions | Privacy Policy | Grievance Redressal Mechanism | Experian Consumer Consent | Disclaimer
+          <strong>3.3</strong> Policy links:{' '}
+          <a href="/terms-of-use" target="_blank" rel="noopener noreferrer" className="underline text-primary hover:opacity-80">Paisawaala Terms &amp; Conditions</a>
+          {' | '}
+          <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="underline text-primary hover:opacity-80">Privacy Policy</a>
+          {' | '}
+          <a href="/grievance-redressal-mechanism" target="_blank" rel="noopener noreferrer" className="underline text-primary hover:opacity-80">Grievance Redressal Mechanism</a>
+          {' | '}
+          <a href="/experian-consumer-consent" target="_blank" rel="noopener noreferrer" className="underline text-primary hover:opacity-80">Experian Consumer Consent</a>
+          {' | '}
+          <a href="/disclaimer" target="_blank" rel="noopener noreferrer" className="underline text-primary hover:opacity-80">Disclaimer</a>
+          {' |'}
         </p>
 
         <SectionHeading number="4" title="Duration" />
