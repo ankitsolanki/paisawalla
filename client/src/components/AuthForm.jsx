@@ -31,7 +31,7 @@ const ConsentNoticePanel = ({ isOpen, onToggle }) => {
         data-testid="button-close-consent-panel"
       >
         <h3 className="text-[0.9375rem] sm:text-lg font-semibold text-foreground m-0 leading-snug">
-          Consent & Data Processing Notice
+          Consent to Access and Use of Credit Information, Contact Preferences and Data Processing
         </h3>
         <span className="text-xl text-muted-foreground shrink-0 ml-3 font-medium" aria-hidden="true">
           X
