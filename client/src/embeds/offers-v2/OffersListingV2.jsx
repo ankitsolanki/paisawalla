@@ -249,7 +249,7 @@ const OffersListingV2 = ({
 
   return (
     <ErrorBoundary>
-      <div className="font-sans pb-20">
+      <div className="font-sans pb-20 overflow-x-hidden">
         <div className="mx-4 md:mx-6 mt-3 flex flex-row items-center gap-2">
           <div className="relative flex-1 min-w-0 overflow-hidden">
             <div
