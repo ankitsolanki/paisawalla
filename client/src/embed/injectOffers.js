@@ -149,9 +149,12 @@ if (script) {
       // Add scoped container class to prevent style leakage
       container.classList.add('pw-offers-container');
       
-      // Ensure container uses full width
+      // Ensure container uses full width and cannot overflow the Webflow page
       container.style.width = '100%';
+      container.style.maxWidth = '100%';
       container.style.boxSizing = 'border-box';
+      container.style.overflowX = 'hidden';
+      container.style.position = 'relative';
       
       // Create React root and render offers listing
       const root = createRoot(container);
