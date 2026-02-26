@@ -205,6 +205,18 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
   useEffect(() => {
     mountedRef.current = true;
     console.log('[PW:Offers] mount', { applicationId, leadId, theme });
+    console.log('[PW:Offers] viewport', {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      clientWidth: document.documentElement.clientWidth,
+      screenWidth: window.screen.width,
+      devicePixelRatio: window.devicePixelRatio,
+      bodyMinWidth: window.getComputedStyle(document.body).minWidth,
+      bodyWidth: window.getComputedStyle(document.body).width,
+      bodyScrollWidth: document.body.scrollWidth,
+      bodyClientWidth: document.body.clientWidth,
+      bodyOverflowX: window.getComputedStyle(document.body).overflowX,
+    });
     return () => {
       mountedRef.current = false;
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
