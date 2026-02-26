@@ -375,7 +375,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   return (
     <ErrorBoundary>
-      <div data-testid="offers-page-v2" className="font-sans min-h-[400px]">
+      <div data-testid="offers-page-v2" className="font-sans min-h-[400px] max-w-full overflow-x-hidden">
         {renderContent()}
       </div>
       <style>{`
