@@ -20,8 +20,15 @@ const apiClient = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config) => {
-    // Add any auth tokens or headers here if needed
-    // Add session ID if available
+    if (!config.baseURL || config.baseURL === '') {
+      const dynamicBase =
+        (typeof window !== 'undefined' && window.VITE_API_BASE_URL)
+          ? window.VITE_API_BASE_URL
+          : (import.meta.env.VITE_API_BASE_URL || '');
+      if (dynamicBase) {
+        config.baseURL = dynamicBase;
+      }
+    }
     if (typeof window !== 'undefined' && window.sessionStorage) {
       const sessionId = sessionStorage.getItem('pw_session_id');
       if (sessionId) {
