@@ -177,9 +177,32 @@ if (script) {
         }
       };
 
-      // Run immediately and again after one frame to catch late-loading Webflow styles
-      realignToViewport();
-      requestAnimationFrame(realignToViewport);
+      // Schedule realignment to run after Webflow JS has settled.
+      // Webflow resizes the container AFTER DOMContentLoaded, so a simple rAF is too early.
+      const scheduleRealign = () => {
+        realignToViewport();
+
+        if (document.readyState === 'complete') {
+          setTimeout(realignToViewport, 100);
+        } else {
+          window.addEventListener('load', () => {
+            realignToViewport();
+            setTimeout(realignToViewport, 300);
+          }, { once: true });
+        }
+
+        if (typeof ResizeObserver !== 'undefined' && container.parentElement) {
+          let corrections = 0;
+          const ro = new ResizeObserver(() => {
+            realignToViewport();
+            corrections++;
+            if (corrections >= 3) ro.disconnect();
+          });
+          ro.observe(container.parentElement);
+          setTimeout(() => ro.disconnect(), 5000);
+        }
+      };
+      scheduleRealign();
       
       // Create React root and render offers listing
       const root = createRoot(container);
