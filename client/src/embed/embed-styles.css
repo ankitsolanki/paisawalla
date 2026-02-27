@@ -150,3 +150,19 @@
   }
 }
 
+/* pw-md breakpoint (900px) — used by OfferCardV2 for mobile/desktop layout switch */
+@media (min-width: 900px) {
+  .pw-offers-container .pw-md\:hidden {
+    display: none !important;
+  }
+  .pw-offers-container .pw-md\:block {
+    display: block !important;
+  }
+}
+
+@media (max-width: 899px) {
+  .pw-offers-container .pw-md\:hidden {
+    display: block !important;
+  }
+}
+
