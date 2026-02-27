@@ -1,0 +1,16 @@
+OffersPageV2-Ci1XrMC4.js:15 [PW:Session] Starting session check {applicationId: '69a151ff4e673086320cd35d', sessionKey: 'pw_session_69a151ff4e673086320cd35d', hasToken: false, maskedToken: null}
+OffersPageV2-Ci1XrMC4.js:15 [PW:Session] No valid token in localStorage — will show OTP {applicationId: '69a151ff4e673086320cd35d', sessionKey: 'pw_session_69a151ff4e673086320cd35d'}
+OffersPageV2-Ci1XrMC4.js:15 [PW:Session] No valid session — starting OTP flow {applicationId: '69a151ff4e673086320cd35d'}
+content.js:1 CISPL SignerDigital Loaded
+OffersPageV2-Ci1XrMC4.js:1 [PW:OTP] OTP gate mounted — initiating OTP send {maskedPhone: '******3983', applicationId: '69a151ff4e673086320cd35d'}
+OffersPageV2-Ci1XrMC4.js:1 [PW:OTP] Sending OTP {maskedPhone: '******3983', attemptNumber: 1, applicationId: '69a151ff4e673086320cd35d'}
+OffersPageV2-Ci1XrMC4.js:1 [PW:OTP] OTP sent successfully {maskedPhone: '******3983'}
+content.js:1 CISPL SignerDigital Loaded
+OffersPageV2-Ci1XrMC4.js:1 [PW:OTP] Verifying OTP {maskedPhone: '******3983', applicationId: '69a151ff4e673086320cd35d', attemptNumber: 2}
+OffersPageV2-Ci1XrMC4.js:1 [PW:OTP] OTP verified successfully — session token received {maskedToken: '546cec48...', applicationId: '69a151ff4e673086320cd35d'}
+OffersPageV2-Ci1XrMC4.js:15 [PW:Session] OTP verified — saving new session token to localStorage {sessionKey: 'pw_session_69a151ff4e673086320cd35d', maskedToken: '546cec48...'}
+listing-page?page=of…e4e673086320cd352:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+listing-page?page=of…e4e673086320cd352:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+listing-page?page=of…e4e673086320cd352:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+listing-page?page=of…e4e673086320cd352:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+listing-page?page=of…e4e673086320cd352:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
