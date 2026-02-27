@@ -3,6 +3,7 @@ import { createLead, getLead, lookupLeadByPhone } from '../controllers/leadContr
 import { storeConsent } from '../controllers/consentController.js';
 import { validateRecaptcha } from '../middleware/validateRecaptcha.js';
 import { formSubmissionLimiter, rateLimiter } from '../middleware/rateLimiter.js';
+import { ipWhitelist } from '../middleware/ipWhitelist.js';
 
 const router = express.Router();
 
@@ -24,8 +25,8 @@ router.post(
 // GET /api/leads/lookup - Lookup lead by phone (optional formType)
 router.get('/lookup', rateLimiter, lookupLeadByPhone);
 
-// GET /api/leads/:leadId - Get lead by ID
-router.get('/:leadId', rateLimiter, getLead);
+// GET /api/leads/:leadId - Get lead by ID (admin only)
+router.get('/:leadId', ipWhitelist, rateLimiter, getLead);
 
 export default router;
 

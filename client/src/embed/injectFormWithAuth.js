@@ -142,9 +142,6 @@ if (script) {
   const title = scriptTag.getAttribute('data-title') || undefined;
   const description = scriptTag.getAttribute('data-description') || undefined;
 
-  // Debug logging (helpful for troubleshooting)
-  console.log('PW Forms: Initializing with:', { formType, theme, containerId });
-
   // Find container element
   const container = document.getElementById(containerId);
   if (!container) {

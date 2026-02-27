@@ -62,7 +62,6 @@ export const createFieldSchema = (field) => {
       // Start with base string schema (required validation will be added later if needed)
       schema = z.string().refine(
         (val) => {
-          console.log('[DATE VALIDATION - Format Check]', {
             fieldName: field.name,
             value: val,
             valueType: typeof val,
@@ -70,20 +69,17 @@ export const createFieldSchema = (field) => {
           });
           
           if (!val || typeof val !== 'string' || val.trim() === '') {
-            console.log('[DATE VALIDATION - Format Check] FAILED: Empty or invalid type');
             return false;
           }
           
           // HTML date input always returns YYYY-MM-DD format
           // Parse as local date to avoid timezone issues
           const parts = val.split('-');
-          console.log('[DATE VALIDATION - Format Check]', {
             parts,
             partsLength: parts.length,
           });
           
           if (parts.length !== 3) {
-            console.log('[DATE VALIDATION - Format Check] FAILED: Invalid format (not YYYY-MM-DD)');
             return false;
           }
           
@@ -92,7 +88,6 @@ export const createFieldSchema = (field) => {
           const day = parseInt(parts[2], 10);
           const date = new Date(year, month, day);
           
-          console.log('[DATE VALIDATION - Format Check]', {
             year,
             month: month + 1, // Display as 1-indexed
             day,
@@ -114,7 +109,6 @@ export const createFieldSchema = (field) => {
                  date.getDate() === day;
           
           if (!isValid) {
-            console.log('[DATE VALIDATION - Format Check] FAILED: Date mismatch');
           }
           
           return isValid;
@@ -122,19 +116,16 @@ export const createFieldSchema = (field) => {
         { message: getErrorMessage('date', 'Please enter a valid date') }
       ).refine(
         (val) => {
-          console.log('[DATE VALIDATION - Range Check]', {
             fieldName: field.name,
             value: val,
           });
           
           if (!val || typeof val !== 'string' || val.trim() === '') {
-            console.log('[DATE VALIDATION - Range Check] FAILED: Empty value');
             return false;
           }
           
           const parts = val.split('-');
           if (parts.length !== 3) {
-            console.log('[DATE VALIDATION - Range Check] FAILED: Invalid format');
             return false;
           }
           
@@ -143,7 +134,6 @@ export const createFieldSchema = (field) => {
           const day = parseInt(parts[2], 10);
           const inputDate = new Date(year, month, day);
           
-          console.log('[DATE VALIDATION - Range Check]', {
             year,
             month: month + 1,
             day,
@@ -152,7 +142,6 @@ export const createFieldSchema = (field) => {
           });
           
           if (isNaN(inputDate.getTime())) {
-            console.log('[DATE VALIDATION - Range Check] FAILED: Invalid date');
             return false;
           }
           
@@ -162,7 +151,6 @@ export const createFieldSchema = (field) => {
           const dateOnly = new Date(year, month, day);
           const minDate = new Date(1900, 0, 1);
           
-          console.log('[DATE VALIDATION - Range Check]', {
             dateOnly: dateOnly.toISOString(),
             today: today.toISOString(),
             minDate: minDate.toISOString(),
@@ -175,7 +163,6 @@ export const createFieldSchema = (field) => {
           const isValid = dateOnly <= today && dateOnly >= minDate;
           
           if (!isValid) {
-            console.log('[DATE VALIDATION - Range Check] FAILED: Date out of range');
           }
           
           return isValid;
@@ -287,7 +274,6 @@ export const createFieldSchema = (field) => {
           (val) => {
             // Value should already be uppercase from preprocess, but ensure it is
             const upperVal = typeof val === 'string' ? val.toUpperCase() : val;
-            console.log('[PAN VALIDATION]', { original: val, upperVal, regex: regex, testResult: regexPattern.test(upperVal) });
             return regexPattern.test(upperVal);
           },
           { message: getErrorMessage('regex', getErrorMessage('pattern', 'Invalid format')) }
@@ -314,7 +300,6 @@ export const createFieldSchema = (field) => {
           (val) => {
             // Value should already be uppercase from preprocess, but ensure it is
             const upperVal = typeof val === 'string' ? val.toUpperCase() : val;
-            console.log('[PAN VALIDATION - Pattern]', { original: val, upperVal, pattern: pattern, testResult: patternRegex.test(upperVal) });
             return patternRegex.test(upperVal);
           },
           { message: getErrorMessage('pattern', 'Invalid format') }
@@ -431,7 +416,6 @@ export const validateFormData = (formData, formSchema) => {
  * Validate single field
  */
 export const validateField = (value, field) => {
-  console.log('[VALIDATE FIELD]', {
     fieldName: field.name,
     fieldType: field.type,
     value,
@@ -443,7 +427,6 @@ export const validateField = (value, field) => {
     const schema = createFieldSchema(field);
     const result = schema.safeParse(value);
 
-    console.log('[VALIDATE FIELD RESULT]', {
       fieldName: field.name,
       success: result.success,
       errors: result.success ? null : result.error.errors.map(e => ({
@@ -457,7 +440,6 @@ export const validateField = (value, field) => {
       return { isValid: true, error: null };
     } else {
       const errorMessage = result.error.errors[0]?.message || 'Invalid value';
-      console.log('[VALIDATE FIELD] FAILED', {
         fieldName: field.name,
         error: errorMessage,
       });

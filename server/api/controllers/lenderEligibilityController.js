@@ -71,7 +71,7 @@ export async function checkLenderEligibility(req, res) {
       stack: error.stack,
     });
     return res.status(500).json(
-      buildErrorResponse('Failed to evaluate lender eligibility', error.message, 500)
+      buildErrorResponse('Failed to evaluate lender eligibility', null, 500)
     );
   }
 }

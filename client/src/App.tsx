@@ -101,7 +101,6 @@ function OffersDemo({ theme, version = 'v1' }: { theme: string; version?: 'v1' |
             applicationId={activeAppId}
             theme={theme}
             onStateChange={(status: string, data: any) => {
-              console.log('Offers state:', status, data);
             }}
           />
         </div>

@@ -72,7 +72,6 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
         processedValue = value.toUpperCase();
         e.target.value = processedValue;
       }
-      console.log('[HANDLE CHANGE]', {
         fieldName: name,
         value,
         processedValue,
@@ -82,7 +81,6 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
       });
       setFormData((prev) => {
         const newFormData = { ...prev, [name]: processedValue };
-        console.log('[HANDLE CHANGE] Updated formData', {
           fieldName: name,
           newValue: newFormData[name],
         });
@@ -103,7 +101,6 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
   const handleBlur = useCallback(
     (e) => {
       const { name, value } = e.target;
-      console.log('[HANDLE BLUR]', {
         fieldName: name,
         value,
         valueType: typeof value,
@@ -112,7 +109,6 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
       trackFieldInteraction(name, 'blur', value);
       const field = schema.fields.find((f) => f.name === name);
       if (field) {
-        console.log('[HANDLE BLUR] Field found', {
           fieldName: field.name,
           fieldType: field.type,
           isRequired: field.required,
@@ -120,18 +116,15 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
         const hasValue = field.type === 'number' 
           ? (value !== undefined && value !== null && value !== '' && !isNaN(Number(value)))
           : (value !== undefined && value !== null && value !== '');
-        console.log('[HANDLE BLUR] Validation check', {
           hasValue,
           isRequired: field.required,
           willValidate: hasValue || field.required,
         });
         if (hasValue || field.required) {
-          console.log('[HANDLE BLUR] Calling validateField', {
             fieldName: name,
             value,
           });
           const validation = validateField(value, field);
-          console.log('[HANDLE BLUR] Validation result', {
             fieldName: name,
             isValid: validation.isValid,
             error: validation.error,
@@ -163,12 +156,10 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
   );
 
   const validateCurrentStep = useCallback(() => {
-    console.log('[VALIDATE CURRENT STEP]', {
       currentStep,
       formData,
     });
     const currentFields = getCurrentStepFields();
-    console.log('[VALIDATE CURRENT STEP] Fields to validate', {
       fieldNames: currentFields.map(f => f.name),
       fieldCount: currentFields.length,
     });
@@ -176,7 +167,6 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
     let isValid = true;
     currentFields.forEach((field) => {
       const value = formData[field.name];
-      console.log('[VALIDATE CURRENT STEP] Processing field', {
         fieldName: field.name,
         fieldType: field.type,
         value,
@@ -188,25 +178,21 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
                       value === '' || 
                       (field.type === 'checkbox' && value === false) ||
                       (field.type === 'number' && (value === '' || value === null || value === undefined || (typeof value === 'string' && value.trim() === '')));
-      console.log('[VALIDATE CURRENT STEP] Field empty check', {
         fieldName: field.name,
         isEmpty,
       });
       if (isEmpty) {
         if (field.required) {
-          console.log('[VALIDATE CURRENT STEP] Field is required and empty', {
             fieldName: field.name,
           });
           stepErrors[field.name] = `${field.label} is required`;
           isValid = false;
         }
       } else {
-        console.log('[VALIDATE CURRENT STEP] Field has value, validating', {
           fieldName: field.name,
           value,
         });
         const validation = validateField(value, field);
-        console.log('[VALIDATE CURRENT STEP] Field validation result', {
           fieldName: field.name,
           isValid: validation.isValid,
           error: validation.error,
@@ -217,7 +203,6 @@ const DesktopFormRenderer = ({ schema, theme = 'light', title, description }) =>
         }
       }
     });
-    console.log('[VALIDATE CURRENT STEP] Final result', {
       isValid,
       errors: stepErrors,
     });

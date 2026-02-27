@@ -2,14 +2,15 @@ import express from 'express';
 import { createApplication, getApplication } from '../controllers/applicationController.js';
 import { getOffers } from '../controllers/offerController.js';
 import { rateLimiter } from '../middleware/rateLimiter.js';
+import { ipWhitelist } from '../middleware/ipWhitelist.js';
 
 const router = express.Router();
 
 // POST /api/applications - Create a new application
 router.post('/', rateLimiter, createApplication);
 
-// GET /api/applications/:applicationId - Get application by ID
-router.get('/:applicationId', rateLimiter, getApplication);
+// GET /api/applications/:applicationId - Get application by ID (admin only)
+router.get('/:applicationId', ipWhitelist, rateLimiter, getApplication);
 
 // POST /api/applications/:applicationId/offers - Retrieve offers list
 router.post('/:applicationId/offers', rateLimiter, getOffers);

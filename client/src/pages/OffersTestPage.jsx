@@ -82,7 +82,6 @@ const OffersTestPage = () => {
               applicationId={applicationId}
               theme={theme}
               onStateChange={(status, data) => {
-                console.log('Offers state changed:', status, data);
               }}
             />
           </div>

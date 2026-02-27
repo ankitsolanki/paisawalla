@@ -1,9 +1,11 @@
 import express from 'express';
 import { getApiLogs, clearApiLogs } from '../utils/apiLogger.js';
+import { ipWhitelist } from '../middleware/ipWhitelist.js';
+import { rateLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-router.get('/', async (req, res) => {
+router.get('/', ipWhitelist, rateLimiter, async (req, res) => {
   try {
     const limit = Math.min(parseInt(req.query.limit) || 50, 500);
     const offset = parseInt(req.query.offset) || 0;
@@ -15,7 +17,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.delete('/', async (req, res) => {
+router.delete('/', ipWhitelist, rateLimiter, async (req, res) => {
   try {
     const result = await clearApiLogs();
     res.json(result);

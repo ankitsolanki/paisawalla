@@ -83,10 +83,6 @@ class AnalyticsService {
     // Flush events in batches
     this.scheduleFlush();
 
-    // Also log to console in development
-    if (import.meta.env.DEV) {
-      console.log('[Analytics]', eventType, event);
-    }
   }
 
   /**
@@ -139,9 +135,6 @@ class AnalyticsService {
     
     // Prevent duplicate tracking within 2 seconds (React Strict Mode protection)
     if (now - lastViewTime < 2000) {
-      if (import.meta.env.DEV) {
-        console.log('[Analytics] Skipping duplicate form_view for', formType);
-      }
       return;
     }
     
@@ -174,9 +167,6 @@ class AnalyticsService {
         if (lastInteraction && 
             lastInteraction.action === action && 
             now - lastInteraction.time < 500) {
-          if (import.meta.env.DEV) {
-            console.log(`[Analytics] Skipping duplicate ${action} for ${fieldName}`);
-          }
           return;
         }
         this.lastFieldInteraction[key] = { action, time: now };

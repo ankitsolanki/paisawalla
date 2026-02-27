@@ -3,14 +3,14 @@ import "dotenv/config";
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
+import mongoSanitize from 'express-mongo-sanitize';
 import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
 import { connectDB } from './config/db.js';
 import { securityConfig } from './config/security.js';
 import { sanitizeInput } from './middleware/sanitizeInput.js';
 import { requestLogger } from './middleware/requestLogger.js';
-import { env, validateEnv } from './config/env.js';
-import { buildErrorResponse } from './utils/responseBuilder.js';
+import { validateEnv } from './config/env.js';
 import mongoose from 'mongoose';
 
 import leadRoutes from './routes/leadRoutes.js';
@@ -25,7 +25,7 @@ import ecvRoutes from './routes/ecvRoutes.js';
 import lenderEligibilityRoutes from './routes/lenderEligibilityRoutes.js';
 import eligibilityRoutes from './routes/eligibilityRoutes.js';
 import apiLogRoutes from './routes/apiLogRoutes.js';
-import { seedTestData, VARIANT_INFO } from './seeds/testData.js';
+import { seedTestData } from './seeds/testData.js';
 import { seedAllLenderData } from './seeds/seedLenderData.js';
 
 validateEnv();
@@ -42,6 +42,12 @@ apiRouter.use(helmet({
   crossOriginEmbedderPolicy: false,
 }));
 apiRouter.use(cors(securityConfig.cors));
+apiRouter.use((req, _res, next) => {
+  if (req.body && typeof req.body === 'object') {
+    req.body = mongoSanitize.sanitize(req.body, { replaceWith: '_' });
+  }
+  next();
+});
 apiRouter.use(sanitizeInput);
 apiRouter.use(requestLogger);
 
@@ -57,19 +63,6 @@ apiRouter.use('/ecv', ecvRoutes);
 apiRouter.use('/lender-eligibility', lenderEligibilityRoutes);
 apiRouter.use('/eligibility', eligibilityRoutes);
 apiRouter.use('/admin/api-logs', apiLogRoutes);
-
-apiRouter.get('/test-variants', (req, res) => {
-  res.status(200).json({ ok: true, variants: VARIANT_INFO });
-});
-
-apiRouter.post('/test-variants/seed', async (req, res) => {
-  try {
-    const result = await seedTestData();
-    res.status(200).json({ ok: true, variants: result, message: 'Test data seeded successfully' });
-  } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
-  }
-});
 
 apiRouter.use(errorHandler);
 
