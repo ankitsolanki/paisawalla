@@ -177,32 +177,33 @@ const Form2 = ({
       leadId,
     });
 
+    let sessionToken = null;
     const cleanPhone = (formData.phone || '').replace(/\D/g, '');
     if (cleanPhone) {
       try {
         const response = await apiClient.post('/api/auth/issue-session-token', { phone: cleanPhone, applicationId: appId });
-        const sessionToken = response?.data?.sessionToken;
+        sessionToken = response?.data?.sessionToken || null;
         if (sessionToken) {
-          localStorage.setItem(`pw_session_${appId}`, sessionToken);
-          console.log('[PW:Session] Pre-redirect session token saved — listing page will skip OTP', { applicationId: appId, maskedToken: `${sessionToken.slice(0, 8)}...` });
+          console.log('[PW:Session] Session token issued — will pass via URL to listing page', { applicationId: appId, maskedToken: `${sessionToken.slice(0, 8)}...` });
         } else {
           console.warn('[PW:Session] issue-session-token responded but no token in response', { response });
         }
       } catch (err) {
-        console.warn('[PW:Session] Failed to issue pre-redirect session token — user will see OTP on listing page', { error: err.message, applicationId: appId });
+        console.warn('[PW:Session] Failed to issue session token — user will see OTP on listing page', { error: err.message, applicationId: appId });
       }
     } else {
-      console.warn('[PW:Session] No phone available to issue pre-redirect session token', { applicationId: appId });
+      console.warn('[PW:Session] No phone available to issue session token', { applicationId: appId });
     }
 
+    const stParam = sessionToken ? `&_st=${sessionToken}` : '';
     if (isEmbedded()) {
       const script = document.querySelector('script[data-form]');
       const offersUrl = script?.getAttribute('data-offers-url') || 'https://paisawaala.webflow.io/listing-page';
       setTimeout(() => {
-        window.location.href = `${offersUrl}?applicationId=${appId}&leadId=${leadId || ''}`;
+        window.location.href = `${offersUrl}?applicationId=${appId}&leadId=${leadId || ''}${stParam}`;
       }, 500);
     } else {
-      window.location.href = `/listing-page?page=offers&applicationId=${appId}${leadId ? `&leadId=${leadId}` : ''}`;
+      window.location.href = `/listing-page?page=offers&applicationId=${appId}${leadId ? `&leadId=${leadId}` : ''}${stParam}`;
     }
   }, [leadId, formData]);
 

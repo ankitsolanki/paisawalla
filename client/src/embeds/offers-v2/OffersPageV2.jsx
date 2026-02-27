@@ -211,6 +211,17 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
     const checkSession = async () => {
       const sessionKey = getSessionKey(applicationId);
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlToken = urlParams.get('_st');
+      if (urlToken && urlToken !== 'undefined' && urlToken !== 'null' && urlToken.trim() !== '') {
+        localStorage.setItem(sessionKey, urlToken);
+        console.log('[PW:Session] Received session token via URL param — saved to localStorage, stripping from URL', { applicationId, maskedToken: `${urlToken.slice(0, 8)}...` });
+        urlParams.delete('_st');
+        const cleanSearch = urlParams.toString() ? `?${urlParams.toString()}` : '';
+        history.replaceState(null, '', `${window.location.pathname}${cleanSearch}`);
+      }
+
       const token = localStorage.getItem(sessionKey);
       const isTokenCorrupted = !token || token === 'undefined' || token === 'null' || token.trim() === '';
       if (isTokenCorrupted && token) {
