@@ -30,19 +30,23 @@ const OtpGate = ({ phone, maskedPhone, applicationId, onVerified, onError }) => 
 
   const sendOtp = useCallback(async () => {
     if (!phone) {
+      console.warn('[PW:OTP] sendOtp called but phone is missing');
       setError('Phone number is required');
       return;
     }
     if (attempts >= MAX_ATTEMPTS) {
+      console.warn('[PW:OTP] Max OTP attempts reached', { attempts, maxAttempts: MAX_ATTEMPTS });
       setError('Too many attempts. Please try again later.');
       return;
     }
 
+    console.log('[PW:OTP] Sending OTP', { maskedPhone: maskedPhone || phone, attemptNumber: attempts + 1, applicationId });
     setSending(true);
     setError('');
 
     try {
       await apiClient.post('/api/auth/send-otp', { phone });
+      console.log('[PW:OTP] OTP sent successfully', { maskedPhone: maskedPhone || phone });
       setStage('otp');
       setOtp(['', '', '', '', '', '']);
       setCountdown(RESEND_COOLDOWN);
@@ -52,14 +56,16 @@ const OtpGate = ({ phone, maskedPhone, applicationId, onVerified, onError }) => 
       }, 100);
     } catch (err) {
       const msg = err?.message || 'Failed to send OTP. Please try again.';
+      console.error('[PW:OTP] Failed to send OTP', { error: msg, maskedPhone: maskedPhone || phone });
       setError(msg);
       if (onError) onError(err);
     } finally {
       setSending(false);
     }
-  }, [phone, attempts, onError]);
+  }, [phone, maskedPhone, attempts, applicationId, onError]);
 
   useEffect(() => {
+    console.log('[PW:OTP] OTP gate mounted — initiating OTP send', { maskedPhone: maskedPhone || phone, applicationId });
     sendOtp();
   }, []);
 
@@ -79,10 +85,12 @@ const OtpGate = ({ phone, maskedPhone, applicationId, onVerified, onError }) => 
 
   const verifyOtp = useCallback(async (otpString) => {
     if (attempts >= MAX_ATTEMPTS) {
+      console.warn('[PW:OTP] Max OTP verify attempts reached — blocking verification', { attempts, maxAttempts: MAX_ATTEMPTS });
       setError('Too many attempts. Please try again later.');
       return;
     }
 
+    console.log('[PW:OTP] Verifying OTP', { maskedPhone: maskedPhone || phone, applicationId, attemptNumber: attempts + 1 });
     setVerifying(true);
     setError('');
 
@@ -93,16 +101,19 @@ const OtpGate = ({ phone, maskedPhone, applicationId, onVerified, onError }) => 
         applicationId,
       });
       const sessionToken = response?.sessionToken || response?.token;
+      const maskedToken = sessionToken ? `${sessionToken.slice(0, 8)}...` : null;
+      console.log('[PW:OTP] OTP verified successfully — session token received', { maskedToken, applicationId });
       if (onVerified) onVerified(sessionToken);
     } catch (err) {
       const msg = err?.message || 'Invalid OTP. Please try again.';
+      console.error('[PW:OTP] OTP verification failed', { error: msg, attemptNumber: attempts + 1, remainingAttempts: MAX_ATTEMPTS - attempts - 1 });
       setError(msg);
       setAttempts((prev) => prev + 1);
       if (onError) onError(err);
     } finally {
       setVerifying(false);
     }
-  }, [phone, applicationId, attempts, onVerified, onError]);
+  }, [phone, maskedPhone, applicationId, attempts, onVerified, onError]);
 
   const handleDigitChange = useCallback((index, value) => {
     if (attempts >= MAX_ATTEMPTS) return;
@@ -154,10 +165,11 @@ const OtpGate = ({ phone, maskedPhone, applicationId, onVerified, onError }) => 
 
   const handleResend = useCallback(() => {
     if (countdown > 0 || sending) return;
+    console.log('[PW:OTP] User requested OTP resend', { maskedPhone: maskedPhone || phone, applicationId });
     setOtp(['', '', '', '', '', '']);
     setError('');
     sendOtp();
-  }, [countdown, sending, sendOtp]);
+  }, [countdown, sending, sendOtp, maskedPhone, phone, applicationId]);
 
   const handleVerifyClick = useCallback(() => {
     const otpString = otp.join('');

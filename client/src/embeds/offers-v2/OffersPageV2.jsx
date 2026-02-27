@@ -212,21 +212,33 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
     const checkSession = async () => {
       const sessionKey = getSessionKey(applicationId);
       const token = localStorage.getItem(sessionKey);
+      const maskedToken = token ? `${token.slice(0, 8)}...` : null;
+
+      console.log('[PW:Session] Starting session check', { applicationId, sessionKey, hasToken: !!token, maskedToken });
 
       if (token) {
+        console.log('[PW:Session] Token found in localStorage — calling server to validate', { maskedToken });
         try {
           const response = await apiClient.post('/api/auth/validate-token', { token, applicationId });
           if (response?.valid) {
+            console.log('[PW:Session] Token is VALID — skipping OTP, proceeding to fetch offers', { maskedToken, phone: response.phone });
             transitionTo('loading');
             fetchOffers();
             return;
           }
-        } catch (err) {
-          console.warn('[PW:Offers] session validate error', { message: err.message });
+          console.warn('[PW:Session] Token is INVALID or EXPIRED (server said so) — removing token, showing OTP', { maskedToken });
           localStorage.removeItem(sessionKey);
+        } catch (err) {
+          console.warn('[PW:Session] Token validation API call FAILED (network/server error) — keeping token intact, proceeding to offers as best-effort', { message: err.message, maskedToken });
+          transitionTo('loading');
+          fetchOffers();
+          return;
         }
       } else {
+        console.log('[PW:Session] No token found in localStorage — will show OTP', { applicationId, sessionKey });
       }
+
+      console.log('[PW:Session] No valid session — starting OTP flow', { applicationId });
       fetchPhoneAndShowOtp();
     };
 
@@ -235,7 +247,10 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   const handleOtpVerified = useCallback((sessionToken) => {
     if (!mountedRef.current) return;
-    localStorage.setItem(getSessionKey(applicationId), sessionToken);
+    const sessionKey = getSessionKey(applicationId);
+    const maskedToken = sessionToken ? `${sessionToken.slice(0, 8)}...` : null;
+    console.log('[PW:Session] OTP verified — saving new session token to localStorage', { sessionKey, maskedToken });
+    localStorage.setItem(sessionKey, sessionToken);
     transitionTo('loading');
     fetchOffers();
   }, [applicationId, transitionTo, fetchOffers]);

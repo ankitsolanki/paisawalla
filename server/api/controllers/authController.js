@@ -129,6 +129,12 @@ export const verifyOtp = async (req, res, next) => {
         const expiresAt = new Date(Date.now() + SESSION_TOKEN_EXPIRY_MS);
         await SessionToken.create({ token, applicationId, phone, expiresAt });
         responseData.sessionToken = token;
+        logger.info('[OTP Auth] Session token created and attached to OTP verify response', {
+          applicationId,
+          maskedToken: `${token.slice(0, 8)}...`,
+          expiresAt: expiresAt.toISOString(),
+          phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+        });
       }
 
       return res.status(200).json(buildResponse(responseData));
@@ -232,7 +238,12 @@ export const issueSessionToken = async (req, res, next) => {
 
     await SessionToken.create({ token, applicationId, phone, expiresAt });
 
-    logger.info('Session token issued', { applicationId });
+    logger.info('[Session] Session token issued via issueSessionToken endpoint', {
+      applicationId,
+      maskedToken: `${token.slice(0, 8)}...`,
+      expiresAt: expiresAt.toISOString(),
+      phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+    });
 
     res.status(200).json(
       buildResponse({
@@ -264,19 +275,35 @@ export const validateSessionToken = async (req, res, next) => {
       );
     }
 
+    const maskedToken = `${token.slice(0, 8)}...`;
+    logger.info('[Session] Validating session token', { applicationId, maskedToken });
+
     const tokenData = await SessionToken.findOne({ token, expiresAt: { $gt: new Date() } });
 
     if (!tokenData) {
+      logger.warn('[Session] Token NOT found in DB or is expired — session invalid', { applicationId, maskedToken, checkedAt: new Date().toISOString() });
       return res.status(200).json(
         buildResponse({ valid: false, phone: null }, 'Token not found or expired')
       );
     }
 
     if (tokenData.applicationId !== applicationId) {
+      logger.warn('[Session] Token applicationId MISMATCH — session invalid', {
+        expectedApplicationId: applicationId,
+        actualApplicationId: tokenData.applicationId,
+        maskedToken,
+      });
       return res.status(200).json(
         buildResponse({ valid: false, phone: null }, 'Token does not match applicationId')
       );
     }
+
+    logger.info('[Session] Token is VALID — session active', {
+      applicationId,
+      maskedToken,
+      phone: tokenData.phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+      expiresAt: tokenData.expiresAt.toISOString(),
+    });
 
     res.status(200).json(
       buildResponse({ valid: true, phone: tokenData.phone }, 'Token is valid')
