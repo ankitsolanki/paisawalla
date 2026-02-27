@@ -154,29 +154,34 @@ const TabletFormRenderer = ({ schema, theme = 'light', title, description }) => 
   const sendOtp = useCallback(async (phone) => {
     setOtpSending(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      const cleanPhone = phone.replace(/\D/g, '');
+      await apiClient.post('/api/auth/send-otp', { phone: cleanPhone });
       setOtpSent(true);
-      trackButtonClick('otp_sent', { phone });
+      trackButtonClick('otp_sent', { phone: cleanPhone });
     } catch (error) {
-      setErrors((prev) => ({ ...prev, phone: 'Failed to send OTP. Please try again.' }));
-      trackButtonClick('otp_send_error', { error: error.message });
+      const msg = error?.message || 'Failed to send OTP. Please try again.';
+      setErrors((prev) => ({ ...prev, phone: msg }));
+      trackButtonClick('otp_send_error', { error: msg });
     } finally {
       setOtpSending(false);
     }
   }, [trackButtonClick]);
 
   const verifyOtp = useCallback(async (phone, otp) => {
+    if (!/^\d{6}$/.test(otp)) {
+      setErrors((prev) => ({ ...prev, otp: 'Invalid OTP. Please enter a 6-digit code.' }));
+      return false;
+    }
     try {
-      if (!/^\d{6}$/.test(otp)) {
-        setErrors((prev) => ({ ...prev, otp: 'Invalid OTP. Please enter a 6-digit code.' }));
-        return false;
-      }
+      const cleanPhone = phone.replace(/\D/g, '');
+      await apiClient.post('/api/auth/verify-otp', { phone: cleanPhone, otp });
       setOtpVerified(true);
-      trackButtonClick('otp_verified', { phone });
+      trackButtonClick('otp_verified', { phone: cleanPhone });
       return true;
     } catch (error) {
-      setErrors((prev) => ({ ...prev, otp: 'Invalid OTP. Please try again.' }));
-      trackButtonClick('otp_verify_error', { error: error.message });
+      const msg = error?.message || 'Invalid OTP. Please try again.';
+      setErrors((prev) => ({ ...prev, otp: msg }));
+      trackButtonClick('otp_verify_error', { error: msg });
       return false;
     }
   }, [trackButtonClick]);

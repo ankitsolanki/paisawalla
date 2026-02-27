@@ -92,9 +92,6 @@ function OffersDemo({ theme, version = 'v1' }: { theme: string; version?: 'v1' |
             ID: {activeAppId}
           </span>
         </div>
-        <div className="text-xs text-muted-foreground mb-2 italic">
-          Test OTP: 123456
-        </div>
         <div className="relative min-h-96">
           <OffersComponent
             key={activeAppId}
@@ -118,9 +115,6 @@ function OffersDemo({ theme, version = 'v1' }: { theme: string; version?: 'v1' |
             </h3>
             <p className="text-sm text-foreground mb-1">
               Click a variant below to test the full offers flow: OTP gate, branded loader, and offers listing.
-            </p>
-            <p className="text-xs text-muted-foreground italic">
-              Test OTP code: 123456
             </p>
           </div>
           <button
