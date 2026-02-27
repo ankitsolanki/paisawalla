@@ -27,7 +27,11 @@ Thumbs.db
 .env.development
 .env.production
 .env.test
+.replit
 *.env
+.pnpm-store
+Pasted-*.txt
+WhatsApp_*.jpeg
 !.env.example
 
 # Dependencies
