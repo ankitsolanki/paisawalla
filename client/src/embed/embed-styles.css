@@ -164,5 +164,8 @@
   .pw-offers-container .pw-md\:hidden {
     display: block !important;
   }
+  .pw-offers-container .pw-md\:block {
+    display: none !important;
+  }
 }
 

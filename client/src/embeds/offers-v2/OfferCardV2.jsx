@@ -260,7 +260,7 @@ const OfferCardV2 = ({ offer, applicationId, rank, isCompareSelected, onToggleCo
       </div>
 
       {/* ===== DESKTOP LAYOUT (>= 900px) ===== */}
-      <div className="hidden pw-md:block">
+      <div className="pw-md:block">
         <div className="flex items-center gap-4 px-4 py-3">
           <div className="flex items-center gap-2.5 w-[180px] shrink-0">
             {lenderAvatar}
