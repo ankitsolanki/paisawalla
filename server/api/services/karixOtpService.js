@@ -15,7 +15,7 @@ function getConfig() {
   return { accessKey, departmentId, ipAddress };
 }
 
-export function isKarixConfigured() {
+export function assertKarixConfigured() {
   const { accessKey, ipAddress } = getConfig();
   const missing = [];
 
@@ -23,13 +23,10 @@ export function isKarixConfigured() {
   if (!ipAddress) missing.push('KARIX_IP_ADDRESS');
 
   if (missing.length > 0) {
-    logger.warn('[Karix OTP] Missing environment variables, falling back to dev mode (hardcoded OTP)', {
-      missingKeys: missing,
-    });
-    return false;
+    const msg = `[Karix OTP] FATAL: Required environment variables are not set: ${missing.join(', ')}. OTP service cannot start.`;
+    logger.error(msg, { missingKeys: missing });
+    throw new Error(msg);
   }
-
-  return true;
 }
 
 function formatMobile(phone) {

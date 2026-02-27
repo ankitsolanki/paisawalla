@@ -182,8 +182,8 @@ const OfferCardV2 = ({ offer, applicationId, rank, isCompareSelected, onToggleCo
       data-testid={`card-offer-v2-${offer.id || offer._id}`}
       className={`relative bg-white border rounded-xl font-sans transition-all duration-200 shadow-sm hover:shadow-md ${isBestOffer ? 'border-primary/40 ring-1 ring-primary/10' : 'border-gray-200'}`}
     >
-      {/* ===== MOBILE LAYOUT (< md) ===== */}
-      <div className="md:hidden p-3.5">
+      {/* ===== MOBILE LAYOUT (< 900px) ===== */}
+      <div className="pw-md:hidden p-3.5">
         <div className="flex items-center gap-2.5 mb-3">
           {lenderAvatar}
           <div className="flex-1 min-w-0">
@@ -259,8 +259,8 @@ const OfferCardV2 = ({ offer, applicationId, rank, isCompareSelected, onToggleCo
         {expandedContent}
       </div>
 
-      {/* ===== DESKTOP LAYOUT (>= md) ===== */}
-      <div className="hidden md:block">
+      {/* ===== DESKTOP LAYOUT (>= 900px) ===== */}
+      <div className="hidden pw-md:block">
         <div className="flex items-center gap-4 px-4 py-3">
           <div className="flex items-center gap-2.5 w-[180px] shrink-0">
             {lenderAvatar}
