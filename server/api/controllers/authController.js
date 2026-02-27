@@ -30,6 +30,16 @@ export const sendOtp = async (req, res, next) => {
       );
     }
 
+    const reqId = Math.random().toString(36).slice(2, 8).toUpperCase();
+    logger.info('[OTP Auth] >>> SEND-OTP request received', {
+      reqId,
+      phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+      referer: req.headers.referer || req.headers.origin || 'none',
+      userAgent: req.headers['user-agent'],
+      ip: req.ip || req.headers['x-forwarded-for'],
+      timestamp: new Date().toISOString(),
+    });
+
     logCurl({
       label: 'OTP Send',
       method: 'POST',
@@ -43,7 +53,8 @@ export const sendOtp = async (req, res, next) => {
     const result = await karixGenerateOtp(phone);
 
     if (result.success) {
-      logger.info('[OTP Auth] Karix OTP generated and sent via SMS', {
+      logger.info('[OTP Auth] >>> SEND-OTP result: SUCCESS', {
+        reqId,
         phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
       });
 
@@ -54,7 +65,8 @@ export const sendOtp = async (req, res, next) => {
       );
     }
 
-    logger.error('[OTP Auth] Karix OTP generation failed', {
+    logger.error('[OTP Auth] >>> SEND-OTP result: FAILED', {
+      reqId,
       error: result.error,
       message: result.message,
       phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
@@ -169,6 +181,16 @@ export const resendOtp = async (req, res, next) => {
       );
     }
 
+    const reqId = Math.random().toString(36).slice(2, 8).toUpperCase();
+    logger.info('[OTP Auth] >>> RESEND-OTP request received', {
+      reqId,
+      phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+      referer: req.headers.referer || req.headers.origin || 'none',
+      userAgent: req.headers['user-agent'],
+      ip: req.ip || req.headers['x-forwarded-for'],
+      timestamp: new Date().toISOString(),
+    });
+
     logCurl({
       label: 'OTP Resend',
       method: 'POST',
@@ -182,7 +204,8 @@ export const resendOtp = async (req, res, next) => {
     const result = await karixRegenerateOtp(phone);
 
     if (result.success) {
-      logger.info('[OTP Auth] OTP resent via Karix regeneration API', {
+      logger.info('[OTP Auth] >>> RESEND-OTP result: SUCCESS', {
+        reqId,
         phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
       });
 

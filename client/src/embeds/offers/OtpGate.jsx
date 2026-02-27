@@ -40,13 +40,13 @@ const OtpGate = ({ phone, maskedPhone, applicationId, onVerified, onError }) => 
       return;
     }
 
-    console.log('[PW:OTP] Sending OTP', { maskedPhone: maskedPhone || phone, attemptNumber: attempts + 1, applicationId });
+    console.log('[PW:OTP] Sending OTP', { caller: 'OtpGate', maskedPhone: maskedPhone || phone, attemptNumber: attempts + 1, applicationId, pageUrl: window.location.href, timestamp: new Date().toISOString() });
     setSending(true);
     setError('');
 
     try {
       await apiClient.post('/api/auth/send-otp', { phone });
-      console.log('[PW:OTP] OTP sent successfully', { maskedPhone: maskedPhone || phone });
+      console.log('[PW:OTP] OTP sent successfully', { caller: 'OtpGate', maskedPhone: maskedPhone || phone, applicationId, pageUrl: window.location.href });
       setStage('otp');
       setOtp(['', '', '', '', '', '']);
       setCountdown(RESEND_COOLDOWN);
@@ -65,7 +65,7 @@ const OtpGate = ({ phone, maskedPhone, applicationId, onVerified, onError }) => 
   }, [phone, maskedPhone, attempts, applicationId, onError]);
 
   useEffect(() => {
-    console.log('[PW:OTP] OTP gate mounted — initiating OTP send', { maskedPhone: maskedPhone || phone, applicationId });
+    console.log('[PW:OTP] OtpGate mounted — auto-sending OTP on mount', { maskedPhone: maskedPhone || phone, applicationId, pageUrl: window.location.href, timestamp: new Date().toISOString() });
     sendOtp();
   }, []);
 

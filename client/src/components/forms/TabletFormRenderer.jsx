@@ -152,14 +152,18 @@ const TabletFormRenderer = ({ schema, theme = 'light', title, description }) => 
   }, [formData, getCurrentStepFields]);
 
   const sendOtp = useCallback(async (phone) => {
+    const cleanPhone = phone.replace(/\D/g, '');
+    const maskedPhone = cleanPhone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2');
+    console.log('[PW:OTP] TabletFormRenderer sending OTP', { caller: 'TabletFormRenderer', maskedPhone, pageUrl: window.location.href, trigger: 'phone-step-next', timestamp: new Date().toISOString() });
     setOtpSending(true);
     try {
-      const cleanPhone = phone.replace(/\D/g, '');
       await apiClient.post('/api/auth/send-otp', { phone: cleanPhone });
       setOtpSent(true);
       trackButtonClick('otp_sent', { phone: cleanPhone });
+      console.log('[PW:OTP] TabletFormRenderer OTP sent successfully', { caller: 'TabletFormRenderer', maskedPhone });
     } catch (error) {
       const msg = error?.message || 'Failed to send OTP. Please try again.';
+      console.error('[PW:OTP] TabletFormRenderer OTP send FAILED', { caller: 'TabletFormRenderer', error: msg, maskedPhone, pageUrl: window.location.href });
       setErrors((prev) => ({ ...prev, phone: msg }));
       trackButtonClick('otp_send_error', { error: msg });
     } finally {

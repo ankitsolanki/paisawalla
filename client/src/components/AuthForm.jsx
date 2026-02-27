@@ -303,13 +303,17 @@ const AuthForm = ({
 
     try {
       const phoneDigits = cleanPhone(phone);
+      const maskedPhone = phoneDigits.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2');
+      console.log('[PW:OTP] AuthForm sending OTP', { caller: 'AuthForm', maskedPhone, pageUrl: window.location.href, timestamp: new Date().toISOString() });
       await apiClient.post('/api/auth/send-otp', { phone: phoneDigits });
+      console.log('[PW:OTP] AuthForm OTP sent successfully', { caller: 'AuthForm', maskedPhone });
 
       setStage('otp');
       setOtp('');
       startResendTimer();
     } catch (error) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Failed to send OTP. Please try again.';
+      console.error('[PW:OTP] AuthForm OTP send FAILED', { caller: 'AuthForm', error: errorMessage, pageUrl: window.location.href });
       setErrors((prev) => ({ ...prev, phone: errorMessage }));
     } finally {
       setOtpSending(false);

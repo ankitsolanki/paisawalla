@@ -45,6 +45,11 @@ export async function generateOtp(phone) {
   const mobile = formatMobile(phone);
   const baseUrl = getBaseUrl();
 
+  logger.info('[Karix OTP] generateOtp called — about to hit Karix API', {
+    mobile: mobile.replace(/(\d{4})\d{6}(\d{2})/, '$1******$2'),
+    timestamp: new Date().toISOString(),
+  });
+
   const params = new URLSearchParams({
     ipaddress: ipAddress,
     mobile: mobile,
