@@ -106,6 +106,9 @@ backend/data/
 *.key
 *.cert
 *.md
+!DEPLOY.md
+!EMBED_INTEGRATION.md
+!paisawalla.knowledge.md
 !README.md
 *.zip
 *.tar
