@@ -78,7 +78,25 @@ This ensures all routes (e.g., `/offers`, `/eligibility`) serve `index.html` and
 
 ---
 
-## Step 6: Custom Domain (Optional)
+## Step 6: Configure Custom HTTP Headers (CORS)
+
+In Amplify Console → **Hosting** → **Custom headers and cache**, add the following configuration so the browser can call your backend from the frontend (and embeds) without CORS issues:
+
+```yaml
+customHeaders:
+  - pattern: "**"
+    headers:
+      - key: Access-Control-Allow-Origin
+        value: "*"
+      - key: Access-Control-Allow-Methods
+        value: GET,OPTIONS
+      - key: Access-Control-Allow-Headers
+        value: "*"
+```
+
+---
+
+## Step 7: Custom Domain (Optional)
 
 1. Go to **Domain management** in Amplify Console
 2. Add your custom domain (e.g., `app.paisawaala.com`)
@@ -87,7 +105,7 @@ This ensures all routes (e.g., `/offers`, `/eligibility`) serve `index.html` and
 
 ---
 
-## Step 7: Verify Deployment
+## Step 8: Verify Deployment
 
 After deployment completes:
 
