@@ -114,6 +114,17 @@ export const verifyOtp = async (req, res, next) => {
       );
     }
 
+    const reqId = Math.random().toString(36).slice(2, 8).toUpperCase();
+    logger.info('[OTP Auth] >>> VERIFY-OTP request received', {
+      reqId,
+      phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+      applicationId: applicationId || 'NOT PROVIDED',
+      referer: req.headers.referer || req.headers.origin || 'none',
+      userAgent: req.headers['user-agent'],
+      ip: req.ip || req.headers['x-forwarded-for'],
+      timestamp: new Date().toISOString(),
+    });
+
     logCurl({
       label: 'OTP Verify',
       method: 'POST',
@@ -128,7 +139,9 @@ export const verifyOtp = async (req, res, next) => {
 
     if (result.verified) {
       logger.info('[OTP Auth] OTP verified via Karix API', {
+        reqId,
         phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+        applicationId: applicationId || 'NOT PROVIDED',
       });
 
       const responseData = {
@@ -151,6 +164,14 @@ export const verifyOtp = async (req, res, next) => {
 
       return res.status(200).json(buildResponse(responseData));
     }
+
+    logger.warn('[OTP Auth] >>> VERIFY-OTP result: FAILED (wrong/expired OTP)', {
+      reqId,
+      phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+      applicationId: applicationId || 'NOT PROVIDED',
+      error: result.error,
+      message: result.message,
+    });
 
     return res.status(400).json(
       buildErrorResponse(result.message, { error: result.error, retriesLeft: result.retriesLeft }, 400)
