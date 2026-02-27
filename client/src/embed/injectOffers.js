@@ -166,11 +166,6 @@ if (script) {
           container.style.left = (-rect.left) + 'px';
           container.style.width = vw + 'px';
           container.style.maxWidth = vw + 'px';
-          console.log('[PW:Offers] realigned container', {
-            wasLeft: Math.round(rect.left),
-            wasWidth: Math.round(rect.width),
-            nowWidth: vw,
-          });
         } else {
           container.style.width = '100%';
           container.style.maxWidth = '100%';

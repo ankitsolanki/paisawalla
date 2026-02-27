@@ -88,7 +88,6 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   const transitionTo = useCallback((newState, data = {}) => {
     if (!mountedRef.current) return;
-    console.log(`[PW:Offers] state → ${newState}`, data);
     setState(newState);
     notifyState(newState, data);
   }, [notifyState]);
@@ -103,7 +102,6 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   const fetchOffers = useCallback(async () => {
     if (!applicationId) return;
-    console.log('[PW:Offers] fetchOffers start', { applicationId });
     let timeoutHandle;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutHandle = setTimeout(() => reject(new Error('BRE_TIMEOUT')), TIMEOUTS.OFFERS_FETCH);
@@ -126,12 +124,10 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
       const offersList = response?.offers || [];
       if (offersList.length === 0) {
-        console.log('[PW:Offers] fetchOffers empty — no offers returned');
         transitionTo('empty', { count: 0 });
         return;
       }
 
-      console.log('[PW:Offers] fetchOffers success', { count: offersList.length, lenders: offersList.map((o) => o.lender || o.lenderName) });
       setOffers(offersList);
       setLastUpdated(Date.now());
       transitionTo('success', { count: offersList.length });
@@ -146,7 +142,6 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   const handleRefresh = useCallback(async () => {
     if (isRefreshing) return;
-    console.log('[PW:Offers] handleRefresh start', { applicationId });
     setIsRefreshing(true);
     setRefreshStatus(null);
 
@@ -164,7 +159,6 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
       const offersList = response?.offers || [];
       if (offersList.length > 0) {
-        console.log('[PW:Offers] handleRefresh success', { count: offersList.length });
         setOffers(offersList);
         setLastUpdated(Date.now());
         setRefreshStatus('updated');
@@ -173,7 +167,6 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
           if (mountedRef.current) setRefreshStatus(null);
         }, 2000);
       } else {
-        console.log('[PW:Offers] handleRefresh — no new offers');
       }
     } catch (err) {
       console.warn('[PW:Offers] handleRefresh error', { message: err?.message });
@@ -184,12 +177,10 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
   }, [applicationId, isRefreshing]);
 
   const fetchPhoneAndShowOtp = useCallback(async () => {
-    console.log('[PW:Offers] fetchPhone start', { applicationId });
     try {
       const response = await apiClient.get(`/api/offers/application/${applicationId}/phone`);
       if (mountedRef.current) {
         const phoneInfo = response?.data || response;
-        console.log('[PW:Offers] fetchPhone success', { maskedPhone: phoneInfo?.maskedPhone });
         setPhoneData(phoneInfo);
         transitionTo('otp_required');
       }
@@ -204,19 +195,6 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   useEffect(() => {
     mountedRef.current = true;
-    console.log('[PW:Offers] mount', { applicationId, leadId, theme });
-    console.log('[PW:Offers] viewport', {
-      innerWidth: window.innerWidth,
-      innerHeight: window.innerHeight,
-      clientWidth: document.documentElement.clientWidth,
-      screenWidth: window.screen.width,
-      devicePixelRatio: window.devicePixelRatio,
-      bodyMinWidth: window.getComputedStyle(document.body).minWidth,
-      bodyWidth: window.getComputedStyle(document.body).width,
-      bodyScrollWidth: document.body.scrollWidth,
-      bodyClientWidth: document.body.clientWidth,
-      bodyOverflowX: window.getComputedStyle(document.body).overflowX,
-    });
     return () => {
       mountedRef.current = false;
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
@@ -234,24 +212,20 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
     const checkSession = async () => {
       const sessionKey = getSessionKey(applicationId);
       const token = localStorage.getItem(sessionKey);
-      console.log('[PW:Offers] checkSession', { applicationId, hasToken: !!token });
 
       if (token) {
         try {
           const response = await apiClient.post('/api/auth/validate-token', { token, applicationId });
           if (response?.valid) {
-            console.log('[PW:Offers] session valid → fetching offers');
             transitionTo('loading');
             fetchOffers();
             return;
           }
-          console.log('[PW:Offers] session token invalid → clearing, will request OTP');
         } catch (err) {
           console.warn('[PW:Offers] session validate error', { message: err.message });
           localStorage.removeItem(sessionKey);
         }
       } else {
-        console.log('[PW:Offers] no session token → requesting OTP');
       }
       fetchPhoneAndShowOtp();
     };

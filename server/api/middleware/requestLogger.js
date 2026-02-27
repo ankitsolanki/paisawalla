@@ -11,7 +11,6 @@ export const requestLogger = (req, res, next) => {
   logger.info('Incoming request', {
     method: req.method,
     path: req.path,
-    query: req.query,
     ip: req.ip,
     origin: req.get('origin'),
     referer: req.get('referer'),

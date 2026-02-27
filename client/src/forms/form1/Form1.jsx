@@ -670,21 +670,17 @@ const Form1 = ({
       e.stopPropagation();
     }
     
-    console.log('handleNext called', { currentStep, stepsLength: steps.length });
     
     // Since each step now has only one section, just validate the step and move forward
     const isValid = validateStep(currentStep);
-    console.log('Validation result:', isValid);
     
     if (isValid) {
       trackButtonClick('next', { fromStep: currentStep, toStep: currentStep + 1 });
       setCurrentStep((prev) => {
         const nextStep = Math.min(prev + 1, steps.length);
-        console.log('Moving to step:', nextStep);
         return nextStep;
       });
     } else {
-      console.log('Validation failed, not moving to next step');
     }
   }, [currentStep, validateStep, steps.length, trackButtonClick]);
 

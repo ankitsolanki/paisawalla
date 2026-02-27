@@ -28,7 +28,6 @@ const Button = ({
   const widthClass = fullWidth ? 'w-full' : '';
 
   const handleClick = (e) => {
-    console.log('Button clicked', { onClick, disabled, loading, type });
     if (onClick && !disabled && !loading) {
       onClick(e);
     }
