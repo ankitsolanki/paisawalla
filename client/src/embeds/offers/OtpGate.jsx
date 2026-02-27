@@ -100,8 +100,13 @@ const OtpGate = ({ phone, maskedPhone, applicationId, onVerified, onError }) => 
         otp: otpString,
         applicationId,
       });
-      const sessionToken = response?.sessionToken || response?.token;
+      const sessionToken = response?.data?.sessionToken || response?.data?.token;
       const maskedToken = sessionToken ? `${sessionToken.slice(0, 8)}...` : null;
+      if (!sessionToken) {
+        console.error('[PW:OTP] OTP verified but NO session token in response — raw response:', response);
+        if (onError) onError(new Error('OTP verified but no session token received from server'));
+        return;
+      }
       console.log('[PW:OTP] OTP verified successfully — session token received', { maskedToken, applicationId });
       if (onVerified) onVerified(sessionToken);
     } catch (err) {

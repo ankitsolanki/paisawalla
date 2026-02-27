@@ -212,21 +212,28 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
     const checkSession = async () => {
       const sessionKey = getSessionKey(applicationId);
       const token = localStorage.getItem(sessionKey);
-      const maskedToken = token ? `${token.slice(0, 8)}...` : null;
+      const isTokenCorrupted = !token || token === 'undefined' || token === 'null' || token.trim() === '';
+      if (isTokenCorrupted && token) {
+        console.warn('[PW:Session] Corrupted token found in localStorage (value was: ' + token + ') — removing it', { sessionKey });
+        localStorage.removeItem(sessionKey);
+      }
 
-      console.log('[PW:Session] Starting session check', { applicationId, sessionKey, hasToken: !!token, maskedToken });
+      const cleanToken = isTokenCorrupted ? null : token;
+      const maskedToken = cleanToken ? `${cleanToken.slice(0, 8)}...` : null;
 
-      if (token) {
+      console.log('[PW:Session] Starting session check', { applicationId, sessionKey, hasToken: !!cleanToken, maskedToken });
+
+      if (cleanToken) {
         console.log('[PW:Session] Token found in localStorage — calling server to validate', { maskedToken });
         try {
-          const response = await apiClient.post('/api/auth/validate-token', { token, applicationId });
-          if (response?.valid) {
-            console.log('[PW:Session] Token is VALID — skipping OTP, proceeding to fetch offers', { maskedToken, phone: response.phone });
+          const response = await apiClient.post('/api/auth/validate-token', { token: cleanToken, applicationId });
+          if (response?.data?.valid) {
+            console.log('[PW:Session] Token is VALID — skipping OTP, proceeding to fetch offers', { maskedToken, phone: response?.data?.phone });
             transitionTo('loading');
             fetchOffers();
             return;
           }
-          console.warn('[PW:Session] Token is INVALID or EXPIRED (server said so) — removing token, showing OTP', { maskedToken });
+          console.warn('[PW:Session] Token is INVALID or EXPIRED (server said so) — removing token, showing OTP', { maskedToken, serverMessage: response?.message });
           localStorage.removeItem(sessionKey);
         } catch (err) {
           console.warn('[PW:Session] Token validation API call FAILED (network/server error) — keeping token intact, proceeding to offers as best-effort', { message: err.message, maskedToken });
@@ -235,7 +242,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
           return;
         }
       } else {
-        console.log('[PW:Session] No token found in localStorage — will show OTP', { applicationId, sessionKey });
+        console.log('[PW:Session] No valid token in localStorage — will show OTP', { applicationId, sessionKey });
       }
 
       console.log('[PW:Session] No valid session — starting OTP flow', { applicationId });
@@ -248,7 +255,11 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
   const handleOtpVerified = useCallback((sessionToken) => {
     if (!mountedRef.current) return;
     const sessionKey = getSessionKey(applicationId);
-    const maskedToken = sessionToken ? `${sessionToken.slice(0, 8)}...` : null;
+    if (!sessionToken || sessionToken === 'undefined' || sessionToken === 'null' || sessionToken.trim() === '') {
+      console.error('[PW:Session] OTP verified but received a null/invalid session token — NOT saving to localStorage', { sessionKey, receivedValue: sessionToken });
+      return;
+    }
+    const maskedToken = `${sessionToken.slice(0, 8)}...`;
     console.log('[PW:Session] OTP verified — saving new session token to localStorage', { sessionKey, maskedToken });
     localStorage.setItem(sessionKey, sessionToken);
     transitionTo('loading');
