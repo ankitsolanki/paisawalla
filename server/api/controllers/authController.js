@@ -9,8 +9,7 @@ import {
   validateOtp as karixValidateOtp,
   regenerateOtp as karixRegenerateOtp,
 } from '../services/karixOtpService.js';
-
-const sessionTokenStore = new Map();
+import { SessionToken } from '../models/SessionToken.js';
 
 const SESSION_TOKEN_EXPIRY_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -127,7 +126,8 @@ export const verifyOtp = async (req, res, next) => {
 
       if (applicationId) {
         const token = crypto.randomBytes(32).toString('hex');
-        sessionTokenStore.set(token, { applicationId, phone, issuedAt: Date.now() });
+        const expiresAt = new Date(Date.now() + SESSION_TOKEN_EXPIRY_MS);
+        await SessionToken.create({ token, applicationId, phone, expiresAt });
         responseData.sessionToken = token;
       }
 
@@ -228,9 +228,11 @@ export const issueSessionToken = async (req, res, next) => {
     }
 
     const token = crypto.randomBytes(32).toString('hex');
-    sessionTokenStore.set(token, { applicationId, phone, issuedAt: Date.now() });
+    const expiresAt = new Date(Date.now() + SESSION_TOKEN_EXPIRY_MS);
 
-    logger.info('Session token issued', { applicationId, phone });
+    await SessionToken.create({ token, applicationId, phone, expiresAt });
+
+    logger.info('Session token issued', { applicationId });
 
     res.status(200).json(
       buildResponse({
@@ -262,18 +264,11 @@ export const validateSessionToken = async (req, res, next) => {
       );
     }
 
-    const tokenData = sessionTokenStore.get(token);
+    const tokenData = await SessionToken.findOne({ token, expiresAt: { $gt: new Date() } });
 
     if (!tokenData) {
       return res.status(200).json(
-        buildResponse({ valid: false, phone: null }, 'Token not found')
-      );
-    }
-
-    if (Date.now() - tokenData.issuedAt > SESSION_TOKEN_EXPIRY_MS) {
-      sessionTokenStore.delete(token);
-      return res.status(200).json(
-        buildResponse({ valid: false, phone: null }, 'Token expired')
+        buildResponse({ valid: false, phone: null }, 'Token not found or expired')
       );
     }
 

@@ -13,7 +13,7 @@ const router = express.Router();
 router.post('/events', rateLimiter, storeEvents);
 
 // POST /api/analytics/events/beacon - Store event via beacon (for page unload)
-router.post('/events/beacon', storeBeaconEvent); // No rate limit for beacon
+router.post('/events/beacon', rateLimiter, storeBeaconEvent);
 
 // GET /api/analytics/sessions/:sessionId/events - Get events for a session
 router.get('/sessions/:sessionId/events', rateLimiter, getSessionEvents);

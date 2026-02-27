@@ -392,11 +392,7 @@ export const checkBreStatus = async (req, res, next) => {
     logger.error('BRE status check error', {
       error: error.message,
     });
-    res.status(500).json({
-      ok: false,
-      code: 'BRE_FAILED',
-      message: error.message || 'Failed to check BRE status',
-    });
+    next(error);
   }
 };
 
