@@ -137,12 +137,14 @@ const Form3 = ({
       })
         .then((response) => {
           const leadData = response?.data || response;
-          if (leadData && typeof leadData === 'object') {
-            applyPrefillData(leadData);
+          if (leadData?.found === false || !leadData || typeof leadData !== 'object') {
+            setPrefillStatus('not_found');
+            setPrefillMessage('');
+          } else {
+            const actualLead = leadData?.lead || leadData;
+            applyPrefillData(actualLead);
             setPrefillStatus('success');
             setPrefillMessage('We found your previous details and filled them in. Please review and update if required.');
-          } else {
-            setPrefillStatus('not_found');
           }
         })
         .catch((error) => {

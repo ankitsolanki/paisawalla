@@ -78,8 +78,12 @@ export const lookupLeadByPhone = async (req, res, next) => {
       .lean();
 
     if (!lead) {
-      return res.status(404).json(
-        buildErrorResponse('Lead not found for this phone number', null, 404)
+      logger.info('Lead lookup — no lead found for phone', {
+        phone: phone.replace(/(\d{2})\d{6}(\d{2})/, '$1******$2'),
+        formType: formType || 'any',
+      });
+      return res.status(200).json(
+        buildResponse({ found: false, lead: null }, 'No lead found for this phone number')
       );
     }
 
@@ -94,7 +98,7 @@ export const lookupLeadByPhone = async (req, res, next) => {
       formType: lead.formType,
     });
 
-    res.status(200).json(buildResponse(safeLead));
+    res.status(200).json(buildResponse({ found: true, lead: safeLead }));
   } catch (error) {
     next(error);
   }

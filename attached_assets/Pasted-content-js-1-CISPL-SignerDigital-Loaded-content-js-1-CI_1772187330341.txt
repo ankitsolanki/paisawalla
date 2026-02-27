@@ -1,0 +1,16 @@
+content.js:1 CISPL SignerDigital Loaded
+content.js:1 CISPL SignerDigital Loaded
+sw_iframe.html?origin=https%3A%2F%2Fpaisawaala.webflow.io:1 [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) <input id=​"SdExtUserPin" type=​"password">​
+webflow.schunk.e0c428ff9737f919.js:1 [Violation] 'readystatechange' handler took 157ms
+OffersPageV2--7FQQ4si.js:15 [PW:Session] Starting session check {applicationId: '69a16e26ed329c3b21c17c96', sessionKey: 'pw_session_69a16e26ed329c3b21c17c96', hasToken: false, maskedToken: null}
+OffersPageV2--7FQQ4si.js:15 [PW:Session] No valid token in localStorage — will show OTP {applicationId: '69a16e26ed329c3b21c17c96', sessionKey: 'pw_session_69a16e26ed329c3b21c17c96'}
+OffersPageV2--7FQQ4si.js:15 [PW:Session] No valid session — starting OTP flow {applicationId: '69a16e26ed329c3b21c17c96'}
+listing-page?page=offers&applicationId=69a16e26ed329c3b21c17c96&leadId=69a16e25ed329c3b21c17c8e:1 [DOM] Input elements should have autocomplete attributes (suggested: "new-password"): (More info: https://goo.gl/9p2vKq) <input id=​"SdExtUserPin" type=​"password">​
+OffersPageV2--7FQQ4si.js:1 [PW:OTP] OtpGate mounted — auto-sending OTP on mount {maskedPhone: '******3983', applicationId: '69a16e26ed329c3b21c17c96', pageUrl: 'https://paisawaala.webflow.io/listing-page?page=of…6ed329c3b21c17c96&leadId=69a16e25ed329c3b21c17c8e', timestamp: '2026-02-27T10:13:01.727Z'}
+OffersPageV2--7FQQ4si.js:1 [PW:OTP] Sending OTP {caller: 'OtpGate', maskedPhone: '******3983', attemptNumber: 1, applicationId: '69a16e26ed329c3b21c17c96', pageUrl: 'https://paisawaala.webflow.io/listing-page?page=of…6ed329c3b21c17c96&leadId=69a16e25ed329c3b21c17c8e', …}
+OffersPageV2--7FQQ4si.js:1 [PW:OTP] OTP sent successfully {caller: 'OtpGate', maskedPhone: '******3983', applicationId: '69a16e26ed329c3b21c17c96', pageUrl: 'https://paisawaala.webflow.io/listing-page?page=of…6ed329c3b21c17c96&leadId=69a16e25ed329c3b21c17c8e'}
+listing-page?page=of…5ed329c3b21c17c8e:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+listing-page?page=of…5ed329c3b21c17c8e:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+listing-page?page=of…5ed329c3b21c17c8e:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+listing-page?page=of…5ed329c3b21c17c8e:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received
+listing-page?page=of…5ed329c3b21c17c8e:1 Uncaught (in promise) Error: A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received

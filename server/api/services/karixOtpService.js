@@ -193,10 +193,10 @@ export async function validateOtp(phone, otp) {
     if (responseText.includes('Verified successfully')) {
       result = { success: true, verified: true, message: 'OTP verified successfully' };
     } else if (response.status === 200 && responseText === '') {
-      logger.info('[Karix OTP] Validation returned 200 with empty body — treating as verified', {
+      logger.warn('[Karix OTP] Validation returned 200 with empty body — treating as unrecognized failure', {
         mobile: mobile.replace(/(\d{4})\d{6}(\d{2})/, '$1******$2'),
       });
-      result = { success: true, verified: true, message: 'OTP verified successfully' };
+      result = { success: false, verified: false, message: 'OTP verification failed. Please try again.', error: 'EMPTY_RESPONSE' };
     } else if (responseText.includes('OTPEXPIRED')) {
       result = { success: false, verified: false, message: 'OTP has expired. Please request a new OTP', error: 'OTP_EXPIRED' };
     } else if (responseText.includes('Max no of tries')) {
