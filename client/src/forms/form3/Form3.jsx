@@ -444,12 +444,31 @@ const Form3 = ({
   }, []);
 
   // Handle eligibility checking completion
-  const handleEligibilityComplete = useCallback((appId) => {
+  const handleEligibilityComplete = useCallback(async (appId) => {
     setCheckingEligibility(false);
     webflowBridge.postMessage('eligibilityComplete', {
       applicationId: appId,
       leadId,
     });
+
+    const cleanPhone = (formData.phone || '').replace(/\D/g, '');
+    if (cleanPhone) {
+      try {
+        const response = await apiClient.post('/api/auth/issue-session-token', { phone: cleanPhone, applicationId: appId });
+        const sessionToken = response?.data?.sessionToken;
+        if (sessionToken) {
+          localStorage.setItem(`pw_session_${appId}`, sessionToken);
+          console.log('[PW:Session] Pre-redirect session token saved — listing page will skip OTP', { applicationId: appId, maskedToken: `${sessionToken.slice(0, 8)}...` });
+        } else {
+          console.warn('[PW:Session] issue-session-token responded but no token in response', { response });
+        }
+      } catch (err) {
+        console.warn('[PW:Session] Failed to issue pre-redirect session token — user will see OTP on listing page', { error: err.message, applicationId: appId });
+      }
+    } else {
+      console.warn('[PW:Session] No phone available to issue pre-redirect session token', { applicationId: appId });
+    }
+
     if (isEmbedded()) {
       const script = document.querySelector('script[data-form]');
       const offersUrl = script?.getAttribute('data-offers-url') || 'https://paisawaala.webflow.io/listing-page';
@@ -459,7 +478,7 @@ const Form3 = ({
     } else {
       window.location.href = `/listing-page?page=offers&applicationId=${appId}${leadId ? `&leadId=${leadId}` : ''}`;
     }
-  }, [leadId]);
+  }, [leadId, formData]);
 
   // Handle eligibility checking error
   const handleEligibilityError = useCallback((error) => {
