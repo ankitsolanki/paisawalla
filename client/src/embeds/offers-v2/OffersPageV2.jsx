@@ -4,6 +4,7 @@ import apiClient from '../../utils/apiClient';
 import { mapErrorToState, getErrorMessage } from '../../utils/errorMapper';
 import { TIMEOUTS } from '../../utils/timeouts';
 import { webflowBridge } from '../../embed/webflowBridge';
+import { getAuthParamsFromUrl } from '../../utils/queryEncoder';
 import OtpGate from '../offers/OtpGate';
 import BrandedLoaderV2 from './BrandedLoaderV2';
 import OffersListingV2 from './OffersListingV2';
@@ -258,6 +259,14 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
         }
       } else {
         console.log('[PW:Session] No valid token in localStorage — will show OTP', { applicationId, sessionKey });
+      }
+
+      const authSession = getAuthParamsFromUrl();
+      if (authSession && authSession.authenticated && authSession.phone) {
+        console.log('[PW:Session] Found valid auth session in sessionStorage — skipping OTP', { phone: authSession.phone, applicationId });
+        transitionTo('loading');
+        fetchOffers();
+        return;
       }
 
       console.log('[PW:Session] No valid session — starting OTP flow', { applicationId });
