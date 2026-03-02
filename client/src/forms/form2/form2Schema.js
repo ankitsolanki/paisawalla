@@ -24,7 +24,6 @@ export default {
     type: 'date',
     required: true,
     rules: ['required', 'dobDate'],
-    placeholder: 'Select your date of birth (dd-mm-yyyy)',
     errorMessage: 'Please enter a valid Date of Birth',
   },
   pinCode: {

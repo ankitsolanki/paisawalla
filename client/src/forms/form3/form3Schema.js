@@ -24,8 +24,7 @@ export default {
     label: 'Date of Birth (DOB)',
     type: 'date',
     required: true,
-    rules: ['required', 'dobDate'], // Reuse Form1 DOB validation
-    placeholder: 'Select your date of birth',
+    rules: ['required', 'dobDate'],
     errorMessage: 'Please enter a valid Date of Birth',
   },
   pinCode: {

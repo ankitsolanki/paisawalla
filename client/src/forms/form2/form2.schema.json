@@ -30,7 +30,6 @@
       "name": "dateOfBirth",
       "label": "Date of Birth (DOB)",
       "type": "date",
-      "placeholder": "Select your date of birth (dd-mm-yyyy)",
       "required": true,
       "rules": ["required", "dobDate"],
       "errorMessage": "Please enter a valid Date of Birth",

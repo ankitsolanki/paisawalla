@@ -26,7 +26,7 @@ const Input = ({
   const shouldShowPlaceholder = isFocused && !hasValue;
 
   const placeholderText = isDateInput
-    ? (placeholder || 'dd-mm-yyyy')
+    ? ''
     : (placeholder || label || '');
 
   const borderClass = error
@@ -80,16 +80,6 @@ const Input = ({
         data-testid={`input-${name}`}
         {...props}
       />
-
-      {isDateInput && isFocused && !hasValue && (
-        <span
-          className="absolute pointer-events-none text-muted-foreground text-sm md:text-base transition-opacity duration-300"
-          style={{ left: '0.875rem', top: '1.55rem' }}
-          data-testid={`placeholder-${name}`}
-        >
-          {placeholderText}
-        </span>
-      )}
 
       {isDateInput && (
         <span
