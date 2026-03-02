@@ -6,11 +6,15 @@ import { logApiCall } from '../utils/apiLogger.js';
 
 function encryptOtp(otp) {
   const keyBase64 = process.env.KARIX_OTP_ENCRYPTION_KEY;
+  const ivBase64 = process.env.KARIX_OTP_ENCRYPTION_IV;
   if (!keyBase64) {
     throw new Error('KARIX_OTP_ENCRYPTION_KEY is not set — cannot encrypt OTP');
   }
+  if (!ivBase64) {
+    throw new Error('KARIX_OTP_ENCRYPTION_IV is not set — cannot encrypt OTP');
+  }
   const key = Buffer.from(keyBase64, 'base64');
-  const iv = Buffer.alloc(16, 0);
+  const iv = Buffer.from(ivBase64, 'base64');
   const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
   const encrypted = Buffer.concat([cipher.update(otp, 'utf8'), cipher.final()]);
   const result = encrypted.toString('base64');
@@ -18,10 +22,11 @@ function encryptOtp(otp) {
   logger.info('[Karix OTP] Encryption debug', {
     keyPreview: `${keyBase64.substring(0, 8)}...${keyBase64.slice(-4)}`,
     keyLength: key.length,
+    ivPreview: `${ivBase64.substring(0, 8)}...${ivBase64.slice(-4)}`,
+    ivLength: iv.length,
     plainOtp: otp,
     encryptedOtp: result,
     algorithm: 'aes-256-cbc',
-    ivType: 'zero',
   });
 
   return result;
