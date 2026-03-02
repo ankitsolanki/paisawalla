@@ -2,6 +2,7 @@ export const env = {
   port: parseInt(process.env.PORT, 10) || 3001,
   nodeEnv: process.env.NODE_ENV || 'development',
   mongoURI: process.env.MONGODB_URI,
+  karixOtpEncryptionKey: process.env.KARIX_OTP_ENCRYPTION_KEY,
   recaptchaSecret: process.env.RECAPTCHA_SECRET_KEY,
   recaptchaSiteKey: process.env.RECAPTCHA_SITE_KEY,
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:5173,http://localhost:5174',
@@ -27,7 +28,7 @@ export const env = {
   },
 };
 
-const requiredVars = ['MONGODB_URI'];
+const requiredVars = ['MONGODB_URI', 'KARIX_OTP_ENCRYPTION_KEY'];
 const optionalVars = ['RECAPTCHA_SECRET_KEY', 'RECAPTCHA_SITE_KEY'];
 
 export const validateEnv = () => {

@@ -1,7 +1,19 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { logger } from '../utils/logger.js';
 import { logCurl } from '../utils/curlLogger.js';
 import { logApiCall } from '../utils/apiLogger.js';
+
+function encryptOtp(otp) {
+  const keyBase64 = process.env.KARIX_OTP_ENCRYPTION_KEY;
+  if (!keyBase64) {
+    throw new Error('KARIX_OTP_ENCRYPTION_KEY is not set — cannot encrypt OTP');
+  }
+  const key = Buffer.from(keyBase64, 'base64');
+  const cipher = crypto.createCipheriv('aes-256-ecb', key, null);
+  const encrypted = Buffer.concat([cipher.update(otp, 'utf8'), cipher.final()]);
+  return encrypted.toString('base64');
+}
 
 function getBaseUrl() {
   return process.env.KARIX_BASE_URL || 'https://auth.instaalerts.zone/otpauthapi';
@@ -145,9 +157,11 @@ export async function validateOtp(phone, otp) {
   const mobile = formatMobile(phone);
   const baseUrl = getBaseUrl();
 
+  const encryptedOtp = encryptOtp(otp);
+
   const params = new URLSearchParams({
     ipaddress: ipAddress,
-    otp: otp,
+    otp: encryptedOtp,
     mobile: mobile,
   });
 
