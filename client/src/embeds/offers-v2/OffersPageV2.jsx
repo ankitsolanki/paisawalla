@@ -214,15 +214,19 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
       const urlParams = new URLSearchParams(window.location.search);
       const urlToken = urlParams.get('_st');
+      
       if (urlToken && urlToken !== 'undefined' && urlToken !== 'null' && urlToken.trim() !== '') {
+        console.log(sessionKey, "sessionKey");
+        console.log('[PW:Session] Received session token via URL param — saving to localStorage', { applicationId, maskedToken: `${urlToken.slice(0, 8)}...` });
         localStorage.setItem(sessionKey, urlToken);
         console.log('[PW:Session] Received session token via URL param — saved to localStorage, stripping from URL', { applicationId, maskedToken: `${urlToken.slice(0, 8)}...` });
         urlParams.delete('_st');
         const cleanSearch = urlParams.toString() ? `?${urlParams.toString()}` : '';
         history.replaceState(null, '', `${window.location.pathname}${cleanSearch}`);
       }
-
+      console.log("sessionKey123123", sessionKey);
       const token = localStorage.getItem(sessionKey);
+      console.log("token123123", token);
       const isTokenCorrupted = !token || token === 'undefined' || token === 'null' || token.trim() === '';
       if (isTokenCorrupted && token) {
         console.warn('[PW:Session] Corrupted token found in localStorage (value was: ' + token + ') — removing it', { sessionKey });
