@@ -153,7 +153,7 @@ export async function generateOtp(phone) {
 }
 
 export async function validateOtp(phone, otp) {
-  const { accessKey, ipAddress } = getConfig();
+  const { accessKey, departmentId, ipAddress } = getConfig();
   const mobile = formatMobile(phone);
   const baseUrl = getBaseUrl();
 
@@ -169,6 +169,7 @@ export async function validateOtp(phone, otp) {
 
   const headers = {
     'access_key': accessKey,
+    'department-id': departmentId,
   };
 
   logCurl({
@@ -177,6 +178,7 @@ export async function validateOtp(phone, otp) {
     url: `${baseUrl}/otpvalidationservlet?ipaddress=${ipAddress}&otp=${encodeURIComponent(encryptedOtp)}&mobile=${mobile}`,
     headers: {
       'access_key': accessKey,
+      'department-id': departmentId,
     },
   });
 
