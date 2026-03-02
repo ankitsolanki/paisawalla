@@ -1,0 +1,23 @@
+
+62|pw-app  | 1:22:14 PM [express] OPTIONS /api/auth/verify-otp 200 in 1ms
+62|pw-app  | 2026-03-02 13:22:14 [info]: Incoming request {"service":"pw-backend","method":"POST","path":"/auth/verify-otp","ip":"123.252.254.68","origin":"https://tinycommand.in","referer":"https://tinycommand.in/","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1","sessionId":"session_1772198482816_av8itl0cg"}
+62|pw-app  | 2026-03-02 13:22:14 [info]: [OTP Auth] >>> VERIFY-OTP request received {"service":"pw-backend","reqId":"NMCCT7","phone":"98******83","applicationId":"NOT PROVIDED","referer":"https://tinycommand.in/","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1","ip":"123.252.254.68"}
+62|pw-app  | 2026-03-02 13:22:14 [info]: [CURL] OTP Verify {"service":"pw-backend","curl":"curl --location --request POST '/api/auth/verify-otp' \\\n--header 'Content-Type: application/json' \\\n--data '{\n  \"phone\": \"9823423983\",\n  \"otp\": \"037484\"\n}'"}
+62|pw-app  | 2026-03-02 13:22:14 [info]: [CURL] Karix OTP Validation {"service":"pw-backend","curl":"curl --location --request POST 'https://auth.instaalerts.zone/otpauthapi/otpvalidationservlet?ipaddress=13.200.82.107&otp=ki%2Bttfk7dJl8RQ5n2c9CJQ%3D%3D&mobile=919823423983' \\\n--header 'access_key: N20aXHHDv4XjVZLRog58LQ==' \\\n--header 'department-id: Uni_SMS_OTP_feb20'"}
+62|pw-app  | 2026-03-02 13:22:14 [info]: [Karix OTP] Validation response {"service":"pw-backend","status":200,"response":"Wrong PIN . No of Retries remaining # 1","mobile":"9198******83"}
+62|pw-app  | 2026-03-02 13:22:14 [warn]: [OTP Auth] >>> VERIFY-OTP result: FAILED (wrong/expired OTP) Wrong OTP. 1 attempts remaining {"service":"pw-backend","reqId":"NMCCT7","phone":"98******83","applicationId":"NOT PROVIDED","error":"WRONG_OTP"}
+62|pw-app  | 1:22:14 PM [express] POST /api/auth/verify-otp 400 in 99ms :: {"success":false,"message":"Wrong OTP. 1 attempts remaining","errors":{"error":"WRONG_OTP","retriesLeft":1},"timestamp":"2026-03-02T07:52:14.248Z"}
+62|pw-app  | 2026-03-02 13:22:14 [info]: Request completed {"service":"pw-backend","method":"POST","path":"/verify-otp","statusCode":400,"duration":"99ms"}
+
+
+
+62|pw-app  | 1:23:09 PM [express] OPTIONS /api/auth/verify-otp 200 in 0ms
+62|pw-app  | 2026-03-02 13:23:09 [info]: Incoming request {"service":"pw-backend","method":"POST","path":"/auth/verify-otp","ip":"123.252.254.68","origin":"https://tinycommand.in","referer":"https://tinycommand.in/","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1","sessionId":"session_1772198482816_av8itl0cg"}
+62|pw-app  | 2026-03-02 13:23:09 [info]: [OTP Auth] >>> VERIFY-OTP request received {"service":"pw-backend","reqId":"7YKH75","phone":"98******83","applicationId":"NOT PROVIDED","referer":"https://tinycommand.in/","userAgent":"Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1","ip":"123.252.254.68"}
+62|pw-app  | 2026-03-02 13:23:09 [info]: [CURL] OTP Verify {"service":"pw-backend","curl":"curl --location --request POST '/api/auth/verify-otp' \\\n--header 'Content-Type: application/json' \\\n--data '{\n  \"phone\": \"9823423983\",\n  \"otp\": \"037484\"\n}'"}
+62|pw-app  | 2026-03-02 13:23:09 [info]: [CURL] Karix OTP Validation {"service":"pw-backend","curl":"curl --location --request POST 'https://auth.instaalerts.zone/otpauthapi/otpvalidationservlet?ipaddress=13.200.82.107&otp=ki%2Bttfk7dJl8RQ5n2c9CJQ%3D%3D&mobile=919823423983' \\\n--header 'access_key: N20aXHHDv4XjVZLRog58LQ==' \\\n--header 'department-id: Uni_SMS_OTP_feb20'"}
+62|pw-app  | 2026-03-02 13:23:09 [info]: [Karix OTP] Validation response {"service":"pw-backend","status":200,"response":"Wrong PIN . No of Retries remaining # 0","mobile":"9198******83"}
+62|pw-app  | 2026-03-02 13:23:09 [warn]: [OTP Auth] >>> VERIFY-OTP result: FAILED (wrong/expired OTP) Wrong OTP. 0 attempts remaining {"service":"pw-backend","reqId":"7YKH75","phone":"98******83","applicationId":"NOT PROVIDED","error":"WRONG_OTP"}
+62|pw-app  | 1:23:09 PM [express] POST /api/auth/verify-otp 400 in 76ms :: {"success":false,"message":"Wrong OTP. 0 attempts remaining","errors":{"error":"WRONG_OTP","retriesLeft":0},"timestamp":"2026-03-02T07:53:09.779Z"}
+62|pw-app  | 2026-03-02 13:23:09 [info]: Request completed {"service":"pw-backend","method":"POST","path":"/verify-otp","statusCode":400,"duration":"75ms"}
+
