@@ -81,6 +81,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
   const [timeAgoText, setTimeAgoText] = useState('');
   const mountedRef = useRef(true);
   const refreshTimerRef = useRef(null);
+  const isFetchingRef = useRef(false);
 
   const notifyState = useCallback((newState, data = {}) => {
     webflowBridge.postMessage('offersPageStateChange', { state: newState, applicationId, ...data });
@@ -103,6 +104,12 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   const fetchOffers = useCallback(async () => {
     if (!applicationId) return;
+    if (isFetchingRef.current) {
+      console.log('[PW:Offers] fetchOffers skipped — already in progress');
+      return;
+    }
+    isFetchingRef.current = true;
+
     let timeoutHandle;
     const timeoutPromise = new Promise((_, reject) => {
       timeoutHandle = setTimeout(() => reject(new Error('BRE_TIMEOUT')), TIMEOUTS.OFFERS_FETCH);
@@ -138,6 +145,8 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
       console.error('[PW:Offers] fetchOffers error', { message: err.message, code: err.code, errorState });
       setError(err);
       transitionTo(errorState, { error: getErrorMessage(err), code: err.code });
+    } finally {
+      isFetchingRef.current = false;
     }
   }, [applicationId, transitionTo]);
 
@@ -196,8 +205,10 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
 
   useEffect(() => {
     mountedRef.current = true;
+    isFetchingRef.current = false;
     return () => {
       mountedRef.current = false;
+      isFetchingRef.current = false;
       if (refreshTimerRef.current) clearTimeout(refreshTimerRef.current);
     };
   }, []);
@@ -210,6 +221,8 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
       return;
     }
 
+    let cancelled = false;
+
     const checkSession = async () => {
       const sessionKey = getSessionKey(applicationId);
 
@@ -217,17 +230,14 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
       const urlToken = urlParams.get('_st');
       
       if (urlToken && urlToken !== 'undefined' && urlToken !== 'null' && urlToken.trim() !== '') {
-        console.log(sessionKey, "sessionKey");
         console.log('[PW:Session] Received session token via URL param — saving to localStorage', { applicationId, maskedToken: `${urlToken.slice(0, 8)}...` });
         localStorage.setItem(sessionKey, urlToken);
-        console.log('[PW:Session] Received session token via URL param — saved to localStorage, stripping from URL', { applicationId, maskedToken: `${urlToken.slice(0, 8)}...` });
         urlParams.delete('_st');
         const cleanSearch = urlParams.toString() ? `?${urlParams.toString()}` : '';
         history.replaceState(null, '', `${window.location.pathname}${cleanSearch}`);
       }
-      console.log("sessionKey123123", sessionKey);
+
       const token = localStorage.getItem(sessionKey);
-      console.log("token123123", token);
       const isTokenCorrupted = !token || token === 'undefined' || token === 'null' || token.trim() === '';
       if (isTokenCorrupted && token) {
         console.warn('[PW:Session] Corrupted token found in localStorage (value was: ' + token + ') — removing it', { sessionKey });
@@ -243,6 +253,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
         console.log('[PW:Session] Token found in localStorage — calling server to validate', { maskedToken });
         try {
           const response = await apiClient.post('/api/auth/validate-token', { token: cleanToken, applicationId });
+          if (cancelled) return;
           if (response?.data?.valid) {
             console.log('[PW:Session] Token is VALID — skipping OTP, proceeding to fetch offers', { maskedToken, phone: response?.data?.phone });
             transitionTo('loading');
@@ -252,6 +263,7 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
           console.warn('[PW:Session] Token is INVALID or EXPIRED (server said so) — removing token, showing OTP', { maskedToken, serverMessage: response?.message });
           localStorage.removeItem(sessionKey);
         } catch (err) {
+          if (cancelled) return;
           console.warn('[PW:Session] Token validation API call FAILED (network/server error) — keeping token intact, proceeding to offers as best-effort', { message: err.message, maskedToken });
           transitionTo('loading');
           fetchOffers();
@@ -260,6 +272,8 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
       } else {
         console.log('[PW:Session] No valid token in localStorage — will show OTP', { applicationId, sessionKey });
       }
+
+      if (cancelled) return;
 
       const authSession = getAuthParamsFromUrl();
       if (authSession && authSession.authenticated && authSession.phone) {
@@ -274,6 +288,10 @@ const OffersPageV2 = ({ applicationId, leadId, theme = 'light', onStateChange })
     };
 
     checkSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, [applicationId]);
 
   const handleOtpVerified = useCallback((sessionToken) => {
