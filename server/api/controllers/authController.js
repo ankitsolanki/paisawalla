@@ -130,7 +130,7 @@ export const verifyOtp = async (req, res, next) => {
       method: 'POST',
       url: '/api/auth/verify-otp',
       headers: { 'Content-Type': 'application/json' },
-      body: { phone, otp: '[MASKED]', applicationId },
+      body: { phone, otp, applicationId },
     });
 
     assertKarixConfigured();
