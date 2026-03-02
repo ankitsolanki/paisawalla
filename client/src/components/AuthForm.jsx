@@ -203,7 +203,6 @@ const AuthForm = ({
   const [consentA, setConsentA] = useState(false);
   const [consentB, setConsentB] = useState(false);
   const [consentC, setConsentC] = useState(false);
-  const [consentD, setConsentD] = useState(false);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const timerRef = useRef(null);
@@ -344,7 +343,7 @@ const AuthForm = ({
         otp: otp.trim(),
       });
 
-      const consents = { consentA, consentB, consentC, consentD };
+      const consents = { consentA, consentB, consentC };
 
       if (onAuthComplete) {
         onAuthComplete({
@@ -372,7 +371,7 @@ const AuthForm = ({
     } finally {
       setOtpVerifying(false);
     }
-  }, [otp, phone, redirectUrl, onAuthComplete, consentA, consentB, consentC, consentD, cleanPhone]);
+  }, [otp, phone, redirectUrl, onAuthComplete, consentA, consentB, consentC, cleanPhone]);
 
   const handleResendOtp = useCallback(async () => {
     if (resendTimer > 0) return;
@@ -509,17 +508,7 @@ const AuthForm = ({
                       htmlFor="consentB"
                       className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
                     >
-                      I consent to share my personal data with Paisawaala and Lenders/NBFCs to process my application(s) and provide the requested product/service{' '}
-                      <a
-                        href="https://www.paisawaala.com/experian-consumer-consent"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline text-primary hover:opacity-80"
-                        onClick={(e) => e.stopPropagation()}
-                        data-testid="link-onboarding-consent"
-                      >
-                        T&C
-                      </a>
+                      I Consent to Onboarding & Sharing with Paisawaala and Lenders/NBFCs
                       <span className="text-destructive ml-1">*</span>
                     </label>
                   </div>
@@ -531,33 +520,14 @@ const AuthForm = ({
                       name="consentC"
                       checked={consentC}
                       onChange={(e) => setConsentC(e.target.checked)}
-                      data-testid="checkbox-consent-personalization"
+                      data-testid="checkbox-consent-marketing"
                       className="h-[1.125rem] w-[1.125rem] rounded-sm border border-border accent-primary cursor-pointer shrink-0 mt-0.5"
                     />
                     <label
                       htmlFor="consentC"
                       className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
                     >
-                      I consent to Personalization & Analytics
-                      <span className="text-xs italic text-muted-foreground/70 ml-1">(optional)</span>
-                    </label>
-                  </div>
-
-                  <div className="flex items-start gap-2.5">
-                    <input
-                      type="checkbox"
-                      id="consentD"
-                      name="consentD"
-                      checked={consentD}
-                      onChange={(e) => setConsentD(e.target.checked)}
-                      data-testid="checkbox-consent-marketing"
-                      className="h-[1.125rem] w-[1.125rem] rounded-sm border border-border accent-primary cursor-pointer shrink-0 mt-0.5"
-                    />
-                    <label
-                      htmlFor="consentD"
-                      className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
-                    >
-                      I consent to Marketing & Contact via Call, SMS, RCS, Email, WhatsApp
+                      I Consent to Marketing Channels, Personalization & Analytics
                       <span className="text-xs italic text-muted-foreground/70 ml-1">(optional)</span>
                     </label>
                   </div>
