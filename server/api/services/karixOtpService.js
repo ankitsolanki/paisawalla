@@ -79,7 +79,7 @@ export async function generateOtp(phone) {
     method: 'POST',
     url,
     headers: {
-      'access_key': '[MASKED]',
+      'access_key': accessKey,
       'department-id': departmentId,
     },
   });
@@ -174,9 +174,9 @@ export async function validateOtp(phone, otp) {
   logCurl({
     label: 'Karix OTP Validation',
     method: 'POST',
-    url: `${baseUrl}/otpvalidationservlet?ipaddress=${ipAddress}&otp=[MASKED]&mobile=${mobile.replace(/(\d{4})\d{6}(\d{2})/, '$1******$2')}`,
+    url: `${baseUrl}/otpvalidationservlet?ipaddress=${ipAddress}&otp=${encodeURIComponent(encryptedOtp)}&mobile=${mobile}`,
     headers: {
-      'access_key': '[MASKED]',
+      'access_key': accessKey,
     },
   });
 
@@ -185,7 +185,7 @@ export async function validateOtp(phone, otp) {
     method: 'POST',
     url: `${baseUrl}/otpvalidationservlet`,
     requestHeaders: headers,
-    requestBody: { ipaddress: ipAddress, otp, mobile },
+    requestBody: { ipaddress: ipAddress, otp: encryptedOtp, mobile },
   });
 
   try {
@@ -276,7 +276,7 @@ export async function regenerateOtp(phone) {
     method: 'POST',
     url,
     headers: {
-      'access_key': '[MASKED]',
+      'access_key': accessKey,
       'department-id': departmentId,
     },
   });
