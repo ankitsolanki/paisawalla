@@ -4,7 +4,7 @@ import Button from './ui/CustomButton';
 import Input from './ui/CustomInput';
 import { validateField } from '../utils/validationRules';
 import apiClient from '../utils/apiClient';
-import { buildUrlWithAuthParams } from '../utils/queryEncoder';
+import { buildUrlWithAuthParams, encodeAuthParams } from '../utils/queryEncoder';
 
 const SectionHeading = ({ number, title }) => (
   <h4 className="text-inherit font-semibold text-foreground mt-4 mb-2">
@@ -346,12 +346,14 @@ const AuthForm = ({
       const consents = { consentA, consentB, consentC };
 
       if (onAuthComplete) {
+        encodeAuthParams(phoneDigits, true, consents);
         onAuthComplete({
           phone: phoneDigits,
           verified: true,
           consents,
         });
       } else if (redirectUrl) {
+        setStage('redirecting');
         const redirectUrlWithParams = buildUrlWithAuthParams(
           redirectUrl,
           phoneDigits,
@@ -359,16 +361,17 @@ const AuthForm = ({
           consents
         );
         window.location.href = redirectUrlWithParams;
+        return;
       } else {
         setErrors((prev) => ({
           ...prev,
           submit: 'Redirect URL not configured. Please contact support.',
         }));
+        setOtpVerifying(false);
       }
     } catch (error) {
       const errorMessage = error?.response?.data?.message || error?.message || 'Invalid OTP. Please try again.';
       setErrors((prev) => ({ ...prev, otp: errorMessage }));
-    } finally {
       setOtpVerifying(false);
     }
   }, [otp, phone, redirectUrl, onAuthComplete, consentA, consentB, consentC, cleanPhone]);
@@ -570,12 +573,13 @@ const AuthForm = ({
               type="submit"
               variant="primary"
               fullWidth
-              disabled={otpSending || otpVerifying || (stage === 'phone' && !mandatoryConsentsGiven)}
-              loading={otpSending || otpVerifying}
+              disabled={otpSending || otpVerifying || stage === 'redirecting' || (stage === 'phone' && !mandatoryConsentsGiven)}
+              loading={otpSending || otpVerifying || stage === 'redirecting'}
               data-testid="button-submit"
             >
               {stage === 'phone' && (otpSending ? 'Sending...' : 'Apply Now')}
               {stage === 'otp' && (otpVerifying ? 'Verifying...' : 'Verify OTP')}
+              {stage === 'redirecting' && 'Redirecting...'}
             </Button>
 
             {stage === 'otp' && (
