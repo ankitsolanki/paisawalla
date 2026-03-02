@@ -80,6 +80,14 @@
   color: inherit;
 }
 
+.pw-form-container a.text-primary {
+  color: hsl(var(--primary)) !important;
+}
+
+.pw-form-container a.underline {
+  text-decoration: underline !important;
+}
+
 .pw-form-container ul,
 .pw-form-container ol {
   margin: 0;

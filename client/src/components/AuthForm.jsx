@@ -66,7 +66,7 @@ const ConsentNoticePanel = ({ isOpen, onToggle }) => {
         <p className="mt-2 mb-1 font-semibold">1.3 Financial & Employment</p>
         <SubItem number="1.3.1" text="Income details - Product suitability & eligibility assessment" />
         <SubItem number="1.3.2" text="Employment status & employer details - Underwriting; eligibility confirmation" />
-        <SubItem number="1.3.3" text="Credit score/report (from Experian) - Risk assessment; matching with suitable lenders/products" />
+        <SubItem number="1.3.3" text="Credit Information - Risk assessment; matching with suitable lenders/products" />
 
         <p className="mt-2 mb-1 font-semibold">1.4 Preferences & Interaction</p>
         <SubItem number="1.4.1" text="Product preferences - Tailored recommendations (only if you opt in)" />
@@ -90,7 +90,7 @@ const ConsentNoticePanel = ({ isOpen, onToggle }) => {
           Purpose limitation: Obtain report from Experian; assess eligibility.
         </p>
 
-        <p className="mt-2 mb-1 font-semibold">(B) Onboarding & Sharing with Lenders/NBFCs</p>
+        <p className="mt-2 mb-1 font-semibold">(B) Onboarding & Sharing with Paisawaala and Lenders/NBFCs</p>
         <p className="my-1 ml-4">
           I consent to share my necessary data as mentioned in clause 1.1 to 1.4 with Paisawaala and lenders/NBFCs solely to process my application(s) and provide the product/service I request, except for information mentioned in clause 1.3.3, which will not be shared with lenders/NBFCs.
         </p>
@@ -167,7 +167,10 @@ const ConsentNoticePanel = ({ isOpen, onToggle }) => {
 
         <SectionHeading number="10" title="Records & Audit" />
         <p className="my-1">
-          Paisawaala maintains verifiable, time-stamped records of the notice presented and your affirmative actions for audit/compliance. We may amend this Notice; material changes will be communicated via email/in-product notice. Continued use after such changes constitutes acceptance.
+          Paisawaala maintains verifiable, time-stamped records of the notice presented and your affirmative actions for audit/compliance.
+        </p>
+        <p className="my-1">
+          We may amend this Notice; material changes will be communicated via email/in-product notice. Continued use after such changes constitutes acceptance.
         </p>
 
         <SectionHeading number="11" title="Updates to this Notice" />
@@ -200,6 +203,7 @@ const AuthForm = ({
   const [consentA, setConsentA] = useState(false);
   const [consentB, setConsentB] = useState(false);
   const [consentC, setConsentC] = useState(false);
+  const [consentD, setConsentD] = useState(false);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
   const timerRef = useRef(null);
@@ -340,7 +344,7 @@ const AuthForm = ({
         otp: otp.trim(),
       });
 
-      const consents = { consentA, consentB, consentC };
+      const consents = { consentA, consentB, consentC, consentD };
 
       if (onAuthComplete) {
         onAuthComplete({
@@ -368,7 +372,7 @@ const AuthForm = ({
     } finally {
       setOtpVerifying(false);
     }
-  }, [otp, phone, redirectUrl, onAuthComplete, consentA, consentB, consentC, cleanPhone]);
+  }, [otp, phone, redirectUrl, onAuthComplete, consentA, consentB, consentC, consentD, cleanPhone]);
 
   const handleResendOtp = useCallback(async () => {
     if (resendTimer > 0) return;
@@ -505,7 +509,17 @@ const AuthForm = ({
                       htmlFor="consentB"
                       className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
                     >
-                      I Consent to Onboarding & Sharing with Paisawaala and Lenders/NBFCs
+                      I consent to share my personal data with Paisawaala and Lenders/NBFCs to process my application(s) and provide the requested product/service{' '}
+                      <a
+                        href="https://www.paisawaala.com/experian-consumer-consent"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="underline text-primary hover:opacity-80"
+                        onClick={(e) => e.stopPropagation()}
+                        data-testid="link-onboarding-consent"
+                      >
+                        T&C
+                      </a>
                       <span className="text-destructive ml-1">*</span>
                     </label>
                   </div>
@@ -517,14 +531,33 @@ const AuthForm = ({
                       name="consentC"
                       checked={consentC}
                       onChange={(e) => setConsentC(e.target.checked)}
-                      data-testid="checkbox-consent-marketing"
+                      data-testid="checkbox-consent-personalization"
                       className="h-[1.125rem] w-[1.125rem] rounded-sm border border-border accent-primary cursor-pointer shrink-0 mt-0.5"
                     />
                     <label
                       htmlFor="consentC"
                       className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
                     >
-                      I Consent to Marketing Channels, Personalization & Analytics
+                      I consent to Personalization & Analytics
+                      <span className="text-xs italic text-muted-foreground/70 ml-1">(optional)</span>
+                    </label>
+                  </div>
+
+                  <div className="flex items-start gap-2.5">
+                    <input
+                      type="checkbox"
+                      id="consentD"
+                      name="consentD"
+                      checked={consentD}
+                      onChange={(e) => setConsentD(e.target.checked)}
+                      data-testid="checkbox-consent-marketing"
+                      className="h-[1.125rem] w-[1.125rem] rounded-sm border border-border accent-primary cursor-pointer shrink-0 mt-0.5"
+                    />
+                    <label
+                      htmlFor="consentD"
+                      className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
+                    >
+                      I consent to Marketing & Contact via Call, SMS, RCS, Email, WhatsApp
                       <span className="text-xs italic text-muted-foreground/70 ml-1">(optional)</span>
                     </label>
                   </div>
