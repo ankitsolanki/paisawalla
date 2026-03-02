@@ -88,6 +88,28 @@
   text-decoration: underline !important;
 }
 
+.pw-form-container input[type="date"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  -moz-appearance: none !important;
+  border-radius: 0.75rem !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  line-height: 1.5 !important;
+  background-color: transparent !important;
+  box-sizing: border-box !important;
+}
+
+.pw-form-container input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0 !important;
+}
+
+.pw-form-container input[type="date"]::-webkit-inner-spin-button,
+.pw-form-container input[type="date"]::-webkit-clear-button {
+  display: none !important;
+  -webkit-appearance: none !important;
+}
+
 .pw-form-container ul,
 .pw-form-container ol {
   margin: 0;
