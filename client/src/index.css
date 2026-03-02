@@ -320,6 +320,8 @@ input[type="date"].floating-input {
   background-color: transparent;
   line-height: 1.5;
   position: relative;
+  border-width: 1px;
+  border-style: solid;
 }
 
 input[type="date"].floating-input::-webkit-calendar-picker-indicator {

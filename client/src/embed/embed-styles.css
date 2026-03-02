@@ -92,6 +92,8 @@
   -webkit-appearance: none !important;
   appearance: none !important;
   -moz-appearance: none !important;
+  border-width: 1px !important;
+  border-style: solid !important;
   border-radius: 0.75rem !important;
   font-family: inherit !important;
   font-size: inherit !important;

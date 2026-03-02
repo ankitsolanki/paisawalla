@@ -81,10 +81,10 @@ const Input = ({
         {...props}
       />
 
-      {isDateInput && !isFocused && !hasValue && (
+      {isDateInput && isFocused && !hasValue && (
         <span
           className="absolute pointer-events-none text-muted-foreground text-sm md:text-base transition-opacity duration-300"
-          style={{ left: '0.875rem', top: '1rem' }}
+          style={{ left: '0.875rem', top: '1.55rem' }}
           data-testid={`placeholder-${name}`}
         >
           {placeholderText}
