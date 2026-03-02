@@ -10,9 +10,21 @@ function encryptOtp(otp) {
     throw new Error('KARIX_OTP_ENCRYPTION_KEY is not set — cannot encrypt OTP');
   }
   const key = Buffer.from(keyBase64, 'base64');
-  const cipher = crypto.createCipheriv('aes-256-ecb', key, null);
+  const iv = Buffer.alloc(16, 0);
+  const cipher = crypto.createCipheriv('aes-256-cbc', key, iv);
   const encrypted = Buffer.concat([cipher.update(otp, 'utf8'), cipher.final()]);
-  return encrypted.toString('base64');
+  const result = encrypted.toString('base64');
+
+  logger.info('[Karix OTP] Encryption debug', {
+    keyPreview: `${keyBase64.substring(0, 8)}...${keyBase64.slice(-4)}`,
+    keyLength: key.length,
+    plainOtp: otp,
+    encryptedOtp: result,
+    algorithm: 'aes-256-cbc',
+    ivType: 'zero',
+  });
+
+  return result;
 }
 
 function getBaseUrl() {
