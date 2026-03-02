@@ -476,7 +476,7 @@ const AuthForm = ({
                       htmlFor="consentA"
                       className="text-xs sm:text-sm text-muted-foreground cursor-pointer leading-relaxed"
                     >
-                      I Consent to{' '}
+                      I consent to Paisawaala as my authorized representative, to fetch my Credit Report from Experian, for credit assessment and provide loan/credit offers{' '}
                       <a
                         href="https://www.paisawaala.com/experian-consumer-consent"
                         target="_blank"
@@ -485,7 +485,7 @@ const AuthForm = ({
                         onClick={(e) => e.stopPropagation()}
                         data-testid="link-experian-consent"
                       >
-                        Experian Credit Information
+                        T&C
                       </a>
                       <span className="text-destructive ml-1">*</span>
                     </label>
